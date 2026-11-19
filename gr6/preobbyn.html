@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Преобразования с двоичным кодом — 6 класс</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    min-height: 100vh;
+    overflow: hidden;
+    color: #fff;
+  }
+  .slide {
+    display: none;
+    width: 100vw;
+    height: 100vh;
+    padding: 30px 50px 80px;
+    animation: fadeIn 0.5s ease;
+    overflow-y: auto;
+  }
+  .slide.active { display: flex; flex-direction: column; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  h1 {
+    font-size: 2.3em;
+    margin-bottom: 20px;
+    text-align: center;
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+  }
+  h2 {
+    font-size: 1.6em;
+    margin-bottom: 15px;
+    color: #ffd700;
+  }
+
+  /* Навигация */
+  .nav {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 15px;
+    z-index: 100;
+  }
+  .nav button {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border: 2px solid #fff;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: 0.3s;
+  }
+  .nav button:hover { background: #fff; color: #1e3c72; }
+  .counter {
+    position: fixed;
+    top: 20px;
+    right: 30px;
+    background: rgba(0,0,0,0.3);
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 1em;
+    z-index: 100;
+  }
+
+  /* Тик-Тэк-Тоу */
+  .ttt-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    max-width: 700px;
+    margin: 15px auto;
+  }
+  .ttt-cell {
+    background: rgba(255,255,255,0.15);
+    border: 2px solid rgba(255,255,255,0.4);
+    padding: 25px;
+    text-align: center;
+    border-radius: 15px;
+    font-size: 1.3em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ttt-cell:hover { background: rgba(255,215,0,0.3); transform: scale(1.05); }
+  .ttt-cell.selected-x { background: rgba(255,99,99,0.5); border-color: #ff6363; }
+  .ttt-cell.selected-o { background: rgba(100,200,255,0.5); border-color: #64c8ff; }
+
+  /* Объяснения */
+  .example-box {
+    background: rgba(0,0,0,0.3);
+    border-left: 5px solid #ffd700;
+    padding: 20px 25px;
+    border-radius: 10px;
+    margin: 12px 0;
+    font-size: 1.15em;
+    line-height: 1.7;
+  }
+  .example-box code {
+    background: rgba(255,255,255,0.2);
+    padding: 3px 10px;
+    border-radius: 5px;
+    font-family: 'Courier New', monospace;
+    font-size: 1.1em;
+  }
+  .step {
+    background: rgba(255,255,255,0.1);
+    padding: 12px 18px;
+    border-radius: 10px;
+    margin: 8px 0;
+  }
+  .step-num {
+    display: inline-block;
+    background: #ffd700;
+    color: #1e3c72;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 28px;
+    font-weight: bold;
+    margin-right: 10px;
+  }
+
+  /* Вычисляем */
+  .big-text {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8em;
+    font-weight: 900;
+    text-align: center;
+    background: linear-gradient(45deg, #ffd700, #ff6b6b, #4ecdc4, #ffd700);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradient 3s ease infinite;
+  }
+  @keyframes gradient {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* Задания */
+  .variants {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 15px;
+  }
+  .variant-card {
+    background: rgba(255,255,255,0.1);
+    border: 3px solid #ffd700;
+    border-radius: 20px;
+    padding: 25px;
+    text-align: center;
+  }
+  .variant-card h3 {
+    font-size: 1.7em;
+    color: #ffd700;
+    margin-bottom: 15px;
+  }
+  .variant-card .task {
+    font-size: 2.3em;
+    font-weight: bold;
+    margin: 12px 0;
+    padding: 12px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+  }
+
+  /* === ДИАГРАММЫ === */
+  .chart-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .chart-wrapper {
+    background: rgba(0,0,0,0.25);
+    border-radius: 20px;
+    padding: 25px;
+    margin-bottom: 15px;
+  }
+  .chart {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    height: 280px;
+    padding: 10px 20px 0;
+    border-bottom: 3px solid rgba(255,255,255,0.4);
+    position: relative;
+  }
+  .chart::before {
+    content: 'кол-во учеников';
+    position: absolute;
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%) rotate(-90deg);
+    font-size: 0.8em;
+    opacity: 0.7;
+  }
+  .bar-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    max-width: 200px;
+    margin: 0 8px;
+  }
+  .bar {
+    width: 100%;
+    background: linear-gradient(180deg, var(--bar-color1), var(--bar-color2));
+    border-radius: 10px 10px 0 0;
+    transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    min-height: 0;
+    box-shadow: 0 -3px 10px rgba(0,0,0,0.2);
+  }
+  .bar-value {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.4em;
+    font-weight: bold;
+    color: #ffd700;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+  }
+  .bar-label {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 0.95em;
+    padding: 0 5px;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .controls {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 15px;
+  }
+  .control-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(255,255,255,0.08);
+    padding: 10px 15px;
+    border-radius: 12px;
+    min-width: 140px;
+  }
+  .control-label {
+    font-size: 0.9em;
+    margin-bottom: 8px;
+    text-align: center;
+    min-height: 30px;
+  }
+  .control-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .control-buttons button {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: #ffd700;
+    color: #1e3c72;
+    font-size: 1.3em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .control-buttons button:hover { background: #fff; transform: scale(1.1); }
+  .control-buttons input {
+    width: 55px;
+    text-align: center;
+    padding: 6px;
+    border-radius: 8px;
+    border: 2px solid rgba(255,255,255,0.3);
+    background: rgba(0,0,0,0.3);
+    color: #fff;
+    font-size: 1.1em;
+    font-weight: bold;
+  }
+  .total-box {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 1.2em;
+    padding: 10px;
+    background: rgba(255,215,0,0.15);
+    border-radius: 10px;
+  }
+  .total-box b { color: #ffd700; font-size: 1.3em; }
+  .reset-btn {
+    background: rgba(255,99,99,0.3);
+    border: 2px solid #ff6363;
+    color: #fff;
+    padding: 8px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.95em;
+    margin-top: 10px;
+  }
+  .reset-btn:hover { background: #ff6363; }
+
+  .question-text-big {
+    font-size: 1.5em;
+    text-align: center;
+    margin-bottom: 15px;
+    padding: 15px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 15px;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+
+<div class="counter" id="counter">1 / 10</div>
+
+<!-- СЛАЙД 1: Тик-Тэк-Тоу -->
+<div class="slide active">
+  <h1>🎯 Сингапурский приём «Тик-Тэк-Тоу»</h1>
+  <p style="text-align:center; font-size:1.15em; margin-bottom:10px;">
+    Выберите 3 ячейки в ряд и составьте <b>связное предложение</b>, объединяющее эти понятия!
+  </p>
+  <div class="ttt-grid" id="tttGrid">
+    <div class="ttt-cell">0 и 1</div>
+    <div class="ttt-cell">Бит</div>
+    <div class="ttt-cell">8</div>
+    <div class="ttt-cell">Двоичная система</div>
+    <div class="ttt-cell">Компьютер</div>
+    <div class="ttt-cell">1010</div>
+    <div class="ttt-cell">Байт</div>
+    <div class="ttt-cell">Перевод</div>
+    <div class="ttt-cell">Степень двойки</div>
+  </div>
+  <p style="text-align:center; margin-top:10px; font-style:italic;">
+    💡 Пример: <i>«Компьютер хранит информацию в двоичной системе, используя только 0 и 1»</i>
+  </p>
+</div>
+
+<!-- СЛАЙД 2: Метод разрядов -->
+<div class="slide">
+  <h1>📐 Метод разрядов</h1>
+  <h2>Двоичная → Десятичная</h2>
+  <div class="step">
+    <span class="step-num">1</span>
+    Над каждой цифрой двоичного числа подписываем <b>веса разрядов</b> — степени двойки справа налево: 1, 2, 4, 8, 16, 32...
+  </div>
+  <div class="step">
+    <span class="step-num">2</span>
+    Складываем только те веса, над которыми стоит цифра <b>1</b>.
+  </div>
+  <div class="example-box">
+    <b>Пример:</b> Переведём число <code>1011</code><br><br>
+    &nbsp;&nbsp;1 &nbsp;&nbsp; 0 &nbsp;&nbsp; 1 &nbsp;&nbsp; 1 &nbsp;&nbsp; ← цифры числа<br>
+    &nbsp;&nbsp;8 &nbsp;&nbsp; 4 &nbsp;&nbsp; 2 &nbsp;&nbsp; 1 &nbsp;&nbsp; ← веса разрядов<br><br>
+    <b>Считаем:</b> 8 + 0 + 2 + 1 = <b style="color:#ffd700; font-size:1.3em;">11</b>
+  </div>
+  <div class="example-box">
+    <b>Попробуй сам:</b> <code>1101</code> = ? &nbsp;&nbsp; <i>(ответ: 8+4+0+1 = 13)</i>
+  </div>
+</div>
+
+<!-- СЛАЙД 3: Деление столбиком -->
+<div class="slide">
+  <h1>✏️ Метод деления на 2</h1>
+  <h2>Десятичная → Двоичная</h2>
+  <div class="step">
+    <span class="step-num">1</span>
+    Делим число на 2 и записываем <b>остаток</b> (0 или 1).
+  </div>
+  <div class="step">
+    <span class="step-num">2</span>
+    Продолжаем делить <b>полученное частное</b> на 2, пока оно не станет равно 0.
+  </div>
+  <div class="step">
+    <span class="step-num">3</span>
+    Выписываем остатки <b>снизу вверх</b> — это и есть двоичное число!
+  </div>
+  <div class="example-box">
+    <b>Пример:</b> Переведём число <b>13</b><br><br>
+    13 ÷ 2 = 6 &nbsp;&nbsp; (остаток <b>1</b>)<br>
+    &nbsp;&nbsp;6 ÷ 2 = 3 &nbsp;&nbsp; (остаток <b>0</b>)<br>
+    &nbsp;&nbsp;3 ÷ 2 = 1 &nbsp;&nbsp; (остаток <b>1</b>)<br>
+    &nbsp;&nbsp;1 ÷ 2 = 0 &nbsp;&nbsp; (остаток <b>1</b>)<br><br>
+    Читаем остатки снизу вверх: <b style="color:#ffd700; font-size:1.3em;">1101</b>
+  </div>
+  <div class="example-box">
+    <b>Попробуй сам:</b> число <b>10</b> = ? &nbsp;&nbsp; <i>(ответ: 1010)</i>
+  </div>
+</div>
+
+<!-- СЛАЙД 4: Вычисляем -->
+<div class="slide">
+  <div class="big-text">ВЫЧИСЛЯЕМ!</div>
+</div>
+
+<!-- СЛАЙД 5: Задания (ИСПРАВЛЕНО: все числа десятичные) -->
+<div class="slide">
+  <h1>📝 Переведите числа в двоичный код</h1>
+  <div class="variants">
+    <div class="variant-card">
+      <h3>Вариант 1</h3>
+      <div class="task">74₁₀ → ?<sub>2</sub></div>
+      <div class="task">101₁₀ → ?<sub>2</sub></div>
+    </div>
+    <div class="variant-card">
+      <h3>Вариант 2</h3>
+      <div class="task">81₁₀ → ?<sub>2</sub></div>
+      <div class="task">110₁₀ → ?<sub>2</sub></div>
+    </div>
+  </div>
+  <p style="text-align:center; margin-top:20px; font-size:1.15em;">
+    ⏱ Время выполнения: <b>5 минут</b>. Используйте метод деления на 2!
+  </p>
+</div>
+
+<!-- СЛАЙД 6: Вопрос 1 рефлексии -->
+<div class="slide">
+  <h1>🎓 Рефлексия · Вопрос 1</h1>
+  <div class="question-text-big">📚 Что такое бит?</div>
+  <div class="chart-container" id="q1"></div>
+</div>
+
+<!-- СЛАЙД 7: Вопрос 2 рефлексии -->
+<div class="slide">
+  <h1>🎓 Рефлексия · Вопрос 2</h1>
+  <div class="question-text-big">🔢 Чему равно двоичное число 1010 в десятичной системе?</div>
+  <div class="chart-container" id="q2"></div>
+</div>
+
+<!-- СЛАЙД 8: Вопрос 3 рефлексии -->
+<div class="slide">
+  <h1>🎓 Рефлексия · Вопрос 3</h1>
+  <div class="question-text-big">🧠 Какой метод перевода запомнился лучше?</div>
+  <div class="chart-container" id="q3"></div>
+</div>
+
+<!-- СЛАЙД 9: Вопрос 4 рефлексии -->
+<div class="slide">
+  <h1>🎓 Рефлексия · Вопрос 4</h1>
+  <div class="question-text-big">😊 Какое настроение у тебя после урока?</div>
+  <div class="chart-container" id="q4"></div>
+</div>
+
+<!-- СЛАЙД 10: Вопрос 5 рефлексии -->
+<div class="slide">
+  <h1>🎓 Рефлексия · Вопрос 5</h1>
+  <div class="question-text-big">⭐ Оцени свою работу на уроке</div>
+  <div class="chart-container" id="q5"></div>
+</div>
+
+<div class="nav">
+  <button onclick="changeSlide(-1)">◀ Назад</button>
+  <button onclick="changeSlide(1)">Вперёд ▶</button>
+</div>
+
+<script>
+  /* ============ НАВИГАЦИЯ ============ */
+  let currentSlide = 0;
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  function showSlide(n) {
+    slides[currentSlide].classList.remove('active');
+    currentSlide = (n + slides.length) % slides.length;
+    slides[currentSlide].classList.add('active');
+    counter.textContent = (currentSlide + 1) + ' / ' + slides.length;
+  }
+  function changeSlide(delta) { showSlide(currentSlide + delta); }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') changeSlide(1);
+    if (e.key === 'ArrowLeft') changeSlide(-1);
+  });
+
+  /* ============ ТИК-ТЭК-ТОУ ============ */
+  let currentPlayer = 'x';
+  document.querySelectorAll('.ttt-cell').forEach(cell => {
+    cell.addEventListener('click', () => {
+      if (cell.classList.contains('selected-x') || cell.classList.contains('selected-o')) {
+        cell.classList.remove('selected-x', 'selected-o');
+      } else {
+        cell.classList.add('selected-' + currentPlayer);
+        currentPlayer = currentPlayer === 'x' ? 'o' : 'x';
+      }
+    });
+  });
+
+  /* ============ ДИАГРАММЫ ============ */
+  const MAX_VALUE = 30; // максимум учеников на шкале
+  const CHART_HEIGHT = 280;
+
+  const questionsData = [
+    {
+      id: 'q1',
+      colors: [['#ff6b6b','#c0392b'], ['#f39c12','#d35400'], ['#3498db','#2874a6'], ['#9b59b6','#6c3483']],
+      options: [
+        "Единица длины",
+        "Мин. единица информации (0 или 1)",
+        "Название компьютера",
+        "Скорость интернета"
+      ]
+    },
+    {
+      id: 'q2',
+      colors: [['#1abc9c','#117a65'], ['#e74c3c','#922b21'], ['#f1c40f','#b7950b'], ['#34495e','#1c2833']],
+      options: ["8", "10", "12", "20"]
+    },
+    {
+      id: 'q3',
+      colors: [['#e67e22','#a04000'], ['#27ae60','#186a3b'], ['#8e44ad','#5b2c6f'], ['#7f8c8d','#424949']],
+      options: ["Метод разрядов", "Метод деления на 2", "Оба одинаково", "Пока не понял(а)"]
+    },
+    {
+      id: 'q4',
+      colors: [['#f1c40f','#b7950b'], ['#2ecc71','#1d8348'], ['#95a5a6','#5d6d7e'], ['#e74c3c','#922b21']],
+      options: ["🤩 Отличное!", "🙂 Хорошее", "😐 Обычное", "😕 Было сложно"]
+    },
+    {
+      id: 'q5',
+      colors: [['#f39c12','#b7950b'], ['#3498db','#21618c'], ['#1abc9c','#117a65'], ['#e74c3c','#922b21']],
+      options: ["🌟 Я молодец!", "👍 Старался(ась)", "🤔 Нужно потренироваться", "😓 Не всё получилось"]
+    }
+  ];
+
+  // Создаём диаграммы
+  questionsData.forEach((q, qIdx) => {
+    const container = document.getElementById(q.id);
+    let barsHTML = '';
+    let controlsHTML = '';
+
+    q.options.forEach((opt, oIdx) => {
+      const [c1, c2] = q.colors[oIdx];
+      barsHTML += `
+        <div class="bar-group">
+          <div class="bar" id="bar-${qIdx}-${oIdx}" 
+               style="--bar-color1:${c1}; --bar-color2:${c2}; height:0;">
+            <div class="bar-value" id="val-${qIdx}-${oIdx}">0</div>
+          </div>
+          <div class="bar-label">${opt}</div>
+        </div>
+      `;
+      controlsHTML += `
+        <div class="control-item">
+          <div class="control-label">${opt}</div>
+          <div class="control-buttons">
+            <button onclick="changeValue(${qIdx}, ${oIdx}, -1)">−</button>
+            <input type="number" min="0" max="${MAX_VALUE}" value="0" 
+                   id="input-${qIdx}-${oIdx}" 
+                   onchange="setValue(${qIdx}, ${oIdx}, this.value)">
+            <button onclick="changeValue(${qIdx}, ${oIdx}, 1)">+</button>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = `
+      <div class="chart-wrapper">
+        <div class="chart">${barsHTML}</div>
+      </div>
+      <div class="controls">${controlsHTML}</div>
+      <div class="total-box">
+        Всего проголосовало: <b id="total-${qIdx}">0</b> учеников
+        <button class="reset-btn" onclick="resetChart(${qIdx})">🔄 Сбросить</button>
+      </div>
+    `;
+  });
+
+  function updateChart(qIdx) {
+    const q = questionsData[qIdx];
+    let total = 0;
+    q.options.forEach((_, oIdx) => {
+      const input = document.getElementById(`input-${qIdx}-${oIdx}`);
+      const bar = document.getElementById(`bar-${qIdx}-${oIdx}`);
+      const val = document.getElementById(`val-${qIdx}-${oIdx}`);
+      let v = parseInt(input.value) || 0;
+      if (v < 0) v = 0;
+      if (v > MAX_VALUE) v = MAX_VALUE;
+      input.value = v;
+      const height = (v / MAX_VALUE) * CHART_HEIGHT;
+      bar.style.height = height + 'px';
+      val.textContent = v;
+      total += v;
+    });
+    document.getElementById(`total-${qIdx}`).textContent = total;
+  }
+
+  function changeValue(qIdx, oIdx, delta) {
+    const input = document.getElementById(`input-${qIdx}-${oIdx}`);
+    let v = parseInt(input.value) || 0;
+    v += delta;
+    if (v < 0) v = 0;
+    if (v > MAX_VALUE) v = MAX_VALUE;
+    input.value = v;
+    updateChart(qIdx);
+  }
+
+  function setValue(qIdx, oIdx, val) {
+    const input = document.getElementById(`input-${qIdx}-${oIdx}`);
+    let v = parseInt(val) || 0;
+    if (v < 0) v = 0;
+    if (v > MAX_VALUE) v = MAX_VALUE;
+    input.value = v;
+    updateChart(qIdx);
+  }
+
+  function resetChart(qIdx) {
+    const q = questionsData[qIdx];
+    q.options.forEach((_, oIdx) => {
+      document.getElementById(`input-${qIdx}-${oIdx}`).value = 0;
+    });
+    updateChart(qIdx);
+  }
+
+  // Инициализация всех диаграмм
+  questionsData.forEach((_, qIdx) => updateChart(qIdx));
+</script>
+
+</body>
+</html>

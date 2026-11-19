@@ -1,0 +1,663 @@
+<write_file>
+<content><!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>СВОЯ КИБЕР-ИГРА</title>
+<style>
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+        color: #fff;
+    }
+
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .header {
+        text-align: center;
+        margin-bottom: 30px;
+        animation: fadeInDown 0.8s ease;
+    }
+
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .header h1 {
+        font-size: 3em;
+        text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+        margin-bottom: 10px;
+    }
+
+    .header .subtitle {
+        font-size: 1.5em;
+        opacity: 0.9;
+    }
+
+    .header .class-info {
+        font-size: 1.1em;
+        margin-top: 10px;
+        opacity: 0.8;
+    }
+
+    .rules {
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 30px;
+        border: 2px solid rgba(255,255,255,0.2);
+    }
+
+    .rules h2 {
+        margin-bottom: 15px;
+        font-size: 1.8em;
+    }
+
+    .rules ul {
+        list-style: none;
+        padding-left: 0;
+    }
+
+    .rules li {
+        padding: 8px 0;
+        padding-left: 30px;
+        position: relative;
+        font-size: 1.1em;
+    }
+
+    .rules li:before {
+        content: "⚡";
+        position: absolute;
+        left: 0;
+    }
+
+    .game-board {
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 20px;
+        border: 2px solid rgba(255,255,255,0.2);
+        margin-bottom: 30px;
+    }
+
+    .categories {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .category {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 1.1em;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .questions-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+    }
+
+    .question-cell {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        font-size: 1.5em;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        border: 2px solid transparent;
+    }
+
+    .question-cell:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        border-color: #fff;
+    }
+
+    .question-cell.used {
+        background: linear-gradient(135deg, #868f96 0%, #596164 100%);
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+
+    .question-cell.used:hover {
+        transform: none;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        z-index: 1000;
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .modal-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 40px;
+        border-radius: 20px;
+        max-width: 700px;
+        width: 90%;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        border: 3px solid rgba(255,255,255,0.3);
+        animation: slideIn 0.4s ease;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translate(-50%, -60%);
+            opacity: 0;
+        }
+        to {
+            transform: translate(-50%, -50%);
+            opacity: 1;
+        }
+    }
+
+    .modal-header {
+        font-size: 1.5em;
+        margin-bottom: 20px;
+        text-align: center;
+        padding-bottom: 15px;
+        border-bottom: 2px solid rgba(255,255,255,0.3);
+    }
+
+    .modal-question {
+        font-size: 1.3em;
+        line-height: 1.6;
+        margin-bottom: 25px;
+        padding: 20px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 10px;
+    }
+
+    .modal-answer {
+        display: none;
+        background: rgba(76, 175, 80, 0.3);
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 2px solid #4CAF50;
+        animation: fadeIn 0.5s ease;
+    }
+
+    .modal-answer h3 {
+        margin-bottom: 10px;
+        color: #81c784;
+    }
+
+    .btn {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-size: 1.1em;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin: 5px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .special-question {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        50% {
+            box-shadow: 0 4px 25px rgba(255,255,255,0.5);
+        }
+    }
+
+    .vulnerability-section {
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        border: 2px solid rgba(255,255,255,0.2);
+    }
+
+    .vulnerability-section h2 {
+        margin-bottom: 20px;
+        font-size: 1.8em;
+    }
+
+    .profile-card {
+        background: rgba(255,255,255,0.1);
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .profile-card h3 {
+        margin-bottom: 15px;
+        color: #ffd700;
+    }
+
+    .profile-item {
+        padding: 10px;
+        margin: 5px 0;
+        background: rgba(255,255,255,0.05);
+        border-radius: 5px;
+    }
+
+    .codex {
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        border: 2px solid rgba(255,255,255,0.2);
+    }
+
+    .codex h2 {
+        margin-bottom: 20px;
+        font-size: 1.8em;
+        text-align: center;
+    }
+
+    .codex-rules {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+    }
+
+    .codex-rule {
+        background: rgba(255,255,255,0.1);
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 4px solid #ffd700;
+    }
+
+    .homework {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        padding: 20px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    .homework h2 {
+        margin-bottom: 15px;
+    }
+
+    .navigation {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(255,255,255,0.1);
+        padding: 15px 25px;
+        border-radius: 10px;
+    }
+
+    .nav-btn {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 1em;
+        transition: all 0.3s ease;
+    }
+
+    .nav-btn:hover {
+        transform: translateX(5px);
+    }
+
+    .nav-btn.prev:hover {
+        transform: translateX(-5px);
+    }
+
+    .page-info {
+        font-size: 1.1em;
+        font-weight: bold;
+    }
+
+    @media (max-width: 768px) {
+        .header h1 {
+            font-size: 2em;
+        }
+        
+        .categories, .questions-grid {
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+        }
+        
+        .category {
+            font-size: 0.8em;
+            padding: 10px 5px;
+        }
+        
+        .question-cell {
+            font-size: 1em;
+            padding: 15px 5px;
+        }
+    }
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>🛡️ СВОЯ КИБЕР-ИГРА</h1>
+<div class="subtitle">Миссия "Цифровой Щит"</div>
+<div class="class-info">6 класс | Безопасность в интернете</div>
+</div>
+    <div class="rules">
+        <h2>⚡ ПРАВИЛА ИГРЫ</h2>
+        <ul>
+            <li>Работаем в парах — вы элитные Кибер-Агентства</li>
+            <li>На экране — табло с 5 категориями вопросов</li>
+            <li>30 секунд на обсуждение в паре</li>
+            <li>Пишем ответ на листе и сдаем его</li>
+            <li>Первые 3 правильных ответа получают бонус 10 очков</li>
+            <li>Неизвестный ответ = запиши на лист открытий и получи дополнительные баллы</li>
+        </ul>
+    </div>
+
+    <div class="game-board">
+        <div class="categories">
+            <div class="category">🔐 Секретные Коды</div>
+            <div class="category">🎣 Ловушки Сети</div>
+            <div class="category">👣 Цифровой След</div>
+            <div class="category">🛡️ Кибер-Щит</div>
+            <div class="category">🕵️ Кибер-Мифы</div>
+        </div>
+
+        <div class="questions-grid">
+            <div class="question-cell" data-category="0" data-points="10">10</div>
+            <div class="question-cell" data-category="1" data-points="10">10</div>
+            <div class="question-cell" data-category="2" data-points="10">10</div>
+            <div class="question-cell" data-category="3" data-points="10">10</div>
+            <div class="question-cell" data-category="4" data-points="10">10</div>
+
+            <div class="question-cell" data-category="0" data-points="20">20</div>
+            <div class="question-cell" data-category="1" data-points="20">20</div>
+            <div class="question-cell" data-category="2" data-points="20">20</div>
+            <div class="question-cell" data-category="3" data-points="20">20</div>
+            <div class="question-cell" data-category="4" data-points="30">30</div>
+
+            <div class="question-cell" data-category="0" data-points="30">30</div>
+            <div class="question-cell special-question" data-category="1" data-points="30">🃏 30</div>
+            <div class="question-cell" data-category="2" data-points="30">30</div>
+            <div class="question-cell" data-category="3" data-points="30">30</div>
+            <div class="question-cell special-question" data-category="4" data-points="50">⭐ 50</div>
+        </div>
+    </div>
+
+    <div class="vulnerability-section">
+        <h2>АГЕНТ, ВНИМАНИЕ! 🔍 НАЙДИ УЯЗВИМОСТЬ</h2>
+        <div class="profile-card">
+            <h3>👤 Профиль пользователя: Макс_2014</h3>
+            <div class="profile-item"><strong>О себе:</strong> Учусь в школе №45, 6 "Б" класс. Мой пароль как кличка моей собаки: Барсик2014 🐕</div>
+            <div class="profile-item"><strong>Фотографии:</strong> [Фото у подъезда с номером дома 15]</div>
+            <div class="profile-item"><strong>Друзья:</strong> 523 друга</div>
+            <div class="profile-item"><strong>Закрепленный пост:</strong> "Бесплатные скины для CS2 — переходи по ссылке vk.com/free-skins-cs2"</div>
+            <div class="profile-item"><strong>Контакты:</strong> Телефон: +7 (999) 123-45-67 (виден всем)</div>
+        </div>
+        <p style="font-size: 1.2em; text-align: center; margin-top: 20px;">
+            <strong>Найдите 5 критических ошибок в профиле Макса!</strong>
+        </p>
+    </div>
+
+    <div class="codex">
+        <h2>🏆 КОДЕКС КИБЕР-АГЕНТА</h2>
+        <div class="codex-rules">
+            <div class="codex-rule">
+                <strong>Думай, прежде чем кликнуть</strong><br>
+                (Ссылки и фишинг)
+            </div>
+            <div class="codex-rule">
+                <strong>Сложный пароль + 2FA</strong><br>
+                (Защита аккаунтов)
+            </div>
+            <div class="codex-rule">
+                <strong>Цифровой след вечен</strong><br>
+                (Думаем, что постим)
+            </div>
+            <div class="codex-rule">
+                <strong>Незнакомец = Угроза</strong><br>
+                (Даже если притворяется другом)
+            </div>
+            <div class="codex-rule">
+                <strong>Не верь мифам — проверяй факты!</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="homework">
+        <h2>📚 Домашнее задание</h2>
+        <p style="font-size: 1.2em;">
+            Включите двухфакторную аутентификацию (2FA) в своем мессенджере или соцсети
+        </p>
+    </div>
+
+    
+</div>
+
+<div id="questionModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header" id="modalHeader"></div>
+        <div class="modal-question" id="modalQuestion"></div>
+        <div class="modal-answer" id="modalAnswer">
+            <h3>✅ Правильный ответ:</h3>
+            <p id="answerText"></p>
+        </div>
+        <div style="text-align: center;">
+            <button class="btn" onclick="showAnswer()">Показать ответ</button>
+            <button class="btn btn-secondary" onclick="closeModal()">🔙 К таблице</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const questions = {
+        "0-10": {
+            category: "🔐 Секретные Коды",
+            points: 10,
+            question: "Что такое 2FA (двухфакторная аутентификация) простыми словами? 🔐📱",
+            answer: "Это когда для входа нужно не только ввести пароль, но и подтвердить вход (например, кодом из СМС или приложением)"
+        },
+        "0-20": {
+            category: "🔐 Секретные Коды",
+            points: 20,
+            question: "Почему пароль \"VasyaPupkin2014\" взломают за 1 секунду? 🎂🔓",
+            answer: "Потому что это личные данные (имя + год рождения), которые легко найти в соцсетях"
+        },
+        "0-30": {
+            category: "🔐 Секретные Коды",
+            points: 30,
+            question: "Что такое \"Парольная фраза\" и почему она лучше обычного пароля? 🐘🍕✨",
+            answer: "Это набор из нескольких случайных слов (например, \"СинийСлонЕстПиццу!\"). Она длинная, ее легко запомнить, но очень сложно взломать перебором"
+        },
+        "1-10": {
+            category: "🎣 Ловушки Сети",
+            points: 10,
+            question: "Как называется поддельный сайт или письмо, которое маскируется под настоящий (например, под банк или ВКонтакте), чтобы украсть ваши данные? 🎣💀",
+            answer: "Фишинг"
+        },
+        "1-20": {
+            category: "🎣 Ловушки Сети",
+            points: 20,
+            question: "Вам в игру пришло сообщение: \"Ты выиграл 10 000 V-Bucks / Робуксов! Перейди по ссылке и введи свой логин и пароль\". Ваши действия? 🎮💰🚫",
+            answer: "Не переходить, нажать \"Пожаловаться\", заблокировать. Официальные валюты так не раздаются"
+        },
+        "1-30": {
+            category: "🎣 Ловушки Сети",
+            points: 30,
+            special: "АУКЦИОН 🃏",
+            question: "Пары торгуются своими очками! Кто предложит больше и ответит верно — забирает банк. Как называется метод мошенников, при котором они не взламывают компьютеры, а \"взламывают\" людей, манипулируя ими, чтобы те сами отдали пароль или деньги? 🎭🧠",
+            answer: "Социальная инженерия"
+        },
+        "2-10": {
+            category: "👣 Цифровой След",
+            points: 10,
+            question: "Как называется вся информация о вас, которая остается в интернете (посты, фото, лайки, комментарии)? 👣💾",
+            answer: "Цифровой след"
+        },
+        "2-20": {
+            category: "👣 Цифровой След",
+            points: 20,
+            question: "Правда ли, что если ты удалил фото из соцсети или мессенджера, оно исчезло навсегда? 📸❌🕸️",
+            answer: "Нет. Его могли сохранить в скриншоты, оно могло остаться в кэше или в архивах интернета"
+        },
+        "2-30": {
+            category: "👣 Цифровой След",
+            points: 30,
+            question: "Представьте, что через 10 лет вы устраиваетесь на крутую работу. HR-менеджер гуглит ваше имя. Что из вашего цифрового следа 6 класса может ему не понравиться? 👔🔍😬",
+            answer: "Оскорбительные комментарии, фото с вечеринок, жалобы на учителей, фейковые аккаунты"
+        },
+        "3-10": {
+            category: "🛡️ Кибер-Щит",
+            points: 10,
+            question: "Незнакомец в чате игры начинает вас оскорблять. Какое действие в настройках нужно сделать в первую очередь? 🚫📢",
+            answer: "Заблокировать (Чёрный список) и пожаловаться (Репорт)"
+        },
+        "3-20": {
+            category: "🛡️ Кибер-Щит",
+            points: 20,
+            question: "Что такое \"Доксинг\"? 📍⚠️🎯",
+            answer: "Публикация в интернете личных данных человека (адреса, телефона, школы) без его согласия с целью травли или угрозы"
+        },
+        "3-30": {
+            category: "🛡️ Кибер-Щит",
+            points: 30,
+            question: "Ваш друг пишет вам в мессенджер: \"Срочно! Скинь 500 рублей на карту, потом объясню\". Но текст написан немного не в его стиле. Что вы сделаете перед тем, как переводить деньги? 💳📞🤔",
+            answer: "Позвоню ему по голосовой связи / задам личный вопрос, на который знает ответ только он (аккаунт друга могли взломать)"
+        },
+        "4-10": {
+            category: "🕵️ Кибер-Мифы",
+            points: 10,
+            question: "МИФ: \"Если я открою сайт в режиме Инкогнито, то никто не узнает, что я там был — ни родители, ни провайдер, ни хакеры\". Правда это или миф? ❌🕶️🙈",
+            answer: "Режим \"Инкогнито\" скрывает историю ТОЛЬКО на вашем устройстве. Провайдер, администраторы сайтов и даже родители (через программы родительского контроля) всё видят. Это не невидимость, а просто \"чистая страница\" в вашем браузере"
+        },
+        "4-30": {
+            category: "🕵️ Кибер-Мифы",
+            points: 30,
+            question: "МИФ: \"На iPhone / Mac вирусов не бывает, потому что это техника Apple — она полностью защищена\". Правда это или миф? ❌🍎🦠",
+            answer: "Техника Apple защищена ЛУЧШЕ, но не ИДЕАЛЬНО. Вирусы, фишинговые сайты и мошенники работают на любых устройствах. Если вы сами введёте пароль на поддельном сайте — его украдут независимо от марки телефона"
+        },
+        "4-50": {
+            category: "🕵️ Кибер-Мифы",
+            points: 50,
+            special: "СУПЕР-ИГРА ⭐",
+            question: "МИФ: \"Если я подключусь к бесплатному Wi-Fi в кафе через VPN, то я в полной безопасности — меня никто не взломает\". Правда это или миф? Вы можете поставить ВСЕ свои очки! ❌📡🕸️⚠️",
+            answer: "VPN шифрует трафик, но НЕ спасает от всего. Бесплатный Wi-Fi опасен: мошенники создают поддельные точки доступа с похожими названиями (\"Cafe_Free_WiFi\"), через которые перехватывают данные. А многие бесплатные VPN сами воруют ваши данные. Полной безопасности в общественных сетях не бывает!"
+        }
+    };
+
+    let currentCell = null;
+
+    document.querySelectorAll('.question-cell').forEach(cell => {
+        cell.addEventListener('click', function() {
+            if (this.classList.contains('used')) return;
+            
+            const category = this.getAttribute('data-category');
+            const points = this.getAttribute('data-points');
+            const key = `${category}-${points}`;
+            
+            currentCell = this;
+            showQuestion(key);
+        });
+    });
+
+    function showQuestion(key) {
+        const q = questions[key];
+        if (!q) return;
+        
+        const modal = document.getElementById('questionModal');
+        const header = document.getElementById('modalHeader');
+        const question = document.getElementById('modalQuestion');
+        const answerDiv = document.getElementById('modalAnswer');
+        
+        let headerText = `${q.category} — ${q.points} очков`;
+        if (q.special) {
+            headerText += ` ${q.special}`;
+        }
+        
+        header.textContent = headerText;
+        question.textContent = q.question;
+        document.getElementById('answerText').textContent = q.answer;
+        answerDiv.style.display = 'none';
+        
+        modal.style.display = 'block';
+    }
+
+    function showAnswer() {
+        document.getElementById('modalAnswer').style.display = 'block';
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('questionModal');
+        modal.style.display = 'none';
+        
+        if (currentCell) {
+            currentCell.classList.add('used');
+            currentCell = null;
+        }
+    }
+
+    document.getElementById('questionModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
+        }
+    });
+</script>
+</body>
+</html>
+</content>
+</write_file>

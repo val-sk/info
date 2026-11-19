@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Двоичный код - Урок информатики 6 класс</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .presentation {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            width: 100%;
+            height: 100vh;
+            display: none;
+            padding: 40px;
+            background: white;
+            position: absolute;
+            top: 0;
+            left: 0;
+            animation: fadeIn 0.5s;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .slide-content {
+            max-width: 1000px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 3em;
+            color: #667eea;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            font-size: 2.3em;
+            color: #764ba2;
+            margin-bottom: 25px;
+        }
+
+        h3 {
+            font-size: 1.6em;
+            color: #667eea;
+            margin: 15px 0;
+        }
+
+        p, li {
+            font-size: 1.2em;
+            line-height: 1.5;
+            color: #333;
+            margin: 8px 0;
+        }
+
+        .code-box {
+            background: #f5f5f5;
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 1.3em;
+            color: #764ba2;
+        }
+
+        .example-box {
+            background: linear-gradient(135deg, #667eea20, #764ba220);
+            border-left: 5px solid #667eea;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 10px;
+            text-align: left;
+        }
+
+        .task-box {
+            background: #fff3cd;
+            border: 3px solid #ffc107;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .navigation {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .nav-btn:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .slide-counter {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(102, 126, 234, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 1.1em;
+            z-index: 1000;
+        }
+
+        .emoji {
+            font-size: 2em;
+            margin: 0 10px;
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, #667eea30, #764ba230);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .binary-demo {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 25px 0;
+        }
+
+        .bit {
+            width: 140px;
+            height: 140px;
+            background: #667eea;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            font-weight: bold;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            user-select: none;
+        }
+
+        .bit.bit-on {
+            background: linear-gradient(135deg, #4caf50, #2e7d32);
+        }
+
+        .bit.bit-off {
+            background: linear-gradient(135deg, #f44336, #c62828);
+        }
+
+        .bit:hover {
+            transform: scale(1.05);
+        }
+
+        .bit:active {
+            transform: scale(0.95);
+        }
+
+        .bit-display {
+            background: #1a1a2e;
+            border: 4px solid #667eea;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px auto;
+            min-height: 80px;
+            max-width: 700px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Courier New', monospace;
+            font-size: 2em;
+            color: #00ff88;
+            text-shadow: 0 0 10px #00ff88;
+            box-shadow: inset 0 0 20px rgba(0, 255, 136, 0.1);
+        }
+
+        .bit-display .bit-digit {
+            padding: 5px 10px;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 5px;
+            animation: blink 0.5s;
+        }
+
+        @keyframes blink {
+            0% { background: rgba(0, 255, 136, 0.6); }
+            100% { background: rgba(0, 255, 136, 0.1); }
+        }
+
+        .bit-display .placeholder {
+            color: #555;
+            font-size: 0.8em;
+            text-shadow: none;
+        }
+
+        .reset-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            font-size: 1em;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+
+        .reset-btn:hover {
+            background: #ee5a6f;
+            transform: scale(1.05);
+        }
+
+        .problem-scenario {
+            background: linear-gradient(135deg, #ff6b6b20, #ee5a6f20);
+            border: 3px solid #ff6b6b;
+            border-radius: 20px;
+            padding: 25px;
+            margin: 15px 0;
+        }
+
+        ul {
+            list-style: none;
+            text-align: left;
+        }
+
+        ul li:before {
+            content: "✓ ";
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .ascii-table {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin: 20px auto;
+            max-width: 800px;
+        }
+
+        .ascii-cell {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        .ascii-cell .letter {
+            font-size: 1.8em;
+            font-weight: bold;
+            display: block;
+        }
+
+        .ascii-cell .code {
+            font-size: 0.9em;
+            opacity: 0.9;
+            display: block;
+            margin-top: 3px;
+        }
+
+        .checklist-container {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .checklist-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .checklist-group {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 5px solid #667eea;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .checklist-group h4 {
+            color: #764ba2;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin: 8px 0;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .checklist-item:hover {
+            background: #e8eaf6;
+        }
+
+        .checklist-item input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            accent-color: #667eea;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .checklist-item label {
+            font-size: 1em;
+            color: #333;
+            cursor: pointer;
+            line-height: 1.4;
+            flex: 1;
+        }
+
+        .checklist-item.checked {
+            background: linear-gradient(135deg, #667eea20, #764ba220);
+        }
+
+        .checklist-item.checked label {
+            text-decoration: line-through;
+            color: #666;
+        }
+
+        .score-board {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 15px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+
+        .score-board .score-number {
+            font-size: 3em;
+            font-weight: bold;
+            display: block;
+            margin: 5px 0;
+        }
+
+        .score-board .score-label {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .score-bar {
+            background: rgba(255,255,255,0.3);
+            height: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .score-bar-fill {
+            background: #00ff88;
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-counter">
+        <span id="current-slide">1</span> / <span id="total-slides">12</span>
+    </div>
+
+    <div class="presentation">
+        <!-- Слайд 1: Титульный -->
+        <div class="slide active">
+            <div class="slide-content">
+                <h1>🖥️ Двоичный код</h1>
+                <h2>Язык компьютера</h2>
+                <p class="emoji">📚 Урок информатики • 6 класс</p>
+                <div class="example-box">
+                    <p><strong>Сегодня мы узнаем:</strong></p>
+                    <ul>
+                        <li>Почему компьютер понимает только 0 и 1</li>
+                        <li>Как кодируются числа, текст и изображения</li>
+                        <li>Научимся читать двоичный код</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 2: Проблемная ситуация + Вопрос 1 + Интерактив -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>🚀 Проблемная ситуация</h2>
+                <div class="problem-scenario">
+                    <h3>Космическая станция</h3>
+                    <p>Вы на космической станции. Связь с Землёй работает через лампочку-телеграф.</p>
+                    <p style="font-size: 1.3em; margin: 15px 0;">💡 Лампочка может быть только в двух состояниях:</p>
+                    <div class="binary-demo">
+                        <div class="bit bit-on" onclick="addBit(1)">ВКЛ<br><span style="font-size:0.6em;">= 1</span></div>
+                        <div class="bit bit-off" onclick="addBit(0)">ВЫКЛ<br><span style="font-size:0.6em;">= 0</span></div>
+                    </div>
+                    <p style="margin-bottom: 10px;">👇 Нажимайте на кнопки — собирайте двоичный код:</p>
+                    <div class="bit-display" id="bitDisplay">
+                        <span class="placeholder">Здесь появится ваш двоичный код...</span>
+                    </div>
+                    <button class="reset-btn" onclick="resetBits()">🔄 Сбросить</button>
+                </div>
+                <div class="example-box">
+                    <h3>❓ Вопрос 1</h3>
+                    <p>Сколько всего состояний может принимать наша лампочка, и как их можно обозначить цифрами?</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 3: Вопросы 2 и 3 -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>❓ Вопросы для обсуждения</h2>
+                <div class="example-box">
+                    <h3>Вопрос 2</h3>
+                    <p>Как с помощью всего двух состояний (0 и 1) можно передать число 5 или любую букву алфавита?</p>
+                </div>
+                <div class="example-box">
+                    <h3>Вопрос 3</h3>
+                    <p>Где в нашей повседневной жизни мы постоянно встречаем объекты, которые имеют только два состояния?</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 4: Двоичный код для чисел -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>🔢 Двоичный код для чисел</h2>
+                <div class="example-box">
+                    <p><strong>Десятичная система:</strong> 10 цифр (0-9)</p>
+                    <p><strong>Двоичная система:</strong> только 2 цифры (0 и 1)</p>
+                </div>
+                <h3>Каждый разряд — это степень двойки:</h3>
+                <div class="code-box">
+                    ... 16 | 8 | 4 | 2 | 1
+                </div>
+                <div class="task-box">
+                    <h3>Пример: Число 5</h3>
+                    <p>В двоичном коде: <span class="highlight">101</span></p>
+                    <p>1×4 + 0×2 + 1×1 = 5</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 5: Считаем на пальцах -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>🖐️ Считаем на пальцах</h2>
+                <div class="problem-scenario">
+                    <p>Каждый палец — это единица разряда:</p>
+                    <p><span class="highlight">Согнут = 0</span> | <span class="highlight">Поднят = 1</span></p>
+                </div>
+                <h3>Попробуйте показать:</h3>
+                <div class="task-box">
+                    <p><strong>Число 3:</strong> 2 + 1 = <span class="highlight">011</span></p>
+                    <p><strong>Число 7:</strong> 4 + 2 + 1 = <span class="highlight">111</span></p>
+                </div>
+                <div class="example-box">
+                    <p style="font-size: 1.2em;">🎉 <strong>Секрет:</strong> На 10 пальцах в двоичном коде можно показать число <span class="highlight">1023</span>!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 6: Двоичный код для текста + ASCII -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>📝 Двоичный код для текста</h2>
+                <div class="example-box">
+                    <p>Компьютер не знает букв! Каждый символ имеет свой <span class="highlight">уникальный номер</span> в таблице ASCII.</p>
+                </div>
+                <h3>Первые 10 латинских букв в ASCII:</h3>
+                <div class="ascii-table">
+                    <div class="ascii-cell">
+                        <span class="letter">A</span>
+                        <span class="code">65 = 1000001</span>
+                    </div>
+                    <div class="ascii-cell">
+                        <span class="letter">B</span>
+                        <span class="code">66 = 1000010</span>
+                    </div>
+                    <div class="ascii-cell">
+                        <span class="letter">C</span>
+                        <span class="code">67 = 1000011</span>
+                    </div>
+                    <div class="ascii-cell">
+                        <span class="letter">D</span>
+                        <span class="code">68 = 1000100</span>
+                    </div>
+                    <div class="ascii-cell">
+                        <span class="letter">E</span>
+                        <span class="code">69 = 1000101</span>
+                    </div>
+                    <div class="ascii-cell">
+                        <span class="letter">F</span>
+                        <span class="code">70 = 1000110</span>
+                    </div>
+                    <div class="ascii-cell">
+                        <span class="letter">G</span>
+                        <span class="code">71 = 1000111</span>
+                    </div>
+                    <div class="ascii-cell">
+                        <span class="letter">H</span>
+                        <span class="code">72 = 1001000</span>
+                    </div>
+                    <div class="ascii-cell">
+                        <span class="letter">I</span>
+                        <span class="code">73 = 1001001</span>
+                    </div>
+                    <div class="ascii-cell">
+                        <span class="letter">J</span>
+                        <span class="code">74 = 1001010</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 7: Шпионское донесение -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>🕵️ Шпионское донесение</h2>
+                <div class="task-box">
+                    <h3>Таблица кодировки:</h3>
+                    <div class="code-box">
+                        А = 001 | Б = 010 | В = 011 | Г = 100 | Д = 101 | Е = 110
+                    </div>
+                </div>
+                <div class="problem-scenario">
+                    <h3>Расшифруйте послание от робота:</h3>
+                    <div class="code-box" style="font-size: 1.8em;">
+                        010  001  011  100
+                    </div>
+                    <p style="margin-top: 15px; font-size: 1.2em;">💭 Какое слово получилось?</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 8: Двоичный код для изображений -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>🖼️ Двоичный код для изображений</h2>
+                <div class="example-box">
+                    <p>Изображение состоит из <span class="highlight">пикселей</span> — крошечных точек</p>
+                    <p>В черно-белом изображении:</p>
+                    <p><span class="highlight">1</span> = черная точка (закрашено)</p>
+                    <p><span class="highlight">0</span> = белая точка (пусто)</p>
+                </div>
+                <h3>Пример:</h3>
+                <div class="code-box">
+                    10101 = зебра из 5 пикселей
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 9: Угадай фигуру -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>🎨 Угадай фигуру</h2>
+                <div class="task-box">
+                    <h3>Как закодировать черный квадрат 3×3?</h3>
+                    <div class="code-box">
+                        111 111 111
+                    </div>
+                </div>
+                <div class="problem-scenario">
+                    <h3>А как закодировать букву "Т"?</h3>
+                    <div class="code-box">
+                        111 010 010
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 10: Практическая работа -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>💻 Практическая работа</h2>
+                <h3>Цифровой квест "Агент 01"</h3>
+                <div class="task-box">
+                    <h3>Уровень 1: Числовой сейф</h3>
+                    <p>Переведите числа в двоичный код:</p>
+                    <ul>
+                        <li>Число 2 = <span class="highlight">10</span></li>
+                        <li>Число 6 = <span class="highlight">110</span></li>
+                        <li>Число 9 = <span class="highlight">1001</span></li>
+                    </ul>
+                </div>
+                <div class="task-box">
+                    <h3>Уровень 2: Дешифратор</h3>
+                    <p>Используйте таблицу кодировки для расшифровки слова</p>
+                </div>
+                <div class="task-box">
+                    <h3>Уровень 3: Пиксельный художник</h3>
+                    <p>Нарисуйте фигуру по двоичному коду в сетке 5×5</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 11: Чек-лист с интерактивом -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>✅ Чек-лист самооценки</h2>
+                <div class="checklist-container">
+                    <div class="checklist-grid">
+                        <div class="checklist-group">
+                            <h4>🧠 1. Понимание сути</h4>
+                            <div class="checklist-item" onclick="toggleCheck(this)">
+                                <input type="checkbox" onchange="updateScore()">
+                                <label>Могу объяснить, почему компьютер использует только 0 и 1</label>
+                            </div>
+                            <div class="checklist-item" onclick="toggleCheck(this)">
+                                <input type="checkbox" onchange="updateScore()">
+                                <label>Понимаю связь между физическим состоянием и цифрами</label>
+                            </div>
+                        </div>
+
+                        <div class="checklist-group">
+                            <h4>🔢 2. Кодирование чисел</h4>
+                            <div class="checklist-item" onclick="toggleCheck(this)">
+                                <input type="checkbox" onchange="updateScore()">
+                                <label>Могу перевести десятичное число в двоичный код</label>
+                            </div>
+                            <div class="checklist-item" onclick="toggleCheck(this)">
+                                <input type="checkbox" onchange="updateScore()">
+                                <label>Смогу прочитать двоичный код и назвать число</label>
+                            </div>
+                        </div>
+
+                        <div class="checklist-group">
+                            <h4>📝 3. Кодирование текста</h4>
+                            <div class="checklist-item" onclick="toggleCheck(this)">
+                                <input type="checkbox" onchange="updateScore()">
+                                <label>Понимаю, как буквы превращаются в нули и единицы</label>
+                            </div>
+                            <div class="checklist-item" onclick="toggleCheck(this)">
+                                <input type="checkbox" onchange="updateScore()">
+                                <label>Смогу использовать таблицу для расшифровки слова</label>
+                            </div>
+                        </div>
+
+                        <div class="checklist-group">
+                            <h4>🖼️ 4. Кодирование изображений</h4>
+                            <div class="checklist-item" onclick="toggleCheck(this)">
+                                <input type="checkbox" onchange="updateScore()">
+                                <label>Знаю, что такое пиксель и как он связан с кодом</label>
+                            </div>
+                            <div class="checklist-item" onclick="toggleCheck(this)">
+                                <input type="checkbox" onchange="updateScore()">
+                                <label>Смогу нарисовать фигуру по двоичному коду</label>
+                            </div>
+                        </div>
+
+                        <div class="checklist-group" style="grid-column: span 2;">
+                            <h4>🌍 5. Связь с реальным миром</h4>
+                            <div class="checklist-item" onclick="toggleCheck(this)">
+                                <input type="checkbox" onchange="updateScore()">
+                                <label>Могу привести примеры объектов с двумя состояниями из жизни</label>
+                            </div>
+                            <div class="checklist-item" onclick="toggleCheck(this)">
+                                <input type="checkbox" onchange="updateScore()">
+                                <label>Понимаю, что фото и видео — это массивы нулей и единиц</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="score-board">
+                        <div class="score-label">Ваш результат:</div>
+                        <span class="score-number"><span id="scoreValue">0</span> / 10</span>
+                        <div class="score-bar">
+                            <div class="score-bar-fill" id="scoreBarFill"></div>
+                        </div>
+                        <div class="score-label" id="scoreMessage" style="margin-top: 10px;">Отмечайте пункты, которые вы освоили!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 12: Финальный -->
+        <div class="slide">
+            <div class="slide-content">
+                <h1>🎉 Отличная работа!</h1>
+                <h2>Вы настоящие IT-агенты!</h2>
+                <div class="example-box">
+                    <h3>Что мы узнали сегодня:</h3>
+                    <ul>
+                        <li>Компьютер использует двоичный код (0 и 1)</li>
+                        <li>Числа, текст и изображения кодируются в двоичной системе</li>
+                        <li>Мы научились читать и создавать двоичный код</li>
+                    </ul>
+                </div>
+                <div class="problem-scenario">
+                    <p style="font-size: 1.4em;">🌟 <strong>Помните:</strong> Все, что вы видите на экране компьютера — это миллиарды нулей и единиц!</p>
+                </div>
+                <p style="font-size: 1.8em; margin-top: 20px;">Спасибо за урок! 👋</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="navigation">
+        <button class="nav-btn" onclick="previousSlide()">← Назад</button>
+        <button class="nav-btn" onclick="nextSlide()">Далее →</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        document.getElementById('total-slides').textContent = totalSlides;
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            document.getElementById('current-slide').textContent = currentSlide + 1;
+        }
+
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+
+        function previousSlide() {
+            showSlide(currentSlide - 1);
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                previousSlide();
+            }
+        });
+
+        function addBit(bit) {
+            const display = document.getElementById('bitDisplay');
+            const placeholder = display.querySelector('.placeholder');
+            if (placeholder) placeholder.remove();
+
+            const digit = document.createElement('span');
+            digit.className = 'bit-digit';
+            digit.textContent = bit;
+            display.appendChild(digit);
+        }
+
+        function resetBits() {
+            const display = document.getElementById('bitDisplay');
+            display.innerHTML = '<span class="placeholder">Здесь появится ваш двоичный код...</span>';
+        }
+
+        function toggleCheck(item) {
+            const checkbox = item.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked;
+            item.classList.toggle('checked', checkbox.checked);
+            updateScore();
+        }
+
+        function updateScore() {
+            const checkboxes = document.querySelectorAll('.checklist-item input[type="checkbox"]');
+            let score = 0;
+            checkboxes.forEach(cb => {
+                if (cb.checked) score++;
+                cb.closest('.checklist-item').classList.toggle('checked', cb.checked);
+            });
+
+            document.getElementById('scoreValue').textContent = score;
+            const percent = (score / 10) * 100;
+            document.getElementById('scoreBarFill').style.width = percent + '%';
+
+            const message = document.getElementById('scoreMessage');
+            if (score === 0) {
+                message.textContent = 'Отмечайте пункты, которые вы освоили!';
+            } else if (score <= 3) {
+                message.textContent = '📚 Есть над чем поработать — не переживайте, всё впереди!';
+            } else if (score <= 6) {
+                message.textContent = '👍 Хороший результат! Продолжайте практиковаться!';
+            } else if (score <= 9) {
+                message.textContent = '🌟 Отлично! Вы почти IT-агент!';
+            } else {
+                message.textContent = '🏆 Превосходно! Вы настоящий мастер двоичного кода!';
+            }
+        }
+    </script>
+</body>
+</html>

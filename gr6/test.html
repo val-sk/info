@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Онлайн-тест: Двоичная система счисления (6 класс)</title>
+<style>
+    :root {
+        --primary: #4a90e2;
+        --success: #2ecc71;
+        --error: #e74c3c;
+        --bg: #f0f4f8;
+        --card: #ffffff;
+    }
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: var(--bg);
+        color: #333;
+        margin: 0;
+        padding: 20px;
+        line-height: 1.6;
+    }
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    .header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .header h1 {
+        color: var(--primary);
+        margin-bottom: 5px;
+    }
+    .student-name-box {
+        background: var(--card);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        border-left: 5px solid var(--primary);
+    }
+    .student-name-box label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 16px;
+    }
+    .student-name-box input {
+        width: 100%;
+        padding: 10px 15px;
+        font-size: 16px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        box-sizing: border-box;
+    }
+    .student-name-box input:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+    .cheat-sheet {
+        background: #fff3cd;
+        border: 2px solid #ffc107;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 25px;
+        text-align: center;
+        font-size: 16px;
+    }
+    .cheat-sheet strong {
+        color: #856404;
+    }
+    .cheat-sheet .numbers {
+        font-family: 'Courier New', monospace;
+        font-size: 18px;
+        font-weight: bold;
+        color: #d35400;
+        margin-top: 8px;
+        letter-spacing: 2px;
+    }
+    .question-card {
+        background: var(--card);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        border-left: 5px solid var(--primary);
+    }
+    .question-card.match {
+        border-left-color: #9b59b6;
+    }
+    .question-card.compare {
+        border-left-color: #e67e22;
+    }
+    .question-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: flex-start;
+    }
+    .q-number {
+        background: var(--primary);
+        color: white;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+        flex-shrink: 0;
+        font-size: 14px;
+    }
+    .match .q-number { background: #9b59b6; }
+    .compare .q-number { background: #e67e22; }
+
+    .options {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .option-label {
+        display: flex;
+        align-items: center;
+        padding: 12px 15px;
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .option-label:hover {
+        background: #e3f2fd;
+        border-color: var(--primary);
+    }
+    .option-label input {
+        margin-right: 12px;
+        transform: scale(1.2);
+    }
+    
+    .btn-check, .btn-save {
+        display: block;
+        width: 100%;
+        max-width: 300px;
+        margin: 30px auto;
+        padding: 15px;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    .btn-check:hover, .btn-save:hover {
+        background: #357abd;
+    }
+    .btn-save {
+        background: var(--success);
+    }
+    .btn-save:hover {
+        background: #27ae60;
+    }
+    
+    .result-box {
+        display: none;
+        background: var(--card);
+        border-radius: 12px;
+        padding: 25px;
+        margin-top: 20px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .score {
+        font-size: 36px;
+        font-weight: bold;
+        color: var(--primary);
+        margin: 10px 0;
+    }
+    .feedback {
+        text-align: left;
+        margin-top: 20px;
+    }
+    .feedback-item {
+        padding: 10px;
+        margin-bottom: 8px;
+        border-radius: 6px;
+        font-size: 15px;
+    }
+    .feedback-item.correct {
+        background: #d4edda;
+        color: #155724;
+        border-left: 4px solid var(--success);
+    }
+    .feedback-item.incorrect {
+        background: #f8d7da;
+        color: #721c24;
+        border-left: 4px solid var(--error);
+    }
+    .explanation {
+        font-size: 13px;
+        color: #555;
+        margin-top: 4px;
+        font-style: italic;
+    }
+    
+    .section-title {
+        text-align: center;
+        color: #666;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin: 30px 0 15px;
+        border-bottom: 2px solid #ddd;
+        padding-bottom: 5px;
+    }
+    
+    .save-notice {
+        background: #e7f3ff;
+        border: 1px solid #b3d9ff;
+        border-radius: 8px;
+        padding: 12px;
+        margin-top: 15px;
+        font-size: 13px;
+        color: #004085;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>🖥️ Тест: Двоичная система счисления</h1>
+        <p>6 класс | Перевод чисел, сравнение и сопоставление</p>
+    </div>
+
+    <!-- ПОЛЕ ДЛЯ ВВОДА ИМЕНИ -->
+    <div class="student-name-box">
+        <label for="studentName">👤 Введи своё имя (оно будет использовано для сохранения результатов):</label>
+        <input type="text" id="studentName" placeholder="Например: Иван" required>
+    </div>
+
+    <div class="cheat-sheet">
+        <strong>💡 Шпаргалка (степени двойки):</strong>
+        <div class="numbers">
+            1 &nbsp;&nbsp; 2 &nbsp;&nbsp; 4 &nbsp;&nbsp; 8 &nbsp;&nbsp; 16 &nbsp;&nbsp; 32
+        </div>
+        <small>Подсказка: чтобы перевести из двоичной в десятичную, складывай значения разрядов, где стоит «1».</small>
+    </div>
+
+    <form id="quizForm">
+        <!-- БЛОК 1: Перевод (4 вопроса) -->
+        <div class="section-title">Часть 1. Перевод чисел (4 вопроса)</div>
+        
+        <div class="question-card" data-correct="b" data-expl="13 = 8 + 4 + 1, значит 1101">
+            <div class="question-title"><span class="q-number">1</span> Переведите число 13 из десятичной системы в двоичную.</div>
+            <div class="options">
+                <label class="option-label"><input type="radio" name="q1" value="a"> 1011</label>
+                <label class="option-label"><input type="radio" name="q1" value="b"> 1101</label>
+                <label class="option-label"><input type="radio" name="q1" value="c"> 1110</label>
+                <label class="option-label"><input type="radio" name="q1" value="d"> 1001</label>
+            </div>
+        </div>
+
+        <div class="question-card" data-correct="c" data-expl="1010₂ = 8 + 2 = 10">
+            <div class="question-title"><span class="q-number">2</span> Переведите число 1010 из двоичной системы в десятичную.</div>
+            <div class="options">
+                <label class="option-label"><input type="radio" name="q2" value="a"> 8</label>
+                <label class="option-label"><input type="radio" name="q2" value="b"> 12</label>
+                <label class="option-label"><input type="radio" name="q2" value="c"> 10</label>
+                <label class="option-label"><input type="radio" name="q2" value="d"> 5</label>
+            </div>
+        </div>
+
+        <div class="question-card" data-correct="a" data-expl="25 = 16 + 8 + 1, значит 11001">
+            <div class="question-title"><span class="q-number">3</span> Переведите число 25 из десятичной системы в двоичную.</div>
+            <div class="options">
+                <label class="option-label"><input type="radio" name="q3" value="a"> 11001</label>
+                <label class="option-label"><input type="radio" name="q3" value="b"> 10101</label>
+                <label class="option-label"><input type="radio" name="q3" value="c"> 11101</label>
+                <label class="option-label"><input type="radio" name="q3" value="d"> 10011</label>
+            </div>
+        </div>
+
+        <div class="question-card" data-correct="b" data-expl="111₂ = 4 + 2 + 1 = 7">
+            <div class="question-title"><span class="q-number">4</span> Переведите число 111 из двоичной системы в десятичную.</div>
+            <div class="options">
+                <label class="option-label"><input type="radio" name="q4" value="a"> 5</label>
+                <label class="option-label"><input type="radio" name="q4" value="b"> 7</label>
+                <label class="option-label"><input type="radio" name="q4" value="c"> 6</label>
+                <label class="option-label"><input type="radio" name="q4" value="d"> 8</label>
+            </div>
+        </div>
+
+        <!-- БЛОК 2: Сравнение (3 вопроса) -->
+        <div class="section-title">Часть 2. Больше или меньше? (3 вопроса)</div>
+
+        <div class="question-card compare" data-correct="a" data-expl="1001₂ = 9. Число 10 больше 9.">
+            <div class="question-title"><span class="q-number">5</span> Что больше: число 10 (десятичное) или число 1001 (двоичное)?</div>
+            <div class="options">
+                <label class="option-label"><input type="radio" name="q5" value="a"> Число 10 (десятичное)</label>
+                <label class="option-label"><input type="radio" name="q5" value="b"> Число 1001 (двоичное)</label>
+                <label class="option-label"><input type="radio" name="q5" value="c"> Они равны</label>
+            </div>
+        </div>
+
+        <div class="question-card compare" data-correct="b" data-expl="10101₂ = 16 + 4 + 1 = 21. Число 20 меньше 21.">
+            <div class="question-title"><span class="q-number">6</span> Что меньше: число 20 (десятичное) или число 10101 (двоичное)?</div>
+            <div class="options">
+                <label class="option-label"><input type="radio" name="q6" value="a"> Число 10101 (двоичное)</label>
+                <label class="option-label"><input type="radio" name="q6" value="b"> Число 20 (десятичное)</label>
+                <label class="option-label"><input type="radio" name="q6" value="c"> Они равны</label>
+            </div>
+        </div>
+
+        <div class="question-card compare" data-correct="a" data-expl="1000₂ = 8. Число 7 меньше 8.">
+            <div class="question-title"><span class="q-number">7</span> Какое число меньше: 7 (десятичное) или 1000 (двоичное)?</div>
+            <div class="options">
+                <label class="option-label"><input type="radio" name="q7" value="a"> 7 (десятичное)</label>
+                <label class="option-label"><input type="radio" name="q7" value="b"> 1000 (двоичное)</label>
+                <label class="option-label"><input type="radio" name="q7" value="c"> Они равны</label>
+            </div>
+        </div>
+
+        <!-- БЛОК 3: Сопоставление (3 вопроса) -->
+        <div class="section-title">Часть 3. Найди верную пару (3 вопроса)</div>
+
+        <div class="question-card match" data-correct="b" data-expl="6 = 4 + 2, значит 110">
+            <div class="question-title"><span class="q-number">8</span> Найдите правильную пару «десятичное – двоичное»:</div>
+            <div class="options">
+                <label class="option-label"><input type="radio" name="q8" value="a"> 6 и 101</label>
+                <label class="option-label"><input type="radio" name="q8" value="b"> 6 и 110</label>
+                <label class="option-label"><input type="radio" name="q8" value="c"> 6 и 100</label>
+            </div>
+        </div>
+
+        <div class="question-card match" data-correct="c" data-expl="15 = 8 + 4 + 2 + 1, значит 1111">
+            <div class="question-title"><span class="q-number">9</span> Найдите правильную пару «десятичное – двоичное»:</div>
+            <div class="options">
+                <label class="option-label"><input type="radio" name="q9" value="a"> 15 и 1110</label>
+                <label class="option-label"><input type="radio" name="q9" value="b"> 15 и 1011</label>
+                <label class="option-label"><input type="radio" name="q9" value="c"> 15 и 1111</label>
+            </div>
+        </div>
+
+        <div class="question-card match" data-correct="a" data-expl="20 = 16 + 4, значит 10100">
+            <div class="question-title"><span class="q-number">10</span> Найдите правильную пару «десятичное – двоичное»:</div>
+            <div class="options">
+                <label class="option-label"><input type="radio" name="q10" value="a"> 20 и 10100</label>
+                <label class="option-label"><input type="radio" name="q10" value="b"> 20 и 10010</label>
+                <label class="option-label"><input type="radio" name="q10" value="c"> 20 и 10110</label>
+            </div>
+        </div>
+
+        <button type="button" class="btn-check" onclick="checkAnswers()">✅ Проверить результаты</button>
+    </form>
+
+    <div class="result-box" id="resultBox">
+        <h2>Результаты теста</h2>
+        <div class="score" id="scoreText">0 / 10</div>
+        <p id="messageText"></p>
+        <div class="feedback" id="feedbackList"></div>
+        
+        <!-- КНОПКА СОХРАНЕНИЯ РЕЗУЛЬТАТОВ -->
+        <button type="button" class="btn-save" onclick="saveResults()">💾 Сохранить результат в файл</button>
+        
+        <div class="save-notice">
+            <strong>ℹ️ Примечание:</strong> При первом сохранении браузер может попросить выбрать папку. Выбери ту же папку, где лежит этот тест. В Chrome/Edge файл сохранится туда, в других браузерах — в папку "Загрузки".
+        </div>
+        
+        <button type="button" class="btn-check" onclick="location.reload()" style="margin-top: 20px; background: #6c757d;">🔄 Пройти заново</button>
+    </div>
+</div>
+
+<script>
+    let testResults = null; // Храним результаты для сохранения
+
+    function checkAnswers() {
+        const studentName = document.getElementById('studentName').value.trim();
+        
+        // Проверяем, что имя введено
+        if (!studentName) {
+            alert('Пожалуйста, введи своё имя перед началом теста!');
+            document.getElementById('studentName').focus();
+            return;
+        }
+
+        const questions = document.querySelectorAll('.question-card');
+        let score = 0;
+        let feedbackHTML = '';
+        let resultsData = []; // Массив для хранения результатов
+
+        questions.forEach((q, index) => {
+            const qNum = index + 1;
+            const correctAnswer = q.getAttribute('data-correct');
+            const explanation = q.getAttribute('data-expl');
+            const selected = document.querySelector(`input[name="q${qNum}"]:checked`);
+            
+            let isCorrect = false;
+            let userAnswer = 'Не выбрано';
+            let userAnswerText = 'Не выбрано';
+
+            if (selected) {
+                userAnswer = selected.value;
+                userAnswerText = selected.parentNode.textContent.trim();
+                if (userAnswer === correctAnswer) {
+                    isCorrect = true;
+                    score++;
+                }
+            }
+
+            const correctText = q.querySelector(`input[value="${correctAnswer}"]`).parentNode.textContent.trim();
+
+            resultsData.push({
+                question: qNum,
+                userAnswer: userAnswerText,
+                correctAnswer: correctText,
+                isCorrect: isCorrect,
+                explanation: explanation
+            });
+
+            const statusClass = isCorrect ? 'correct' : 'incorrect';
+            const statusIcon = isCorrect ? '✅' : '❌';
+
+            feedbackHTML += `
+                <div class="feedback-item ${statusClass}">
+                    <strong>Вопрос ${qNum}:</strong> ${statusIcon} ${isCorrect ? 'Верно!' : `Ошибка. Правильный ответ: ${correctText}`}
+                    <div class="explanation">💡 ${explanation}</div>
+                </div>
+            `;
+        });
+
+        // Сохраняем результаты для последующего экспорта
+        testResults = {
+            studentName: studentName,
+            score: score,
+            total: 10,
+            date: new Date().toLocaleString('ru-RU'),
+            results: resultsData
+        };
+
+        document.getElementById('scoreText').textContent = `${score} / 10`;
+        
+        let message = '';
+        if (score === 10) message = '🏆 Отлично! Ты настоящий мастер двоичной системы!';
+        else if (score >= 8) message = '👍 Очень хорошо! Почти без ошибок.';
+        else if (score >= 5) message = '👌 Неплохо, но стоит повторить шпаргалку и попробовать ещё раз.';
+        else message = '📚 Не расстраивайся! Используй шпаргалку сверху и попробуй снова.';
+        
+        document.getElementById('messageText').textContent = message;
+        document.getElementById('feedbackList').innerHTML = feedbackHTML;
+        
+        document.getElementById('resultBox').style.display = 'block';
+        document.getElementById('resultBox').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Функция сохранения результатов в файл
+    async function saveResults() {
+        if (!testResults) {
+            alert('Сначала проверь результаты теста!');
+            return;
+        }
+
+        // Формируем содержимое файла
+        let fileContent = `РЕЗУЛЬТАТЫ ТЕСТА ПО ДВОИЧНОЙ СИСТЕМЕ СЧИСЛЕНИЯ\n`;
+        fileContent += `${'='.repeat(50)}\n\n`;
+        fileContent += `Ученик: ${testResults.studentName}\n`;
+        fileContent += `Дата прохождения: ${testResults.date}\n`;
+        fileContent += `Результат: ${testResults.score} из ${testResults.total}\n\n`;
+        fileContent += `${'='.repeat(50)}\n`;
+        fileContent += `ДЕТАЛЬНЫЕ РЕЗУЛЬТАТЫ ПО ВОПРОСАМ:\n`;
+        fileContent += `${'='.repeat(50)}\n\n`;
+
+        testResults.results.forEach(r => {
+            fileContent += `Вопрос ${r.question}: ${r.isCorrect ? '✅ ВЕРНО' : '❌ ОШИБКА'}\n`;
+            fileContent += `  Ответ ученика: ${r.userAnswer}\n`;
+            if (!r.isCorrect) {
+                fileContent += `  Правильный ответ: ${r.correctAnswer}\n`;
+            }
+            fileContent += `  Пояснение: ${r.explanation}\n\n`;
+        });
+
+        fileContent += `${'='.repeat(50)}\n`;
+        fileContent += `ИТОГОВЫЙ РЕЗУЛЬТАТ: ${testResults.score} / ${testResults.total}\n`;
+        fileContent += `${'='.repeat(50)}\n`;
+
+        // Очищаем имя файла от недопустимых символов
+        const cleanName = testResults.studentName.replace(/[<>:"/\\|?*]/g, '_');
+        const fileName = `тест${cleanName}.txt`;
+
+        // Пытаемся использовать File System Access API (Chrome/Edge)
+        if ('showSaveFilePicker' in window) {
+            try {
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: fileName,
+                    types: [{
+                        description: 'Текстовый файл',
+                        accept: {'text/plain': ['.txt']},
+                    }],
+                });
+                const writable = await handle.createWritable();
+                await writable.write(fileContent);
+                await writable.close();
+                alert(`✅ Результат сохранён в файл "${fileName}"`);
+                return;
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    // Пользователь отменил сохранение
+                    return;
+                }
+                console.error('Ошибка сохранения:', err);
+            }
+        }
+
+        // Fallback: скачивание через Blob (для всех браузеров)
+        const blob = new Blob([fileContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        alert(`✅ Файл "${fileName}" скачан. Найди его в папке "Загрузки".`);
+    }
+</script>
+
+</body>
+</html>
