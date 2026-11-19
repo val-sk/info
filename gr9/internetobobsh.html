@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Урок 9 класс: Интернет и безопасность</title>
+<style>
+    :root {
+        --bg-deep: #050d1f;
+        --bg-dark: #0a1929;
+        --bg-card: #0f2444;
+        --bg-card-light: #152e55;
+        --primary: #1e88e5;
+        --primary-dark: #0d47a1;
+        --accent: #00d4ff;
+        --accent-glow: #00b8ff;
+        --neon: #4fc3f7;
+        --success: #00e676;
+        --warning: #ffc107;
+        --danger: #ff5252;
+        --text: #e3f2fd;
+        --text-dim: #90a4ae;
+        --border: #1e3a5f;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: var(--bg-deep);
+        background-image: 
+            radial-gradient(ellipse at top, #0d2847 0%, transparent 60%),
+            radial-gradient(ellipse at bottom, #0a1929 0%, transparent 60%),
+            linear-gradient(180deg, #050d1f 0%, #0a1929 100%);
+        color: var(--text);
+        margin: 0;
+        padding: 24px 12px 110px;
+        min-height: 100vh;
+        position: relative;
+        overflow-x: hidden;
+    }
+
+    /* Анимированная "цифровая сетка" на фоне */
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-image: 
+            linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+        z-index: 0;
+        animation: gridMove 20s linear infinite;
+    }
+
+    @keyframes gridMove {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(40px, 40px); }
+    }
+
+    /* Плавающие "частицы" */
+    .particle {
+        position: fixed;
+        width: 4px;
+        height: 4px;
+        background: var(--accent);
+        border-radius: 50%;
+        pointer-events: none;
+        opacity: 0.4;
+        box-shadow: 0 0 10px var(--accent);
+        animation: float 15s infinite linear;
+        z-index: 0;
+    }
+
+    @keyframes float {
+        0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+        10% { opacity: 0.6; }
+        90% { opacity: 0.6; }
+        100% { transform: translateY(-100vh) translateX(100px); opacity: 0; }
+    }
+
+    .presentation-container {
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto;
+        background: linear-gradient(145deg, var(--bg-card) 0%, var(--bg-dark) 100%);
+        border-radius: 20px;
+        box-shadow: 
+            0 10px 40px rgba(0, 0, 0, 0.5),
+            0 0 0 1px var(--border),
+            inset 0 1px 0 rgba(79, 195, 247, 0.1);
+        position: relative;
+        z-index: 1;
+        overflow: hidden;
+    }
+
+    /* Свечение по краям контейнера */
+    .presentation-container::before {
+        content: '';
+        position: absolute;
+        top: -2px; left: -2px; right: -2px; bottom: -2px;
+        background: linear-gradient(45deg, var(--accent), var(--primary), var(--accent));
+        border-radius: 22px;
+        z-index: -1;
+        opacity: 0.3;
+        filter: blur(8px);
+        animation: borderGlow 4s ease-in-out infinite;
+    }
+
+    @keyframes borderGlow {
+        0%, 100% { opacity: 0.2; }
+        50% { opacity: 0.5; }
+    }
+
+    .slide-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 32px;
+        background: linear-gradient(90deg, var(--bg-card-light) 0%, var(--bg-card) 100%);
+        color: var(--neon);
+        font-weight: 600;
+        font-size: .95em;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .slide-header span:first-child::before {
+        content: '🛡️ ';
+    }
+
+    .progress-line {
+        height: 4px;
+        background: var(--bg-deep);
+    }
+    .progress-line div {
+        height: 100%;
+        width: 3.7%;
+        background: linear-gradient(90deg, var(--accent), var(--neon));
+        transition: width .3s ease;
+        box-shadow: 0 0 10px var(--accent);
+        border-radius: 0 2px 2px 0;
+    }
+
+    .slide {
+        display: none;
+        padding: 36px;
+        min-height: 420px;
+        animation: slideIn .5s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+    }
+    .slide.active { display: block; }
+
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(15px) scale(0.98); }
+        to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    h1, h2, h3, h4 { 
+        color: var(--neon); 
+        margin-top: 0;
+        text-shadow: 0 0 20px rgba(79, 195, 247, 0.3);
+    }
+    h1 { 
+        font-size: 2.4em; 
+        text-align: center;
+        background: linear-gradient(135deg, var(--neon) 0%, var(--accent) 50%, #fff 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: titleGlow 3s ease-in-out infinite;
+    }
+
+    @keyframes titleGlow {
+        0%, 100% { filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5)); }
+        50% { filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.8)); }
+    }
+
+    h2 { 
+        font-size: 1.8em; 
+        border-bottom: 3px solid var(--accent); 
+        display: inline-block; 
+        padding-bottom: 5px;
+        position: relative;
+    }
+
+    h2::after {
+        content: '';
+        position: absolute;
+        bottom: -3px;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, var(--accent), transparent);
+        animation: scanLine 2s ease-in-out infinite;
+    }
+
+    @keyframes scanLine {
+        0%, 100% { opacity: 0.5; }
+        50% { opacity: 1; }
+    }
+
+    /* Глобальная навигация */
+    .global-nav {
+        position: fixed;
+        left: 50%;
+        bottom: 16px;
+        transform: translateX(-50%);
+        width: min(900px, calc(100% - 24px));
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card-light) 100%);
+        border: 1px solid var(--accent);
+        border-radius: 14px;
+        padding: 10px 16px;
+        box-shadow: 
+            0 6px 24px rgba(0, 0, 0, 0.5),
+            0 0 20px rgba(0, 212, 255, 0.3);
+        z-index: 9999;
+        backdrop-filter: blur(10px);
+    }
+    .global-nav .counter {
+        font-weight: 700;
+        color: var(--neon);
+        white-space: nowrap;
+        text-shadow: 0 0 10px var(--accent);
+        font-family: 'Courier New', monospace;
+        letter-spacing: 1px;
+    }
+
+    button {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: #fff;
+        border: 1px solid var(--accent);
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 1em;
+        cursor: pointer;
+        transition: all .25s;
+        font-family: inherit;
+        font-weight: 600;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        box-shadow: 0 4px 12px rgba(30, 136, 229, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    button::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.4s, height 0.4s;
+    }
+
+    button:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+
+    button:hover { 
+        background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+        box-shadow: 
+            0 6px 20px rgba(0, 212, 255, 0.5),
+            0 0 20px rgba(0, 212, 255, 0.3);
+        transform: translateY(-2px);
+    }
+    button:active { transform: translateY(0) scale(0.97); }
+    button:disabled { 
+        background: #263238; 
+        border-color: #37474f;
+        color: #546e7a;
+        cursor: not-allowed; 
+        box-shadow: none;
+    }
+    button:disabled:hover { transform: none; }
+    button:disabled::before { display: none; }
+
+    .btn-success { 
+        background: linear-gradient(135deg, #00c853 0%, #009624 100%);
+        border-color: var(--success);
+    }
+    .btn-success:hover { 
+        background: linear-gradient(135deg, #00e676 0%, #00c853 100%);
+        box-shadow: 0 6px 20px rgba(0, 230, 118, 0.5);
+    }
+    .btn-small { padding: 9px 16px; font-size: .95em; }
+
+    /* Блоки вопросов */
+    .question-block {
+        background: linear-gradient(135deg, var(--bg-card-light) 0%, var(--bg-card) 100%);
+        padding: 22px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        border-left: 5px solid var(--accent);
+        border: 1px solid var(--border);
+        border-left: 5px solid var(--accent);
+        box-shadow: 
+            inset 0 1px 0 rgba(79, 195, 247, 0.1),
+            0 4px 12px rgba(0, 0, 0, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Эффект "сканирования" на блоке вопроса */
+    .question-block::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.05), transparent);
+        animation: scanEffect 4s ease-in-out infinite;
+    }
+
+    @keyframes scanEffect {
+        0% { left: -100%; }
+        50% { left: 100%; }
+        100% { left: 100%; }
+    }
+
+    .options label {
+        display: block;
+        padding: 12px 14px;
+        margin: 6px 0;
+        background: var(--bg-dark);
+        border-radius: 8px;
+        cursor: pointer;
+        border: 1px solid var(--border);
+        transition: all .2s;
+        position: relative;
+        overflow: hidden;
+    }
+    .options label:hover { 
+        border-color: var(--accent); 
+        background: var(--bg-card-light);
+        box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+        transform: translateX(4px);
+    }
+    .options input { 
+        margin-right: 10px;
+        accent-color: var(--accent);
+        width: 18px;
+        height: 18px;
+        vertical-align: middle;
+    }
+
+    select {
+        padding: 10px 12px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: var(--bg-dark);
+        color: var(--text);
+        font-size: 1em;
+        max-width: 100%;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all .2s;
+    }
+    select:hover, select:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+        outline: none;
+    }
+
+    .match-row { 
+        margin: 14px 0;
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        border-left: 3px solid var(--primary);
+    }
+    .match-row select { 
+        display: block; 
+        margin-top: 8px; 
+        width: 100%; 
+        max-width: 480px; 
+    }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid var(--border); padding: 12px; text-align: left; }
+    th { 
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: #fff;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    tr:nth-child(even) { background: rgba(0, 0, 0, 0.2); }
+    tr:nth-child(odd) { background: var(--bg-card); }
+    tr:hover { background: var(--bg-card-light); }
+
+    /* Карточка результата */
+    .result-card {
+        text-align: center;
+        padding: 35px;
+        background: linear-gradient(135deg, #0d47a1 0%, #1565c0 50%, #1976d2 100%);
+        color: #fff;
+        border-radius: 15px;
+        margin-bottom: 20px;
+        border: 2px solid var(--accent);
+        box-shadow: 
+            0 10px 30px rgba(0, 0, 0, 0.4),
+            0 0 30px rgba(0, 212, 255, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .result-card::before {
+        content: '🏆';
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 3em;
+        opacity: 0.2;
+        animation: trophyFloat 3s ease-in-out infinite;
+    }
+
+    @keyframes trophyFloat {
+        0%, 100% { transform: translateY(0) rotate(-5deg); }
+        50% { transform: translateY(-10px) rotate(5deg); }
+    }
+
+    .result-card h2 { 
+        color: #fff; 
+        border: none; 
+        font-size: 3em; 
+        margin: 0;
+        text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    }
+    .result-card p { 
+        font-size: 1.3em; 
+        margin: 10px 0;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    /* Кейсы */
+    .case-box {
+        background: linear-gradient(135deg, #3e2723 0%, #4e342e 100%);
+        border-left: 5px solid var(--warning);
+        padding: 18px;
+        border-radius: 8px;
+        margin: 15px 0;
+        border: 1px solid var(--warning);
+        border-left: 5px solid var(--warning);
+        box-shadow: 
+            0 4px 12px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 193, 7, 0.1);
+        position: relative;
+    }
+
+    .case-box::before {
+        content: '⚠️';
+        position: absolute;
+        top: -15px;
+        left: 15px;
+        font-size: 1.5em;
+        background: var(--bg-card);
+        padding: 0 8px;
+        border-radius: 50%;
+        animation: warningPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes warningPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.15); }
+    }
+
+    .task-list li { 
+        margin-bottom: 10px;
+        padding: 8px 12px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 6px;
+        border-left: 3px solid var(--accent);
+        transition: all .2s;
+    }
+    .task-list li:hover {
+        background: rgba(0, 212, 255, 0.1);
+        transform: translateX(5px);
+    }
+
+    /* Чек-лист */
+    .checklist-section {
+        background: linear-gradient(135deg, var(--bg-card-light) 0%, var(--bg-card) 100%);
+        padding: 18px 22px;
+        border-radius: 12px;
+        margin-bottom: 15px;
+        border: 1px solid var(--border);
+        border-left: 5px solid var(--accent);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    .checklist-section h4 { 
+        margin: 0 0 12px 0; 
+        font-size: 1.15em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .checklist-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 14px;
+        margin: 8px 0;
+        background: var(--bg-dark);
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        cursor: pointer;
+        transition: all .25s;
+        user-select: none;
+        position: relative;
+        overflow: hidden;
+    }
+    .checklist-item:hover { 
+        border-color: var(--accent);
+        background: var(--bg-card-light);
+        transform: translateX(4px);
+    }
+    .checklist-item input[type="checkbox"] {
+        width: 22px; height: 22px;
+        margin: 0 14px 0 0;
+        cursor: pointer;
+        accent-color: var(--accent);
+        flex-shrink: 0;
+    }
+    .checklist-item.checked { 
+        background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%);
+        border-color: var(--success);
+        box-shadow: 0 0 15px rgba(0, 230, 118, 0.3);
+    }
+    .checklist-item.checked::after {
+        content: '✓';
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--success);
+        font-size: 1.5em;
+        font-weight: bold;
+        text-shadow: 0 0 10px var(--success);
+        animation: checkPop 0.3s ease-out;
+    }
+
+    @keyframes checkPop {
+        0% { transform: translateY(-50%) scale(0); }
+        50% { transform: translateY(-50%) scale(1.3); }
+        100% { transform: translateY(-50%) scale(1); }
+    }
+
+    .checklist-item.checked label { 
+        text-decoration: line-through; 
+        color: var(--success);
+    }
+    .checklist-item label { cursor: pointer; flex: 1; margin: 0; }
+
+    .score-panel {
+        background: linear-gradient(135deg, var(--primary-dark) 0%, #0d47a1 100%);
+        color: #fff;
+        padding: 22px;
+        border-radius: 12px;
+        margin-top: 20px;
+        text-align: center;
+        border: 2px solid var(--accent);
+        box-shadow: 
+            0 8px 20px rgba(0, 0, 0, 0.4),
+            0 0 25px rgba(0, 212, 255, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .score-panel::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent, rgba(0, 212, 255, 0.1), transparent);
+        animation: shine 3s ease-in-out infinite;
+    }
+
+    @keyframes shine {
+        0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+        100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    }
+
+    .score-panel .score-value { 
+        font-size: 2.5em; 
+        font-weight: bold; 
+        margin: 8px 0;
+        text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        font-family: 'Courier New', monospace;
+    }
+    .score-panel .score-status { 
+        font-size: 1.15em; 
+        margin-top: 8px;
+        position: relative;
+        z-index: 1;
+    }
+    .progress-bar {
+        width: 100%; height: 14px;
+        background: rgba(0, 0, 0, 0.4);
+        border-radius: 7px;
+        overflow: hidden;
+        margin-top: 12px;
+        border: 1px solid var(--border);
+        position: relative;
+        z-index: 1;
+    }
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent), var(--neon), var(--success));
+        width: 0%;
+        transition: width .5s ease;
+        box-shadow: 0 0 10px var(--accent);
+        position: relative;
+    }
+
+    .progress-fill::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        animation: progressShine 2s ease-in-out infinite;
+    }
+
+    @keyframes progressShine {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+
+    /* Дополнительные эффекты для слайдов */
+    .slide h3 {
+        position: relative;
+        padding-left: 35px;
+    }
+
+    .slide h3::before {
+        content: '🔹';
+        position: absolute;
+        left: 0;
+        animation: iconPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes iconPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+    }
+
+    /* Эффект "цифровой защиты" для слайдов теста */
+    #slide-3::before, #slide-4::before, #slide-5::before,
+    #slide-6::before, #slide-7::before, #slide-8::before,
+    #slide-9::before, #slide-10::before, #slide-11::before,
+    #slide-12::before, #slide-13::before, #slide-14::before,
+    #slide-15::before, #slide-16::before, #slide-17::before {
+        content: '🔐';
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        font-size: 2em;
+        opacity: 0.15;
+        animation: lockFloat 4s ease-in-out infinite;
+    }
+
+    @keyframes lockFloat {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-10px) rotate(10deg); }
+    }
+
+    /* Эффект "щита" для кейсов */
+    #slide-19::before, #slide-20::before, #slide-21::before, #slide-22::before {
+        content: '🛡️';
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        font-size: 2.5em;
+        opacity: 0.15;
+        animation: shieldPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes shieldPulse {
+        0%, 100% { transform: scale(1); filter: drop-shadow(0 0 5px var(--accent)); }
+        50% { transform: scale(1.1); filter: drop-shadow(0 0 15px var(--accent)); }
+    }
+
+    /* Эффект "творчества" для слайдов творчества */
+    #slide-24::before, #slide-25::before {
+        content: '✨';
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        font-size: 2.5em;
+        opacity: 0.3;
+        animation: sparkle 2s ease-in-out infinite;
+    }
+
+    @keyframes sparkle {
+        0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.3; }
+        50% { transform: scale(1.2) rotate(180deg); opacity: 0.6; }
+    }
+
+    /* Финальный слайд */
+    #slide-27 {
+        text-align: center;
+    }
+
+    #slide-27::before {
+        content: '🎉';
+        position: absolute;
+        top: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 4em;
+        opacity: 0.3;
+        animation: celebration 2s ease-in-out infinite;
+    }
+
+    @keyframes celebration {
+        0%, 100% { transform: translateX(-50%) scale(1) rotate(0deg); }
+        25% { transform: translateX(-50%) scale(1.1) rotate(-10deg); }
+        75% { transform: translateX(-50%) scale(1.1) rotate(10deg); }
+    }
+
+    /* Ссылки и списки */
+    ul, ol {
+        padding-left: 25px;
+    }
+
+    li {
+        margin-bottom: 8px;
+        line-height: 1.6;
+    }
+
+    li::marker {
+        color: var(--accent);
+    }
+
+    hr {
+        border: none;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        margin: 20px 0;
+    }
+
+    /* Адаптивность */
+    @media (max-width: 600px) {
+        .slide { padding: 24px 18px; }
+        .slide-header { padding: 12px 20px; }
+        h1 { font-size: 1.7em; }
+        h2 { font-size: 1.4em; }
+        button { padding: 10px 16px; font-size: .95em; }
+        .global-nav { padding: 8px 10px; }
+        .result-card h2 { font-size: 2.2em; }
+    }
+</style>
+</head>
+<body>
+
+<!-- Плавающие частицы -->
+<div class="particle" style="left: 10%; animation-delay: 0s;"></div>
+<div class="particle" style="left: 25%; animation-delay: 3s;"></div>
+<div class="particle" style="left: 40%; animation-delay: 6s;"></div>
+<div class="particle" style="left: 55%; animation-delay: 2s;"></div>
+<div class="particle" style="left: 70%; animation-delay: 8s;"></div>
+<div class="particle" style="left: 85%; animation-delay: 4s;"></div>
+<div class="particle" style="left: 15%; animation-delay: 10s;"></div>
+<div class="particle" style="left: 60%; animation-delay: 12s;"></div>
+
+<div class="presentation-container">
+    <div class="slide-header">
+        <span>Интернет и безопасность</span>
+        <span id="header-counter">Слайд 1 / 27</span>
+    </div>
+    <div class="progress-line"><div id="top-progress"></div></div>
+
+    <!-- 1 -->
+    <div class="slide active" id="slide-1">
+        <h1>🌐 Интернет и безопасность</h1>
+        <p style="text-align:center;font-size:1.2em;">Обобщение и систематизация знаний</p>
+        <p style="text-align:center;">👥 Работа в парах • 9 класс</p>
+        <p style="text-align:center;">📅 13-16 октября 2026</p>
+        <hr>
+        <h3>📋 Как работаем</h3>
+        <ul>
+            <li>🧪 <b>Часть 1:</b> Тест «Интернет-знания» — 15 вопросов</li>
+            <li>🔍 <b>Часть 2:</b> 4 кейса на безопасность</li>
+            <li>🎨 <b>Часть 3:</b> Забавные задания в редакторе презентаций</li>
+            <li>✅ <b>Финал:</b> Формирующее оценивание по чек-листу</li>
+        </ul>
+        <p><b>👥 Правила работы в паре:</b> Обсуждайте каждый ответ вдвоём. Один ведёт запись, второй — проверяет. Меняйтесь ролями!</p>
+    </div>
+
+    <!-- 2 -->
+    <div class="slide" id="slide-2">
+        <h2>📝 Часть 1. Тест «Интернет-знания»</h2>
+        <p>15 вопросов разного типа. Обсуждайте в паре и выбирайте ответ.</p>
+        <p><b>⚠️ Важно:</b> Кнопки «Проверить» нет! Мы узнаем ваш итоговый балл только в самом конце теста. Отвечайте честно, не подглядывая в интернет!</p>
+    </div>
+
+    <!-- 3 / Q1 -->
+    <div class="slide" id="slide-3">
+        <h3>Вопрос 1 / 15 🔘</h3>
+        <div class="question-block">
+            <p><b>Что такое IP-адрес?</b></p>
+            <div class="options">
+                <label><input type="radio" name="q1" value="1"> Логин пользователя в социальной сети</label>
+                <label><input type="radio" name="q1" value="2"> Уникальный числовой идентификатор устройства в сети</label>
+                <label><input type="radio" name="q1" value="3"> Название веб-сайта</label>
+                <label><input type="radio" name="q1" value="4"> Пароль от Wi-Fi</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4 / Q2 -->
+    <div class="slide" id="slide-4">
+        <h3>Вопрос 2 / 15 🔘</h3>
+        <div class="question-block">
+            <p><b>Что означает значок 🔒 в адресной строке браузера?</b></p>
+            <div class="options">
+                <label><input type="radio" name="q2" value="1"> Сайт заблокирован Роскомнадзором</label>
+                <label><input type="radio" name="q2" value="2"> Соединение защищено протоколом HTTPS</label>
+                <label><input type="radio" name="q2" value="3"> Сайт работает только на русском языке</label>
+                <label><input type="radio" name="q2" value="4"> Сайт требует платной подписки</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5 / Q3 -->
+    <div class="slide" id="slide-5">
+        <h3>Вопрос 3 / 15 ☑️ (выберите НЕСКОЛЬКО)</h3>
+        <div class="question-block">
+            <p><b>Какие признаки указывают на фишинговое письмо?</b></p>
+            <div class="options">
+                <label><input type="checkbox" name="q3" value="1"> Срочность и угрозы («Ваш аккаунт будет удалён!»)</label>
+                <label><input type="checkbox" name="q3" value="2"> Письмо от известного друга с личной шуткой</label>
+                <label><input type="checkbox" name="q3" value="3"> Ссылка ведёт на странный адрес (например, paypa1.com)</label>
+                <label><input type="checkbox" name="q3" value="4"> Просят ввести пароль или данные карты</label>
+                <label><input type="checkbox" name="q3" value="5"> Грамматические ошибки и опечатки</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6 / Q4 -->
+    <div class="slide" id="slide-6">
+        <h3>Вопрос 4 / 15 🔗 (сопоставление)</h3>
+        <div class="question-block">
+            <p><b>Соедините тип угрозы с её описанием:</b></p>
+            <div class="match-row">🦠 1. Вирус
+                <select id="q4_1"><option value="">— выберите —</option><option value="Кража данных через поддельные сайты">Кража данных через поддельные сайты</option><option value="Вредоносная программа, копирующая себя">Вредоносная программа, копирующая себя</option><option value="Рассылка спама от имени знакомых">Рассылка спама от имени знакомых</option><option value="Программа, шифрующая файлы за выкуп">Программа, шифрующая файлы за выкуп</option></select>
+            </div>
+            <div class="match-row">🎣 2. Фишинг
+                <select id="q4_2"><option value="">— выберите —</option><option value="Кража данных через поддельные сайты">Кража данных через поддельные сайты</option><option value="Вредоносная программа, копирующая себя">Вредоносная программа, копирующая себя</option><option value="Рассылка спама от имени знакомых">Рассылка спама от имени знакомых</option><option value="Программа, шифрующая файлы за выкуп">Программа, шифрующая файлы за выкуп</option></select>
+            </div>
+            <div class="match-row">🎭 3. Спуфинг
+                <select id="q4_3"><option value="">— выберите —</option><option value="Кража данных через поддельные сайты">Кража данных через поддельные сайты</option><option value="Вредоносная программа, копирующая себя">Вредоносная программа, копирующая себя</option><option value="Рассылка спама от имени знакомых">Рассылка спама от имени знакомых</option><option value="Программа, шифрующая файлы за выкуп">Программа, шифрующая файлы за выкуп</option></select>
+            </div>
+            <div class="match-row">🔒 4. Ransomware
+                <select id="q4_4"><option value="">— выберите —</option><option value="Кража данных через поддельные сайты">Кража данных через поддельные сайты</option><option value="Вредоносная программа, копирующая себя">Вредоносная программа, копирующая себя</option><option value="Рассылка спама от имени знакомых">Рассылка спама от имени знакомых</option><option value="Программа, шифрующая файлы за выкуп">Программа, шифрующая файлы за выкуп</option></select>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7 / Q5 -->
+    <div class="slide" id="slide-7">
+        <h3>Вопрос 5 / 15 📋 (выпадающий список)</h3>
+        <div class="question-block">
+            <p><b>Вставьте подходящие слова:</b></p>
+            <p>Файл с расширением
+                <select id="q5_1"><option value="">—</option><option value=".exe">.exe</option><option value=".jpg">.jpg</option><option value=".docx">.docx</option></select>
+                может содержать вирус, а файл
+                <select id="q5_2"><option value="">—</option><option value=".exe">.exe</option><option value=".jpg">.jpg</option><option value=".docx">.docx</option></select>
+                — это обычное изображение.</p>
+        </div>
+    </div>
+
+    <!-- 8 / Q6 -->
+    <div class="slide" id="slide-8">
+        <h3>Вопрос 6 / 15 🔘</h3>
+        <div class="question-block">
+            <p><b>Что такое «куки» (cookies) в браузере?</b></p>
+            <div class="options">
+                <label><input type="radio" name="q6" value="1"> Вирус, который съедает память компьютера</label>
+                <label><input type="radio" name="q6" value="2"> Небольшие текстовые файлы, сохраняющие данные о посещениях сайтов</label>
+                <label><input type="radio" name="q6" value="3"> Рекламные баннеры на сайтах</label>
+                <label><input type="radio" name="q6" value="4"> Настройки антивируса</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- 9 / Q7 -->
+    <div class="slide" id="slide-9">
+        <h3>Вопрос 7 / 15 ☑️ (выберите НЕСКОЛЬКО)</h3>
+        <div class="question-block">
+            <p><b>Признаки надёжного источника информации:</b></p>
+            <div class="options">
+                <label><input type="checkbox" name="q7" value="1"> Указан автор и дата публикации</label>
+                <label><input type="checkbox" name="q7" value="2"> Много восклицательных знаков и CAPS LOCK</label>
+                <label><input type="checkbox" name="q7" value="3"> Ссылки на исследования и официальные источники</label>
+                <label><input type="checkbox" name="q7" value="4"> Информация подтверждается другими авторитетными сайтами</label>
+                <label><input type="checkbox" name="q7" value="5"> Сайт требует немедленно поделиться публикацией</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- 10 / Q8 -->
+    <div class="slide" id="slide-10">
+        <h3>Вопрос 8 / 15 🔗 (сопоставление)</h3>
+        <div class="question-block">
+            <p><b>Сопоставьте поисковый оператор и его действие:</b></p>
+            <div class="match-row">🔍 1. "фраза в кавычках"
+                <select id="q8_1"><option value="">— выберите —</option><option value="Искать точную фразу">Искать точную фразу</option><option value="Исключить слово из поиска">Исключить слово из поиска</option><option value="Искать на конкретном сайте">Искать на конкретном сайте</option><option value="Искать в заголовке">Искать в заголовке</option></select>
+            </div>
+            <div class="match-row">❌ 2. -слово
+                <select id="q8_2"><option value="">— выберите —</option><option value="Искать точную фразу">Искать точную фразу</option><option value="Исключить слово из поиска">Исключить слово из поиска</option><option value="Искать на конкретном сайте">Искать на конкретном сайте</option><option value="Искать в заголовке">Искать в заголовке</option></select>
+            </div>
+            <div class="match-row">🌐 3. site:сайт.ru
+                <select id="q8_3"><option value="">— выберите —</option><option value="Искать точную фразу">Искать точную фразу</option><option value="Исключить слово из поиска">Исключить слово из поиска</option><option value="Искать на конкретном сайте">Искать на конкретном сайте</option><option value="Искать в заголовке">Искать в заголовке</option></select>
+            </div>
+            <div class="match-row">📑 4. intitle:слово
+                <select id="q8_4"><option value="">— выберите —</option><option value="Искать точную фразу">Искать точную фразу</option><option value="Исключить слово из поиска">Исключить слово из поиска</option><option value="Искать на конкретном сайте">Искать на конкретном сайте</option><option value="Искать в заголовке">Искать в заголовке</option></select>
+            </div>
+        </div>
+    </div>
+
+    <!-- 11 / Q9 -->
+    <div class="slide" id="slide-11">
+        <h3>Вопрос 9 / 15 🔘</h3>
+        <div class="question-block">
+            <p><b>Что такое двухфакторная аутентификация (2FA)?</b></p>
+            <div class="options">
+                <label><input type="radio" name="q9" value="1"> Два разных пароля для одного аккаунта</label>
+                <label><input type="radio" name="q9" value="2"> Подтверждение входа через пароль + код из SMS/приложения</label>
+                <label><input type="radio" name="q9" value="3"> Вход с двух разных устройств</label>
+                <label><input type="radio" name="q9" value="4"> Двойное шифрование данных</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- 12 / Q10 -->
+    <div class="slide" id="slide-12">
+        <h3>Вопрос 10 / 15 📋 (выпадающий список)</h3>
+        <div class="question-block">
+            <p><b>Заполните пропуски:</b></p>
+            <p>Лицензия
+                <select id="q10_1"><option value="">—</option><option value="Creative Commons">Creative Commons</option><option value="Microsoft Office">Microsoft Office</option><option value="Windows 11">Windows 11</option></select>
+                позволяет авторам разрешать свободное использование своих произведений. А символ
+                <select id="q10_2"><option value="">—</option><option value="©">©</option><option value="™">™</option><option value="®">®</option></select>
+                означает, что произведение защищено авторским правом.</p>
+        </div>
+    </div>
+
+    <!-- 13 / Q11 -->
+    <div class="slide" id="slide-13">
+        <h3>Вопрос 11 / 15 🔘</h3>
+        <div class="question-block">
+            <p><b>Что такое «цифровой след»?</b></p>
+            <div class="options">
+                <label><input type="radio" name="q11" value="1"> Отпечатки пальцев на экране смартфона</label>
+                <label><input type="radio" name="q11" value="2"> Вся информация о человеке, оставленная им в интернете</label>
+                <label><input type="radio" name="q11" value="3"> История покупок в магазине</label>
+                <label><input type="radio" name="q11" value="4"> Количество лайков под постами</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- 14 / Q12 -->
+    <div class="slide" id="slide-14">
+        <h3>Вопрос 12 / 15 ☑️ (выберите НЕСКОЛЬКО)</h3>
+        <div class="question-block">
+            <p><b>Правила создания надёжного пароля:</b></p>
+            <div class="options">
+                <label><input type="checkbox" name="q12" value="1"> Минимум 12 символов</label>
+                <label><input type="checkbox" name="q12" value="2"> Использовать дату рождения</label>
+                <label><input type="checkbox" name="q12" value="3"> Сочетать буквы, цифры и спецсимволы</label>
+                <label><input type="checkbox" name="q12" value="4"> Разные пароли для разных аккаунтов</label>
+                <label><input type="checkbox" name="q12" value="5"> Записать пароль на стикере на мониторе</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- 15 / Q13 -->
+    <div class="slide" id="slide-15">
+        <h3>Вопрос 13 / 15 🔗 (сопоставление)</h3>
+        <div class="question-block">
+            <p><b>Виды интернет-мошенничества:</b></p>
+            <div class="match-row">📧 1. Нигерийские письма
+                <select id="q13_1"><option value="">— выберите —</option><option value="Фальшивый интернет-магазин">Фальшивый интернет-магазин</option><option value="Обещание огромного наследства за предоплату">Обещание огромного наследства за предоплату</option><option value="Фальшивая служба поддержки банка">Фальшивая служба поддержки банка</option><option value="Инвестиции в «крипто-чудо»">Инвестиции в «крипто-чудо»</option></select>
+            </div>
+            <div class="match-row">🛒 2. Фишинговый магазин
+                <select id="q13_2"><option value="">— выберите —</option><option value="Фальшивый интернет-магазин">Фальшивый интернет-магазин</option><option value="Обещание огромного наследства за предоплату">Обещание огромного наследства за предоплату</option><option value="Фальшивая служба поддержки банка">Фальшивая служба поддержки банка</option><option value="Инвестиции в «крипто-чудо»">Инвестиции в «крипто-чудо»</option></select>
+            </div>
+            <div class="match-row">📞 3. Вишинг
+                <select id="q13_3"><option value="">— выберите —</option><option value="Фальшивый интернет-магазин">Фальшивый интернет-магазин</option><option value="Обещание огромного наследства за предоплату">Обещание огромного наследства за предоплату</option><option value="Фальшивая служба поддержки банка">Фальшивая служба поддержки банка</option><option value="Инвестиции в «крипто-чудо»">Инвестиции в «крипто-чудо»</option></select>
+            </div>
+            <div class="match-row">💰 4. Скам-инвестиции
+                <select id="q13_4"><option value="">— выберите —</option><option value="Фальшивый интернет-магазин">Фальшивый интернет-магазин</option><option value="Обещание огромного наследства за предоплату">Обещание огромного наследства за предоплату</option><option value="Фальшивая служба поддержки банка">Фальшивая служба поддержки банка</option><option value="Инвестиции в «крипто-чудо»">Инвестиции в «крипто-чудо»</option></select>
+            </div>
+        </div>
+    </div>
+
+    <!-- 16 / Q14 -->
+    <div class="slide" id="slide-16">
+        <h3>Вопрос 14 / 15 🔘</h3>
+        <div class="question-block">
+            <p><b>Для чего нужен VPN?</b></p>
+            <div class="options">
+                <label><input type="radio" name="q14" value="1"> Ускоряет интернет в 10 раз</label>
+                <label><input type="radio" name="q14" value="2"> Шифрует трафик и скрывает реальный IP-адрес</label>
+                <label><input type="radio" name="q14" value="3"> Защищает от вирусов</label>
+                <label><input type="radio" name="q14" value="4"> Удаляет историю браузера</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- 17 / Q15 -->
+    <div class="slide" id="slide-17">
+        <h3>Вопрос 15 / 15 📋 (выпадающий список)</h3>
+        <div class="question-block">
+            <p><b>Заполните пропуски:</b></p>
+            <p>Использование чужих текстов без указания автора называется
+                <select id="q15_1"><option value="">—</option><option value="плагиат">плагиат</option><option value="цитирование">цитирование</option><option value="реферат">реферат</option></select>.
+                Чтобы легально использовать чужое изображение, нужно искать материалы с лицензией
+                <select id="q15_2"><option value="">—</option><option value="Creative Commons">Creative Commons</option><option value="«Все права защищены»">«Все права защищены»</option><option value="Microsoft">Microsoft</option></select>.</p>
+        </div>
+        <p style="color:var(--success);font-weight:600;">✨ Это последний вопрос. Нажмите «Далее ▶», чтобы увидеть результат теста.</p>
+    </div>
+
+    <!-- 18 / Итоги теста -->
+    <div class="slide" id="slide-18">
+        <div class="result-card">
+            <h2 id="result-score">0 / 15</h2>
+            <p id="result-title">Статус</p>
+            <p id="result-congrats">Поздравление</p>
+        </div>
+        <h3>📊 Таблица правильных ответов для самопроверки:</h3>
+        <div style="max-height:300px;overflow-y:auto;">
+            <table id="answers-table">
+                <thead><tr><th>№</th><th>Вопрос (кратко)</th><th>Правильный ответ</th><th>Результат</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div style="margin-top:20px;">
+            <button type="button" class="btn-small" id="restart-test">🔄 Пройти тест заново</button>
+        </div>
+    </div>
+
+    <!-- 19 -->
+    <div class="slide" id="slide-19">
+        <h2>🔎 Часть 2. Кейс №1 «Социальные сети»</h2>
+        <div class="case-box">
+            <b>📖 Ситуация:</b> Десятиклассница Алина выложила в <b>ВКонтакте</b> сторис с фотографией своего нового билета на концерт. На билете видны: её полное имя, номер телефона, QR-код и адрес места проведения. В комментариях ей написал «фанат» и попросил её домашний адрес, чтобы «прислать подарок». Алина отправила адрес.
+        </div>
+        <b>❓ Задания для пары:</b>
+        <ol class="task-list">
+            <li>🔍 Найдите 3 ошибки в поведении Алины</li>
+            <li>⚠️ Объясните, чем каждая ошибка опасна</li>
+            <li>🛡️ Сформулируйте 3 правила безопасного поведения в соцсетях</li>
+        </ol>
+    </div>
+
+    <!-- 20 -->
+    <div class="slide" id="slide-20">
+        <h2>🔎 Кейс №2 «Онлайн-покупки»</h2>
+        <div class="case-box">
+            <b>📖 Ситуация:</b> Девятиклассник Максим искал новые кроссовки и нашёл сайт, где они стоили в 3 раза дешевле, чем в обычных магазинах. На сайте не был указан юридический адрес, но была акция «только сегодня — скидка 80%». Максим ввёл данные карты мамы, чтобы не упустить шанс. Через неделю с карты списали 15 000 рублей.
+        </div>
+        <b>❓ Задания для пары:</b>
+        <ol class="task-list">
+            <li>🚩 Найдите 4 «красных флага» на сайте</li>
+            <li>🔍 Как Максим должен был проверить надёжность сайта?</li>
+            <li>🛡️ Сформулируйте 4 правила безопасных онлайн-покупок</li>
+        </ol>
+    </div>
+
+    <!-- 21 -->
+    <div class="slide" id="slide-21">
+        <h2>🔎 Кейс №3 «Фейковые новости»</h2>
+        <div class="case-box">
+            <b>📖 Ситуация:</b> В школьном чате девятиклассники поделились сообщением: «Завтра отменяют все уроки из-за ремонта! Проверено лично!». Сообщение переслали 50 ученикам. Утром все пришли в школу — уроки шли как обычно. Оказалось, что сообщение написал шутник из параллельного класса. Но некоторые родители успели позвонить в школу и возмутиться.
+        </div>
+        <b>❓ Задания для пары:</b>
+        <ol class="task-list">
+            <li>🔍 Какие признаки недостоверной информации здесь видны?</li>
+            <li>✅ Как нужно было проверить сообщение перед пересылкой?</li>
+            <li>📋 Сформулируйте 3 правила проверки информации в интернете</li>
+        </ol>
+    </div>
+
+    <!-- 22 -->
+    <div class="slide" id="slide-22">
+        <h2>🔎 Кейс №4 «Кибербуллинг»</h2>
+        <div class="case-box">
+            <b>📖 Ситуация:</b> В классе создали анонимный чат, где начали обсуждать одноклассника Диму: выложили его неудачное фото, придумали обидное прозвище, написали «пусть уходит из школы». Дима увидел это и перестал ходить в школу. Два участника чата считают, что «это просто шутка» и «все так делают».
+        </div>
+        <b>❓ Задания для пары:</b>
+        <ol class="task-list">
+            <li>🚫 Почему это не шутка, а кибербуллинг?</li>
+            <li>⚖️ Какие законные последствия могут быть у участников?</li>
+            <li>🤝 Что должен был сделать каждый свидетель?</li>
+            <li>💙 Сформулируйте 3 правила этичного поведения в сети</li>
+        </ol>
+    </div>
+
+    <!-- 23 -->
+    <div class="slide" id="slide-23">
+        <h2>🎯 Обсудим кейсы!</h2>
+        <p>🗣 Каждая пара кратко озвучит одно главное правило, которое они вывели из своего кейса.</p>
+        <h3>📋 Общий список правил класса:</h3>
+        <ul>
+            <li>🔒 Не выкладывай личные данные (адрес, телефон, билеты)</li>
+            <li>💳 Проверяй сайт перед покупкой (отзывы, HTTPS, контакты)</li>
+            <li>🔍 Проверяй информацию из 2–3 источников</li>
+            <li>🤝 Веди себя в сети так же, как в жизни</li>
+            <li>🆘 При травле — сообщай взрослому, сохраняй доказательства</li>
+        </ul>
+    </div>
+
+    <!-- 24 -->
+    <div class="slide" id="slide-24">
+        <h2>🎨 Часть 3. Творим в редакторе презентаций!</h2>
+        <p>Откройте <b>PowerPoint</b> или <b>LibreOffice Impress</b>. Каждая пара выбирает одно задание:</p>
+        <ul>
+            <li>🎭 <b>Задание 1. «Мем по безопасности»</b> (1 слайд-мем с полезным посылом)</li>
+            <li>🚫 <b>Задание 2. «Антиреклама фишинга»</b> (2 слайда в стиле ироничной рекламы ловушки)</li>
+            <li>📊 <b>Задание 3. «Инфографика ТОП-5»</b> (1 слайд с иконками и минимумом текста)</li>
+            <li>📖 <b>Задание 4. «Комикс-история»</b> (3–4 слайда про хакера-неудачника)</li>
+        </ul>
+    </div>
+
+    <!-- 25 -->
+    <div class="slide" id="slide-25">
+        <h2>🎤 Защита творческих работ</h2>
+        <p>Каждая пара показывает свою презентацию классу (1–2 минуты).</p>
+        <h3>🏆 Номинации от класса:</h3>
+        <ul>
+            <li>🎨 «Самый креативный дизайн»</li>
+            <li>😂 «Самый смешной мем»</li>
+            <li>💡 «Самый полезный совет»</li>
+            <li>🌟 «Самая оригинальная идея»</li>
+        </ul>
+    </div>
+
+    <!-- 26 / Формирующее оценивание -->
+    <div class="slide" id="slide-26">
+        <h2>✅ Формирующее оценивание</h2>
+        <p>Каждая пара отмечает, что у вас получилось. Честно — это для вас! <b>Баллы считаются автоматически.</b></p>
+
+        <div class="checklist-section">
+            <h4>📚 Знания (4 пункта)</h4>
+            <div class="checklist-item"><input type="checkbox" class="check-item"><label>Я знаю, что такое IP-адрес, куки, VPN, 2FA</label></div>
+            <div class="checklist-item"><input type="checkbox" class="check-item"><label>Я умею распознавать фишинг и мошеннические сайты</label></div>
+            <div class="checklist-item"><input type="checkbox" class="check-item"><label>Я понимаю, что такое авторское право и цифровой след</label></div>
+            <div class="checklist-item"><input type="checkbox" class="check-item"><label>Я умею использовать поисковые операторы</label></div>
+        </div>
+
+        <div class="checklist-section">
+            <h4>🛡️ Безопасность (4 пункта)</h4>
+            <div class="checklist-item"><input type="checkbox" class="check-item"><label>Я соблюдаю правила создания надёжных паролей</label></div>
+            <div class="checklist-item"><input type="checkbox" class="check-item"><label>Я не делюсь личными данными в соцсетях</label></div>
+            <div class="checklist-item"><input type="checkbox" class="check-item"><label>Я проверяю информацию перед пересылкой</label></div>
+            <div class="checklist-item"><input type="checkbox" class="check-item"><label>Я знаю, как действовать при кибербуллинге</label></div>
+        </div>
+
+        <div class="checklist-section">
+            <h4>👥 Работа в паре (3 пункта)</h4>
+            <div class="checklist-item"><input type="checkbox" class="check-item"><label>Мы обсуждали ответы вдвоём</label></div>
+            <div class="checklist-item"><input type="checkbox" class="check-item"><label>Мы уважали мнение друг друга</label></div>
+            <div class="checklist-item"><input type="checkbox" class="check-item"><label>Мы вместе решили все 4 кейса</label></div>
+        </div>
+
+        <div class="checklist-section">
+            <h4>🎨 Творчество (3 пункта)</h4>
+            <div class="checklist-item"><input type="checkbox" class="check-item"><label>Мы создали презентацию</label></div>
+            <div class="checklist-item"><input type="checkbox" class="check-item"><label>Наша работа получилась интересной</label></div>
+            <div class="checklist-item"><input type="checkbox" class="check-item"><label>Мы выступили перед классом</label></div>
+        </div>
+
+        <div class="score-panel">
+            <div>💎 Ваш итоговый балл:</div>
+            <div class="score-value"><span id="checklist-score">0</span> / 14</div>
+            <div class="score-status" id="checklist-status">Отметьте пункты, чтобы увидеть результат</div>
+            <div class="progress-bar"><div class="progress-fill" id="checklist-progress"></div></div>
+        </div>
+    </div>
+
+    <!-- 27 / Финал -->
+    <div class="slide" id="slide-27">
+        <h1>🎉 Молодцы!</h1>
+        <p style="text-align:center;font-size:1.5em;margin-top:40px;">Теперь вы — эксперты по безопасности в интернете!</p>
+        <ul style="font-size:1.2em;text-align:center;list-style-type:none;padding:0;">
+            <li>🌐 Пользуйтесь интернетом умно</li>
+            <li>🔒 Защищайте свои данные</li>
+            <li>🤝 Уважайте других в сети</li>
+        </ul>
+        <p style="text-align:center;font-size:1.5em;margin-top:40px;">Спасибо за урок! 💜</p>
+        <div style="text-align:center;margin-top:20px;">
+            <button type="button" class="btn-small" data-goto="1">🔄 В начало</button>
+        </div>
+    </div>
+</div>
+
+<!-- ЕДИНАЯ НАВИГАЦИЯ -->
+<div class="global-nav">
+    <button type="button" id="btn-prev" class="btn-small">◀ Назад</button>
+    <span class="counter" id="nav-counter">1 / 27</span>
+    <button type="button" id="btn-next" class="btn-small btn-success">Далее ▶</button>
+</div>
+
+<script>
+(function () {
+    "use strict";
+
+    var TOTAL = 27;
+    var current = 1;
+
+    var prevBtn = document.getElementById('btn-prev');
+    var nextBtn = document.getElementById('btn-next');
+
+    function showSlide(n) {
+        n = parseInt(n, 10);
+        if (isNaN(n)) n = 1;
+        if (n < 1) n = 1;
+        if (n > TOTAL) n = TOTAL;
+
+        var slides = document.querySelectorAll('.slide');
+        for (var i = 0; i < slides.length; i++) {
+            slides[i].classList.remove('active');
+        }
+
+        var target = document.getElementById('slide-' + n);
+        if (!target) return;
+        target.classList.add('active');
+
+        current = n;
+
+        document.getElementById('nav-counter').textContent = n + ' / ' + TOTAL;
+        document.getElementById('header-counter').textContent = 'Слайд ' + n + ' / ' + TOTAL;
+        document.getElementById('top-progress').style.width = (n / TOTAL * 100) + '%';
+
+        prevBtn.disabled = (n === 1);
+        nextBtn.disabled = (n === TOTAL);
+        nextBtn.textContent = (n === 17) ? 'Завершить тест 🏆' : 'Далее ▶';
+
+        window.scrollTo(0, 0);
+    }
+
+    function goNext() {
+        if (current >= TOTAL) return;
+        if (current === 17) {
+            finishTest();
+            return;
+        }
+        showSlide(current + 1);
+    }
+
+    function goPrev() {
+        if (current <= 1) return;
+        showSlide(current - 1);
+    }
+
+    prevBtn.addEventListener('click', goPrev);
+    nextBtn.addEventListener('click', goNext);
+
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest ? e.target.closest('[data-goto]') : null;
+        if (btn) {
+            e.preventDefault();
+            showSlide(btn.getAttribute('data-goto'));
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        var tag = e.target.tagName;
+        if (tag === 'SELECT' || tag === 'TEXTAREA') return;
+        if (tag === 'INPUT' && e.target.type !== 'checkbox') return;
+
+        if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+            e.preventDefault();
+            goNext();
+        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+            e.preventDefault();
+            goPrev();
+        }
+    });
+
+    function updateChecklistScore() {
+        var items = document.querySelectorAll('.check-item');
+        var total = 0;
+
+        items.forEach(function (item) {
+            var parent = item.closest('.checklist-item');
+            if (item.checked) {
+                total++;
+                if (parent) parent.classList.add('checked');
+            } else {
+                if (parent) parent.classList.remove('checked');
+            }
+        });
+
+        document.getElementById('checklist-score').textContent = total;
+        document.getElementById('checklist-progress').style.width = (total / 14 * 100) + '%';
+
+        var status;
+        if (total === 0)       status = 'Отметьте пункты, чтобы увидеть результат';
+        else if (total >= 13)  status = '🏆 Великолепно! Вы настоящие эксперты!';
+        else if (total >= 10)  status = '🌟 Отличный результат! Вы хорошо усвоили материал.';
+        else if (total >= 7)   status = '👍 Хороший результат! Есть над чем поработать.';
+        else if (total >= 4)   status = '📚 Неплохо, но стоит повторить некоторые темы.';
+        else                   status = '💪 Не расстраивайтесь! Повторите материал и попробуйте снова.';
+
+        document.getElementById('checklist-status').textContent = status;
+    }
+
+    document.querySelectorAll('.check-item').forEach(function (item) {
+        item.addEventListener('change', updateChecklistScore);
+    });
+
+    document.querySelectorAll('.checklist-item').forEach(function (row) {
+        row.addEventListener('click', function (e) {
+            if (e.target.tagName === 'INPUT') return;
+            var cb = this.querySelector('input[type="checkbox"]');
+            if (cb) {
+                cb.checked = !cb.checked;
+                updateChecklistScore();
+            }
+        });
+    });
+
+    document.getElementById('restart-test').addEventListener('click', function () {
+        document.querySelectorAll('input[name^="q"]').forEach(function (el) {
+            el.checked = false;
+        });
+        document.querySelectorAll('select[id^="q"]').forEach(function (el) {
+            el.selectedIndex = 0;
+        });
+        showSlide(2);
+    });
+
+    function checkedValue(name) {
+        var el = document.querySelector('input[name="' + name + '"]:checked');
+        return el ? el.value : null;
+    }
+
+    function checkedValues(name) {
+        var list = document.querySelectorAll('input[name="' + name + '"]:checked');
+        return Array.prototype.map.call(list, function (c) { return c.value; }).sort().join(',');
+    }
+
+    function sel(id) {
+        var el = document.getElementById(id);
+        return el ? el.value : '';
+    }
+
+    function finishTest() {
+        var score = 0;
+        var results = [];
+
+        function add(title, answer, ok) {
+            if (ok) score++;
+            results.push({ q: title, ans: answer, ok: !!ok });
+        }
+
+        add('IP-адрес', 'Уникальный числовой идентификатор устройства в сети', checkedValue('q1') === '2');
+        add('Значок 🔒', 'Соединение защищено протоколом HTTPS', checkedValue('q2') === '2');
+        add('Признаки фишинга', 'Срочность, странный адрес, просьба пароля, ошибки', checkedValues('q3') === '1,3,4,5');
+        add('Типы угроз', 'Вирус — копирует; Фишинг — кража; Спуфинг — спам; Ransomware — шифрует',
+            sel('q4_1') === 'Вредоносная программа, копирующая себя' &&
+            sel('q4_2') === 'Кража данных через поддельные сайты' &&
+            sel('q4_3') === 'Рассылка спама от имени знакомых' &&
+            sel('q4_4') === 'Программа, шифрующая файлы за выкуп');
+        add('Расширения файлов', 'Вирус: .exe, Изображение: .jpg', sel('q5_1') === '.exe' && sel('q5_2') === '.jpg');
+        add('Куки (cookies)', 'Небольшие текстовые файлы с данными о посещениях', checkedValue('q6') === '2');
+        add('Надёжный источник', 'Автор/дата, ссылки на исследования, подтверждение другими', checkedValues('q7') === '1,3,4');
+        add('Поисковые операторы', '"фраза" — точная; -слово — исключить; site: — на сайте; intitle: — в заголовке',
+            sel('q8_1') === 'Искать точную фразу' &&
+            sel('q8_2') === 'Исключить слово из поиска' &&
+            sel('q8_3') === 'Искать на конкретном сайте' &&
+            sel('q8_4') === 'Искать в заголовке');
+        add('Двухфакторная аутентификация', 'Пароль + код из SMS/приложения', checkedValue('q9') === '2');
+        add('Лицензии и права', 'Creative Commons, ©', sel('q10_1') === 'Creative Commons' && sel('q10_2') === '©');
+        add('Цифровой след', 'Вся информация о человеке в интернете', checkedValue('q11') === '2');
+        add('Надёжный пароль', '12 символов, буквы + цифры + спецсимволы, разные для аккаунтов', checkedValues('q12') === '1,3,4');
+        add('Виды мошенничества', 'Нигерийские — наследство; Фишинг — магазин; Вишинг — банк; Скам — крипто',
+            sel('q13_1') === 'Обещание огромного наследства за предоплату' &&
+            sel('q13_2') === 'Фальшивый интернет-магазин' &&
+            sel('q13_3') === 'Фальшивая служба поддержки банка' &&
+            sel('q13_4') === 'Инвестиции в «крипто-чудо»');
+        add('VPN', 'Шифрует трафик и скрывает реальный IP-адрес', checkedValue('q14') === '2');
+        add('Авторское право', 'Плагиат, Creative Commons', sel('q15_1') === 'плагиат' && sel('q15_2') === 'Creative Commons');
+
+        document.getElementById('result-score').textContent = score + ' / 15';
+
+        var title, congrats;
+        if (score >= 13) {
+            title = '«Эксперт» 🌟';
+            congrats = 'Великолепно! Вы настоящие мастера цифровой безопасности!';
+        } else if (score >= 10) {
+            title = '«Продвинутый» 👍';
+            congrats = 'Отличный результат! Вы хорошо разбираетесь в основах безопасности.';
+        } else if (score >= 6) {
+            title = '«Уверенный пользователь» 🥉';
+            congrats = 'Хорошо! Но есть над чем поработать. Повторите сложные темы.';
+        } else {
+            title = '«Нужно повторить» 📚';
+            congrats = 'Не расстраивайтесь! Давайте разберём ошибки вместе.';
+        }
+
+        document.getElementById('result-title').textContent = title;
+        document.getElementById('result-congrats').textContent = congrats;
+
+        var tbody = document.querySelector('#answers-table tbody');
+        tbody.innerHTML = '';
+
+        results.forEach(function (r, index) {
+            var tr = document.createElement('tr');
+
+            var tdNum = document.createElement('td');
+            tdNum.textContent = index + 1;
+
+            var tdQ = document.createElement('td');
+            tdQ.textContent = r.q;
+
+            var tdA = document.createElement('td');
+            tdA.textContent = r.ans;
+
+            var tdR = document.createElement('td');
+            tdR.style.textAlign = 'center';
+            tdR.style.fontSize = '1.4em';
+            tdR.textContent = r.ok ? '✅' : '❌';
+
+            tr.appendChild(tdNum);
+            tr.appendChild(tdQ);
+            tr.appendChild(tdA);
+            tr.appendChild(tdR);
+            tbody.appendChild(tr);
+        });
+
+        showSlide(18);
+    }
+
+    showSlide(1);
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Модели и моделирование. Интерактивная презентация</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+  body {
+    background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #16213e 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+    color: #e0e0e0;
+  }
+  .presentation {
+    width: 100%;
+    max-width: 1200px;
+    background: #1e1e2e;
+    border-radius: 20px;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.5);
+    overflow: hidden;
+    position: relative;
+    height: calc(100vh - 30px);
+    max-height: 900px;
+  }
+  .slide {
+    display: none;
+    padding: 30px 50px;
+    animation: fadeIn 0.5s ease;
+    height: 100%;
+    overflow-y: auto;
+  }
+  .slide.active { display: flex; flex-direction: column; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .slide-title {
+    font-size: 36px;
+    color: #ffffff;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 600;
+  }
+  .slide-subtitle {
+    font-size: 18px;
+    color: #a0a0b0;
+    text-align: center;
+    margin-bottom: 20px;
+    font-style: italic;
+  }
+
+  /* Slide 1 - Title */
+  .title-slide {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  .title-slide h1 {
+    font-size: 60px;
+    color: #ffffff;
+    margin-bottom: 20px;
+    font-weight: 700;
+    text-shadow: 0 0 20px rgba(100, 150, 255, 0.3);
+  }
+  .title-slide h2 {
+    font-size: 28px;
+    color: #a0a0b0;
+    margin-bottom: 40px;
+    font-weight: 400;
+  }
+  .title-slide .quote {
+    font-size: 20px;
+    color: #8080a0;
+    font-style: italic;
+    margin-bottom: 50px;
+    padding: 0 40px;
+  }
+  .start-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 18px 50px;
+    font-size: 20px;
+    border-radius: 35px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    font-weight: 600;
+  }
+  .start-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(102, 126, 234, 0.6);
+  }
+
+  /* Slide 2 - Concepts */
+  .concepts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    margin-top: 15px;
+    flex: 1;
+  }
+  .concept-card {
+    background: #2a2a3e;
+    border: 2px solid #3a3a4e;
+    border-radius: 15px;
+    padding: 25px;
+    transition: all 0.3s;
+  }
+  .concept-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    border-color: #667eea;
+  }
+  .concept-icon {
+    font-size: 45px;
+    margin-bottom: 15px;
+  }
+  .concept-card h3 {
+    font-size: 26px;
+    color: #ffffff;
+    margin-bottom: 12px;
+  }
+  .concept-card p {
+    color: #c0c0d0;
+    line-height: 1.6;
+    font-size: 17px;
+  }
+  .concept-card .example {
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(102, 126, 234, 0.15);
+    border-radius: 8px;
+    font-size: 15px;
+    color: #a0b0ff;
+  }
+  .goal-box {
+    margin-top: 20px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 18px;
+    color: #ffffff;
+    border: 1px solid rgba(102, 126, 234, 0.3);
+  }
+
+  /* Slide 3 - Classification drag-drop */
+  .classification-area {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+    flex: 1;
+  }
+  .drop-zone {
+    background: #2a2a3e;
+    border: 2px dashed #4a4a5e;
+    border-radius: 12px;
+    padding: 20px;
+    min-height: 180px;
+    transition: all 0.3s;
+  }
+  .drop-zone.drag-over {
+    background: rgba(46, 204, 113, 0.15);
+    border-color: #2ecc71;
+  }
+  .drop-zone h3 {
+    font-size: 20px;
+    color: #ffffff;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .drop-zone p {
+    font-size: 14px;
+    color: #a0a0b0;
+    margin-bottom: 15px;
+  }
+  .drop-zone .items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 80px;
+  }
+  .examples-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    padding: 15px;
+    background: #252535;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #3a3a4e;
+  }
+  .draggable {
+    background: #3a3a4e;
+    border: 2px solid #667eea;
+    color: #ffffff;
+    padding: 10px 18px;
+    border-radius: 20px;
+    cursor: grab;
+    font-size: 16px;
+    transition: all 0.2s;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .draggable:hover {
+    background: #667eea;
+    transform: scale(1.05);
+  }
+  .draggable.dragging { opacity: 0.5; cursor: grabbing; }
+  .draggable .icon { font-size: 18px; }
+
+  /* Slide 4 - Stages */
+  .stages-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex: 1;
+  }
+  .stage-item {
+    background: #2a2a3e;
+    border: 2px solid #3a3a4e;
+    border-radius: 10px;
+    padding: 18px 25px;
+    cursor: grab;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 18px;
+  }
+  .stage-item:hover { border-color: #667eea; background: rgba(102, 126, 234, 0.1); }
+  .stage-item.dragging { opacity: 0.5; }
+  .stage-item .num {
+    background: #667eea;
+    color: white;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+    font-size: 18px;
+  }
+  .stage-item .arrow {
+    margin-left: auto;
+    color: #a0a0b0;
+    font-size: 20px;
+  }
+
+  /* Slide 5 - Practical example */
+  .practical-box {
+    background: rgba(255, 167, 38, 0.15);
+    border-left: 5px solid #ffa726;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+  }
+  .practical-box h3 {
+    color: #ffa726;
+    margin-bottom: 10px;
+    font-size: 22px;
+  }
+  .practical-box p {
+    color: #c0c0d0;
+    line-height: 1.6;
+    font-size: 17px;
+  }
+  .steps-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+  }
+  .step-item {
+    background: #2a2a3e;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #3a3a4e;
+  }
+  .step-header {
+    padding: 18px 25px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    color: #ffffff;
+    transition: background 0.2s;
+    font-size: 18px;
+  }
+  .step-header:hover { background: rgba(102, 126, 234, 0.1); }
+  .step-content {
+    padding: 0 25px;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s;
+    color: #c0c0d0;
+    line-height: 1.6;
+    font-size: 16px;
+  }
+  .step-item.open .step-content {
+    padding: 18px 25px;
+    max-height: 300px;
+  }
+  .step-item.open .step-header .arrow-icon { transform: rotate(180deg); }
+  .arrow-icon { transition: transform 0.3s; }
+
+  /* Slide 6 - Quiz */
+  .quiz-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    flex: 1;
+  }
+  .quiz-question {
+    background: #2a2a3e;
+    border-radius: 12px;
+    padding: 18px;
+    border: 2px solid #3a3a4e;
+  }
+  .quiz-question h4 {
+    color: #ffffff;
+    margin-bottom: 12px;
+    font-size: 18px;
+  }
+  .quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .quiz-option {
+    background: #3a3a4e;
+    border: 2px solid #4a4a5e;
+    padding: 12px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 16px;
+    color: #e0e0e0;
+  }
+  .quiz-option:hover { border-color: #667eea; background: rgba(102, 126, 234, 0.15); }
+  .quiz-option.selected { border-color: #667eea; background: rgba(102, 126, 234, 0.2); }
+  .quiz-option.correct { border-color: #2ecc71; background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+  .quiz-option.wrong { border-color: #e74c3c; background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
+  select.quiz-select {
+    padding: 10px 15px;
+    border: 2px solid #4a4a5e;
+    border-radius: 8px;
+    font-size: 16px;
+    background: #3a3a4e;
+    color: #ffffff;
+    cursor: pointer;
+  }
+
+  /* Results */
+  .results-box {
+    text-align: center;
+    padding: 30px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .score {
+    font-size: 70px;
+    color: #667eea;
+    font-weight: bold;
+    margin-bottom: 15px;
+  }
+  .score-message {
+    font-size: 28px;
+    color: #ffffff;
+    margin-bottom: 25px;
+  }
+  .answers-list {
+    text-align: left;
+    background: #2a2a3e;
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    border: 1px solid #3a3a4e;
+  }
+  .answers-list div {
+    padding: 10px 0;
+    border-bottom: 1px solid #3a3a4e;
+    font-size: 17px;
+    color: #c0c0d0;
+  }
+  .answers-list div:last-child { border-bottom: none; }
+
+  /* Navigation */
+  .nav-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #3a3a4e;
+  }
+  .nav-btn {
+    background: #3a3a4e;
+    color: #ffffff;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 17px;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+  .nav-btn:hover:not(:disabled) { background: #667eea; }
+  .nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .slide-counter {
+    color: #a0a0b0;
+    font-size: 16px;
+    align-self: center;
+  }
+
+  /* Action buttons */
+  .action-btns {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 15px;
+  }
+  .action-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+    font-weight: 600;
+  }
+  .action-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4); }
+  .action-btn.secondary { background: #4a4a5e; }
+  .action-btn.secondary:hover { background: #5a5a6e; }
+
+  /* ========= SCHEMES ========= */
+  .scheme-container {
+    position: relative;
+    padding: 10px 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .scheme-root {
+    text-align: center;
+    margin-bottom: 15px;
+  }
+  .scheme-root-box {
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 16px 32px;
+    border-radius: 30px;
+    font-size: 20px;
+    font-weight: 600;
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    animation: pulseRoot 2s infinite;
+  }
+  @keyframes pulseRoot {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+  }
+  .scheme-branches {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    position: relative;
+    flex: 1;
+  }
+  .scheme-branch {
+    flex: 1;
+    min-width: 220px;
+    max-width: 320px;
+    background: #2a2a3e;
+    border: 2px solid #3a3a4e;
+    border-radius: 15px;
+    padding: 18px;
+    position: relative;
+    transition: all 0.3s;
+    animation: slideDown 0.6s ease;
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .scheme-branch:hover {
+    border-color: #667eea;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+  }
+  .branch-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 2px dashed #4a4a5e;
+  }
+  .branch-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+    animation: iconBounce 2s ease infinite;
+  }
+  @keyframes iconBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+  .branch-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #ffffff;
+  }
+  .branch-subtitle {
+    font-size: 13px;
+    color: #a0a0b0;
+    margin-top: 2px;
+  }
+  .branch-items {
+    min-height: 60px;
+    padding: 10px;
+    background: #252535;
+    border: 2px dashed #4a4a5e;
+    border-radius: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    transition: all 0.3s;
+  }
+  .branch-items.over {
+    background: rgba(46, 204, 113, 0.15);
+    border-color: #2ecc71;
+  }
+  .branch-items .draggable {
+    font-size: 14px;
+    padding: 8px 14px;
+  }
+
+  /* Color themes for branches */
+  .branch-material .branch-icon { background: rgba(255, 152, 0, 0.2); color: #ffa726; }
+  .branch-material { border-top: 4px solid #ff9800; }
+  .branch-info .branch-icon { background: rgba(3, 169, 244, 0.2); color: #29b6f6; }
+  .branch-info { border-top: 4px solid #03a9f4; }
+  .branch-verbal .branch-icon { background: rgba(233, 30, 99, 0.2); color: #f06292; }
+  .branch-verbal { border-top: 4px solid #e91e63; }
+  .branch-graphic .branch-icon { background: rgba(76, 175, 80, 0.2); color: #66bb6a; }
+  .branch-graphic { border-top: 4px solid #4caf50; }
+  .branch-math .branch-icon { background: rgba(156, 39, 176, 0.2); color: #ba68c8; }
+  .branch-math { border-top: 4px solid #9c27b0; }
+  .branch-special .branch-icon { background: rgba(255, 87, 34, 0.2); color: #ff8a65; }
+  .branch-special { border-top: 4px solid #ff5722; }
+  .branch-imitation .branch-icon { background: rgba(0, 150, 136, 0.2); color: #4db6ac; }
+  .branch-imitation { border-top: 4px solid #009688; }
+  .branch-analytical .branch-icon { background: rgba(63, 81, 181, 0.2); color: #7986cb; }
+  .branch-analytical { border-top: 4px solid #3f51b5; }
+  .branch-optimization .branch-icon { background: rgba(255, 193, 7, 0.2); color: #ffd54f; }
+  .branch-optimization { border-top: 4px solid #ffc107; }
+
+  /* Examples pool for schemes */
+  .examples-pool {
+    margin-top: 15px;
+    padding: 15px;
+    background: #252535;
+    border-radius: 12px;
+    border: 2px dashed #4a4a5e;
+  }
+  .pool-title {
+    text-align: center;
+    color: #a0a0b0;
+    font-size: 15px;
+    margin-bottom: 10px;
+    font-style: italic;
+  }
+  .pool-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    min-height: 40px;
+  }
+
+  /* Feedback */
+  .scheme-feedback {
+    text-align: center;
+    margin-top: 10px;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 16px;
+    min-height: 20px;
+  }
+  .scheme-feedback.success { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+  .scheme-feedback.error { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
+
+  /* Sub-branches (for scheme 2 - 4 branches) */
+  .scheme-branches.four {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+  }
+  .scheme-branches.four .scheme-branch {
+    max-width: none;
+  }
+
+  @media (max-width: 768px) {
+    .slide { padding: 20px 15px; }
+    .title-slide h1 { font-size: 36px; }
+    .concepts { grid-template-columns: 1fr; }
+    .classification-area { grid-template-columns: 1fr; }
+    .scheme-branches.four { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="presentation">
+
+  <!-- SLIDE 1: Title -->
+  <div class="slide active title-slide">
+    <h1>МОДЕЛИ И МОДЕЛИРОВАНИЕ</h1>
+    <h2>Классификации моделей и этапы построения</h2>
+    <p class="quote">«Моделирование – искусство понимать мир через упрощение»</p>
+    <button class="start-btn" onclick="goToSlide(1)">Начать изучение →</button>
+  </div>
+
+  <!-- SLIDE 2: Concepts -->
+  <div class="slide">
+    <h2 class="slide-title">Основные понятия</h2>
+    <div class="concepts">
+      <div class="concept-card">
+        <div class="concept-icon">🧩</div>
+        <h3>Модель</h3>
+        <p>Новый объект, который отражает существенные (с точки зрения цели) признаки предмета, процесса или явления.</p>
+        <div class="example">📍 Пример: В географии планету Земля познают через модель — глобус.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-icon">🔬</div>
+        <h3>Моделирование</h3>
+        <p>Метод познания, заключающийся в создании и исследовании моделей реальных предметов, процессов и явлений.</p>
+      </div>
+    </div>
+    <div class="goal-box">
+      🎯 <strong>Цель моделирования</strong> — получить новые знания об оригинале, не исследуя его напрямую.
+    </div>
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="goToSlide(0)">← Назад</button>
+      <span class="slide-counter">2 / 10</span>
+      <button class="nav-btn" onclick="goToSlide(2)">Далее →</button>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: Classification (basic) -->
+  <div class="slide">
+    <h2 class="slide-title">Классификация моделей</h2>
+    <p class="slide-subtitle">Перетащите примеры моделей в соответствующие категории</p>
+    <div class="classification-area">
+      <div class="drop-zone" data-category="material">
+        <h3>🏗️ Материальная модель</h3>
+        <p>Муляж, макет; имеет материальное воплощение</p>
+        <div class="items"></div>
+      </div>
+      <div class="drop-zone" data-category="info">
+        <h3>📄 Информационная модель</h3>
+        <p>Описание, формула, схема, чертёж, программа</p>
+        <div class="items"></div>
+      </div>
+    </div>
+    <div class="examples-row" id="basic-examples">
+      <div class="draggable" draggable="true" data-correct="material"><span class="icon">🌍</span> Глобус</div>
+      <div class="draggable" draggable="true" data-correct="info"><span class="icon">📐</span> Чертёж</div>
+      <div class="draggable" draggable="true" data-correct="material"><span class="icon">🏠</span> Макет здания</div>
+      <div class="draggable" draggable="true" data-correct="info"><span class="icon">🧮</span> Формула</div>
+      <div class="draggable" draggable="true" data-correct="material"><span class="icon">🍎</span> Муляж яблока</div>
+      <div class="draggable" draggable="true" data-correct="info"><span class="icon">📋</span> Схема</div>
+    </div>
+    <div class="action-btns">
+      <button class="action-btn" onclick="checkBasicClassification()">✓ Проверить</button>
+      <button class="action-btn secondary" onclick="resetBasicClassification()">↻ Сбросить</button>
+    </div>
+    <div id="basic-feedback" class="scheme-feedback"></div>
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="goToSlide(1)">← Назад</button>
+      <span class="slide-counter">3 / 10</span>
+      <button class="nav-btn" onclick="goToSlide(3)">Далее →</button>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: Stages -->
+  <div class="slide">
+    <h2 class="slide-title">Этапы моделирования</h2>
+    <p class="slide-subtitle">Расположите этапы моделирования в правильном порядке, используя стрелки.</p>
+    <div class="stages-list" id="stages-list">
+      <div class="stage-item" draggable="true" data-order="3">
+        <span class="num">?</span>
+        <span>Формализация — переход к информационной модели</span>
+        <span class="arrow">⋮⋮</span>
+      </div>
+      <div class="stage-item" draggable="true" data-order="1">
+        <span class="num">?</span>
+        <span>Определение цели и объекта моделирования</span>
+        <span class="arrow">⋮⋮</span>
+      </div>
+      <div class="stage-item" draggable="true" data-order="4">
+        <span class="num">?</span>
+        <span>Исследование модели и анализ результатов</span>
+        <span class="arrow">⋮⋮</span>
+      </div>
+      <div class="stage-item" draggable="true" data-order="2">
+        <span class="num">?</span>
+        <span>Анализ реального объекта и выделение существенных признаков</span>
+        <span class="arrow">⋮⋮</span>
+      </div>
+    </div>
+    <div class="action-btns">
+      <button class="action-btn" onclick="checkStages()">✓ Проверить порядок</button>
+      <button class="action-btn secondary" onclick="shuffleStages()">🔀 Перемешать</button>
+    </div>
+    <div id="stages-feedback" class="scheme-feedback"></div>
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="goToSlide(2)">← Назад</button>
+      <span class="slide-counter">4 / 10</span>
+      <button class="nav-btn" onclick="goToSlide(4)">Далее →</button>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: Scheme 1 -->
+  <div class="slide">
+    <h2 class="slide-title">🌳 Схема 1. Виды моделей по способу представления</h2>
+    <p class="slide-subtitle">Перетащите примеры в соответствующие категории схемы</p>
+    <div class="scheme-container">
+      <div class="scheme-root">
+        <div class="scheme-root-box">🧩 МОДЕЛИ</div>
+      </div>
+      <div class="scheme-branches">
+        <div class="scheme-branch branch-material">
+          <div class="branch-header">
+            <div class="branch-icon">🏗️</div>
+            <div>
+              <div class="branch-title">Материальные</div>
+              <div class="branch-subtitle">имеют физическую форму</div>
+            </div>
+          </div>
+          <div class="branch-items" data-correct="material"></div>
+        </div>
+        <div class="scheme-branch branch-info">
+          <div class="branch-header">
+            <div class="branch-icon">📄</div>
+            <div>
+              <div class="branch-title">Информационные</div>
+              <div class="branch-subtitle">описывают признаки информацией</div>
+            </div>
+          </div>
+          <div class="branch-items" data-correct="info"></div>
+        </div>
+      </div>
+      <div class="examples-pool">
+        <div class="pool-title">📦 Примеры — перетащите в нужную категорию</div>
+        <div class="pool-items" id="pool-scheme1">
+          <div class="draggable" draggable="true" data-correct="material"><span class="icon">🌍</span> Глобус</div>
+          <div class="draggable" draggable="true" data-correct="info"><span class="icon">📐</span> Чертёж дома</div>
+          <div class="draggable" draggable="true" data-correct="material"><span class="icon">🏠</span> Макет здания</div>
+          <div class="draggable" draggable="true" data-correct="info"><span class="icon">📊</span> Таблица</div>
+          <div class="draggable" draggable="true" data-correct="material"><span class="icon">🍎</span> Муляж яблока</div>
+          <div class="draggable" draggable="true" data-correct="info"><span class="icon">🧮</span> Формула</div>
+          <div class="draggable" draggable="true" data-correct="material"><span class="icon">🚗</span> Модель автомобиля</div>
+          <div class="draggable" draggable="true" data-correct="info"><span class="icon">📋</span> Схема метро</div>
+        </div>
+      </div>
+    </div>
+    <div class="action-btns">
+      <button class="action-btn" onclick="checkScheme('scheme1')">✓ Проверить</button>
+      <button class="action-btn secondary" onclick="resetScheme('scheme1')">↻ Сбросить</button>
+    </div>
+    <div id="scheme1-feedback" class="scheme-feedback"></div>
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="goToSlide(3)">← Назад</button>
+      <span class="slide-counter">5 / 10</span>
+      <button class="nav-btn" onclick="goToSlide(5)">Далее →</button>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: Scheme 2 -->
+  <div class="slide">
+    <h2 class="slide-title">🌳 Схема 2. Виды моделей по форме представления информации</h2>
+    <p class="slide-subtitle">Перетащите примеры в соответствующие ветви схемы</p>
+    <div class="scheme-container">
+      <div class="scheme-root">
+        <div class="scheme-root-box">📚 ИНФОРМАЦИОННЫЕ МОДЕЛИ</div>
+      </div>
+      <div class="scheme-branches four">
+        <div class="scheme-branch branch-verbal">
+          <div class="branch-header">
+            <div class="branch-icon">💬</div>
+            <div>
+              <div class="branch-title">Вербальные</div>
+              <div class="branch-subtitle">словесное описание</div>
+            </div>
+          </div>
+          <div class="branch-items" data-correct="verbal"></div>
+        </div>
+        <div class="scheme-branch branch-graphic">
+          <div class="branch-header">
+            <div class="branch-icon">🖼️</div>
+            <div>
+              <div class="branch-title">Графические</div>
+              <div class="branch-subtitle">рисунки, схемы, карты</div>
+            </div>
+          </div>
+          <div class="branch-items" data-correct="graphic"></div>
+        </div>
+        <div class="scheme-branch branch-math">
+          <div class="branch-header">
+            <div class="branch-icon">🧮</div>
+            <div>
+              <div class="branch-title">Математические</div>
+              <div class="branch-subtitle">формулы, уравнения</div>
+            </div>
+          </div>
+          <div class="branch-items" data-correct="math"></div>
+        </div>
+        <div class="scheme-branch branch-special">
+          <div class="branch-header">
+            <div class="branch-icon">🎼</div>
+            <div>
+              <div class="branch-title">Специальные</div>
+              <div class="branch-subtitle">ноты, хим. формулы</div>
+            </div>
+          </div>
+          <div class="branch-items" data-correct="special"></div>
+        </div>
+      </div>
+      <div class="examples-pool">
+        <div class="pool-title">📦 Примеры — перетащите в нужную ветвь</div>
+        <div class="pool-items" id="pool-scheme2">
+          <div class="draggable" draggable="true" data-correct="verbal"><span class="icon">💬</span> Описание героя</div>
+          <div class="draggable" draggable="true" data-correct="graphic"><span class="icon">🗺️</span> Карта мира</div>
+          <div class="draggable" draggable="true" data-correct="math"><span class="icon">📐</span> E=mc²</div>
+          <div class="draggable" draggable="true" data-correct="special"><span class="icon">🎵</span> Нотная запись</div>
+          <div class="draggable" draggable="true" data-correct="verbal"><span class="icon">📖</span> Сказка</div>
+          <div class="draggable" draggable="true" data-correct="graphic"><span class="icon">📊</span> График функции</div>
+          <div class="draggable" draggable="true" data-correct="math"><span class="icon">∑</span> Уравнение</div>
+          <div class="draggable" draggable="true" data-correct="special"><span class="icon">⚗️</span> H₂O</div>
+          <div class="draggable" draggable="true" data-correct="verbal"><span class="icon">📝</span> Инструкция</div>
+          <div class="draggable" draggable="true" data-correct="graphic"><span class="icon">📐</span> Чертёж</div>
+        </div>
+      </div>
+    </div>
+    <div class="action-btns">
+      <button class="action-btn" onclick="checkScheme('scheme2')">✓ Проверить</button>
+      <button class="action-btn secondary" onclick="resetScheme('scheme2')">↻ Сбросить</button>
+    </div>
+    <div id="scheme2-feedback" class="scheme-feedback"></div>
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="goToSlide(4)">← Назад</button>
+      <span class="slide-counter">6 / 10</span>
+      <button class="nav-btn" onclick="goToSlide(6)">Далее →</button>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: Scheme 3 -->
+  <div class="slide">
+    <h2 class="slide-title">🌳 Схема 3. Компьютерные модели по способу реализации</h2>
+    <p class="slide-subtitle">Перетащите примеры в соответствующие категории</p>
+    <div class="scheme-container">
+      <div class="scheme-root">
+        <div class="scheme-root-box">💻 КОМПЬЮТЕРНЫЕ МОДЕЛИ</div>
+      </div>
+      <div class="scheme-branches">
+        <div class="scheme-branch branch-imitation">
+          <div class="branch-header">
+            <div class="branch-icon">🎬</div>
+            <div>
+              <div class="branch-title">Имитационные</div>
+              <div class="branch-subtitle">воспроизводят поведение системы</div>
+            </div>
+          </div>
+          <div class="branch-items" data-correct="imitation"></div>
+        </div>
+        <div class="scheme-branch branch-analytical">
+          <div class="branch-header">
+            <div class="branch-icon">🔢</div>
+            <div>
+              <div class="branch-title">Аналитические</div>
+              <div class="branch-subtitle">основаны на формулах и уравнениях</div>
+            </div>
+          </div>
+          <div class="branch-items" data-correct="analytical"></div>
+        </div>
+        <div class="scheme-branch branch-optimization">
+          <div class="branch-header">
+            <div class="branch-icon">🎯</div>
+            <div>
+              <div class="branch-title">Оптимизационные</div>
+              <div class="branch-subtitle">ищут лучшее решение</div>
+            </div>
+          </div>
+          <div class="branch-items" data-correct="optimization"></div>
+        </div>
+      </div>
+      <div class="examples-pool">
+        <div class="pool-title">📦 Примеры — перетащите в нужную категорию</div>
+        <div class="pool-items" id="pool-scheme3">
+          <div class="draggable" draggable="true" data-correct="imitation"><span class="icon">🌦️</span> Модель погоды</div>
+          <div class="draggable" draggable="true" data-correct="analytical"><span class="icon">🚀</span> Расчёт траектории</div>
+          <div class="draggable" draggable="true" data-correct="optimization"><span class="icon">🚂</span> Расписание поездов</div>
+          <div class="draggable" draggable="true" data-correct="imitation"><span class="icon">✈️</span> Тренажёр пилота</div>
+          <div class="draggable" draggable="true" data-correct="analytical"><span class="icon">📈</span> Прогноз роста</div>
+          <div class="draggable" draggable="true" data-correct="optimization"><span class="icon">📦</span> Маршрут доставки</div>
+          <div class="draggable" draggable="true" data-correct="imitation"><span class="icon">🏙️</span> Модель города</div>
+          <div class="draggable" draggable="true" data-correct="analytical"><span class="icon">⚛️</span> Модель атома</div>
+          <div class="draggable" draggable="true" data-correct="optimization"><span class="icon">💰</span> Оптимальный портфель</div>
+        </div>
+      </div>
+    </div>
+    <div class="action-btns">
+      <button class="action-btn" onclick="checkScheme('scheme3')">✓ Проверить</button>
+      <button class="action-btn secondary" onclick="resetScheme('scheme3')">↻ Сбросить</button>
+    </div>
+    <div id="scheme3-feedback" class="scheme-feedback"></div>
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="goToSlide(5)">← Назад</button>
+      <span class="slide-counter">7 / 10</span>
+      <button class="nav-btn" onclick="goToSlide(7)">Далее →</button>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: Practical example -->
+  <div class="slide">
+    <h2 class="slide-title">Практический пример</h2>
+    <div class="practical-box">
+      <h3>☕ Кофейня «Утренний кофе»</h3>
+      <p>Владелец кофейни сталкивается с очередями в часы пик (8:00–10:00). Клиенты уходят, бариста на износ. <strong>Решение: моделирование.</strong></p>
+    </div>
+    <div class="steps-accordion">
+      <div class="step-item open">
+        <div class="step-header" onclick="toggleStep(this)">
+          <span>1️⃣ Цель и критерии успеха</span>
+          <span class="arrow-icon">▼</span>
+        </div>
+        <div class="step-content">
+          <strong>Цель:</strong> Сократить время обслуживания на 30% и устранить очереди.<br>
+          <strong>Критерий:</strong> Уменьшение времени с 6 до 4 минут.
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-header" onclick="toggleStep(this)">
+          <span>2️⃣ Анализ и существенные признаки</span>
+          <span class="arrow-icon">▼</span>
+        </div>
+        <div class="step-content">
+          <strong>Данные:</strong> Поток клиентов, время операций, работа бариста.<br>
+          <strong>Существенные:</strong> Длительность операций, кол-во персонала, последовательность.<br>
+          <strong>Несущественные:</strong> Цвет униформы, музыка, марка кофе.
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-header" onclick="toggleStep(this)">
+          <span>3️⃣ Формализация и результат</span>
+          <span class="arrow-icon">▼</span>
+        </div>
+        <div class="step-content">
+          <strong>Решение:</strong> Создание информационной имитационной модели в специальном ПО для оптимизации процессов.
+        </div>
+      </div>
+    </div>
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="goToSlide(6)">← Назад</button>
+      <span class="slide-counter">8 / 10</span>
+      <button class="nav-btn" onclick="goToSlide(8)">Далее →</button>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: Quiz -->
+  <div class="slide">
+    <h2 class="slide-title">Тест самопроверки</h2>
+    <div class="quiz-container">
+      <div class="quiz-question">
+        <h4>1. Что такое модель?</h4>
+        <div class="quiz-options" data-q="1">
+          <div class="quiz-option" data-value="1">Точная копия объекта со всеми мельчайшими деталями</div>
+          <div class="quiz-option" data-value="2">Новый объект, отражающий существенные признаки оригинала</div>
+          <div class="quiz-option" data-value="3">Компьютерная программа для расчётов</div>
+        </div>
+      </div>
+      <div class="quiz-question">
+        <h4>2. Какой из примеров является информационной моделью?</h4>
+        <div class="quiz-options" data-q="2">
+          <div class="quiz-option" data-value="1">Муляж яблока</div>
+          <div class="quiz-option" data-value="2">Глобус</div>
+          <div class="quiz-option" data-value="3">Чертёж и математическая формула</div>
+        </div>
+      </div>
+      <div class="quiz-question">
+        <h4>3. Первый этап моделирования — это...</h4>
+        <select class="quiz-select" data-q="3">
+          <option value="">— Выберите вариант —</option>
+          <option value="1">Формализация</option>
+          <option value="2">Определение цели моделирования</option>
+          <option value="3">Анализ реального объекта</option>
+          <option value="4">Построение информационной модели</option>
+        </select>
+      </div>
+      <div class="quiz-question">
+        <h4>4. Процесс придания модели определённой формы на основе свойств называется...</h4>
+        <select class="quiz-select" data-q="4">
+          <option value="">— Выберите вариант —</option>
+          <option value="1">Адекватность</option>
+          <option value="2">Формализация</option>
+          <option value="3">Моделирование</option>
+          <option value="4">Упрощение</option>
+        </select>
+      </div>
+      <div class="quiz-question">
+        <h4>5. Сопоставьте термин и его определение / пример:</h4>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+          <div style="display:flex;gap:10px;align-items:center;">
+            <strong>Материальная модель:</strong>
+            <select class="quiz-select" data-q="5" data-sub="a">
+              <option value="">— Выберите —</option>
+              <option value="1">Глобус</option>
+              <option value="2">Формула</option>
+              <option value="3">Схема</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <strong>Информационная модель:</strong>
+            <select class="quiz-select" data-q="5" data-sub="b">
+              <option value="">— Выберите —</option>
+              <option value="1">Макет здания</option>
+              <option value="2">Цифровой двойник</option>
+              <option value="3">Муляж</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <strong>Адекватность модели:</strong>
+            <select class="quiz-select" data-q="5" data-sub="c">
+              <option value="">— Выберите —</option>
+              <option value="1">Совпадение существенных признаков</option>
+              <option value="2">Выбор программного обеспечения</option>
+              <option value="3">Искусство понимать мир</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="action-btns">
+      <button class="action-btn" onclick="finishQuiz()">✓ Завершить тест</button>
+    </div>
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="goToSlide(7)">← Назад</button>
+      <span class="slide-counter">9 / 10</span>
+      <button class="nav-btn" onclick="goToSlide(9)">Далее →</button>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: Results -->
+  <div class="slide">
+    <h2 class="slide-title">Результаты теста</h2>
+    <div class="results-box">
+      <div class="score"><span id="final-score">0</span> из 5 баллов</div>
+      <div class="score-message" id="score-message">Отлично!</div>
+      <div class="answers-list" id="answers-list">
+        <div>Вопрос 1: <span id="ans1">—</span></div>
+        <div>Вопрос 2: <span id="ans2">—</span></div>
+        <div>Вопрос 3: <span id="ans3">—</span></div>
+        <div>Вопрос 4: <span id="ans4">—</span></div>
+        <div>Вопрос 5: <span id="ans5">—</span></div>
+      </div>
+      <div class="action-btns">
+        <button class="action-btn" onclick="resetQuiz()">🔄 Следующее задание - Яндекс-учебник: Табличные модели</button>
+      </div>
+	  <img src="497239.png">
+    </div>
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="goToSlide(8)">← Назад</button>
+      <span class="slide-counter">10 / 10</span>
+      <button class="nav-btn" onclick="goToSlide(0)">🏠 В начало</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ===== Navigation =====
+  let currentSlide = 0;
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+
+  function goToSlide(n) {
+    slides[currentSlide].classList.remove('active');
+    currentSlide = n;
+    slides[currentSlide].classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  // ===== Slide 3: Basic classification - DRAG & DROP =====
+  let draggedItem = null;
+
+  function initBasicDragDrop() {
+    const items = document.querySelectorAll('#basic-examples .draggable');
+    const zones = document.querySelectorAll('.drop-zone');
+
+    items.forEach(item => {
+      item.addEventListener('dragstart', function(e) {
+        draggedItem = this;
+        this.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+
+      item.addEventListener('dragend', function(e) {
+        this.classList.remove('dragging');
+        draggedItem = null;
+        zones.forEach(z => z.classList.remove('drag-over'));
+      });
+    });
+
+    zones.forEach(zone => {
+      zone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        this.classList.add('drag-over');
+      });
+
+      zone.addEventListener('dragleave', function(e) {
+        this.classList.remove('drag-over');
+      });
+
+      zone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('drag-over');
+        if (draggedItem) {
+          const itemsContainer = this.querySelector('.items');
+          itemsContainer.appendChild(draggedItem);
+        }
+      });
+    });
+  }
+
+  function checkBasicClassification() {
+    const zones = document.querySelectorAll('.drop-zone');
+    let correct = 0, total = 0;
+    zones.forEach(zone => {
+      const cat = zone.dataset.category;
+      zone.querySelectorAll('.draggable').forEach(item => {
+        total++;
+        if (item.dataset.correct === cat) {
+          item.style.background = 'rgba(46, 204, 113, 0.3)';
+          item.style.borderColor = '#2ecc71';
+          correct++;
+        } else {
+          item.style.background = 'rgba(231, 76, 60, 0.3)';
+          item.style.borderColor = '#e74c3c';
+        }
+      });
+    });
+    const fb = document.getElementById('basic-feedback');
+    if (total === 0) {
+      fb.className = 'scheme-feedback error';
+      fb.textContent = '⚠️ Перетащите примеры в категории';
+    } else if (correct === total) {
+      fb.className = 'scheme-feedback success';
+      fb.textContent = `✅ Отлично! Все ${total} примеров размещены верно!`;
+    } else {
+      fb.className = 'scheme-feedback error';
+      fb.textContent = `❌ Верно: ${correct} из ${total}. Попробуйте ещё раз!`;
+    }
+  }
+
+  function resetBasicClassification() {
+    const pool = document.getElementById('basic-examples');
+    document.querySelectorAll('.drop-zone .items .draggable').forEach(item => {
+      item.style.background = '';
+      item.style.borderColor = '';
+      pool.appendChild(item);
+    });
+    document.getElementById('basic-feedback').textContent = '';
+  }
+
+  // ===== Slide 4: Stages =====
+  const stagesList = document.getElementById('stages-list');
+  let draggedStage = null;
+
+  stagesList.querySelectorAll('.stage-item').forEach(item => {
+    item.addEventListener('dragstart', e => {
+      draggedStage = item;
+      item.classList.add('dragging');
+    });
+    item.addEventListener('dragend', e => {
+      item.classList.remove('dragging');
+    });
+    item.addEventListener('dragover', e => {
+      e.preventDefault();
+      const afterElement = getDragAfterElement(stagesList, e.clientY);
+      if (afterElement == null) {
+        stagesList.appendChild(draggedStage);
+      } else {
+        stagesList.insertBefore(draggedStage, afterElement);
+      }
+    });
+  });
+
+  function getDragAfterElement(container, y) {
+    const elements = [...container.querySelectorAll('.stage-item:not(.dragging)')];
+    return elements.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) {
+        return { offset, element: child };
+      } else {
+        return closest;
+      }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+  }
+
+  function checkStages() {
+    const items = stagesList.querySelectorAll('.stage-item');
+    let correct = 0;
+    items.forEach((item, i) => {
+      const order = parseInt(item.dataset.order);
+      const num = item.querySelector('.num');
+      if (order === i + 1) {
+        num.textContent = i + 1;
+        num.style.background = '#2ecc71';
+        item.style.borderColor = '#2ecc71';
+        item.style.background = 'rgba(46, 204, 113, 0.15)';
+        correct++;
+      } else {
+        num.textContent = '✗';
+        num.style.background = '#e74c3c';
+        item.style.borderColor = '#e74c3c';
+        item.style.background = 'rgba(231, 76, 60, 0.15)';
+      }
+    });
+    const fb = document.getElementById('stages-feedback');
+    if (correct === items.length) {
+      fb.className = 'scheme-feedback success';
+      fb.textContent = `✅ Отлично! Все ${correct} этапов расположены верно!`;
+    } else {
+      fb.className = 'scheme-feedback error';
+      fb.textContent = `❌ Верно: ${correct} из ${items.length}. Попробуйте ещё раз!`;
+    }
+  }
+
+  function shuffleStages() {
+    const items = [...stagesList.querySelectorAll('.stage-item')];
+    items.forEach(item => {
+      item.style.background = '';
+      item.style.borderColor = '';
+      item.querySelector('.num').textContent = '?';
+      item.querySelector('.num').style.background = '#667eea';
+    });
+    for (let i = items.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      stagesList.appendChild(items[j]);
+      items.splice(j, 1);
+    }
+    document.getElementById('stages-feedback').textContent = '';
+  }
+
+  // ===== Accordion =====
+  function toggleStep(header) {
+    header.parentElement.classList.toggle('open');
+  }
+
+  // ===== Schemes drag & drop =====
+  let draggedEl = null;
+
+  function initSchemesDragDrop() {
+    const allDraggables = document.querySelectorAll('.scheme-container .draggable');
+    const allDropZones = document.querySelectorAll('.branch-items');
+
+    allDraggables.forEach(item => {
+      item.addEventListener('dragstart', function(e) {
+        draggedEl = this;
+        e.dataTransfer.effectAllowed = 'move';
+        setTimeout(() => { if (draggedEl) draggedEl.style.opacity = '0.4'; }, 0);
+      });
+
+      item.addEventListener('dragend', function(e) {
+        this.style.opacity = '1';
+        draggedEl = null;
+        allDropZones.forEach(z => z.classList.remove('over'));
+      });
+    });
+
+    allDropZones.forEach(zone => {
+      zone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        this.classList.add('over');
+      });
+
+      zone.addEventListener('dragleave', function(e) {
+        this.classList.remove('over');
+      });
+
+      zone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('over');
+        if (draggedEl) {
+          this.appendChild(draggedEl);
+        }
+      });
+    });
+  }
+
+  function resetScheme(schemeId) {
+    const pool = document.getElementById('pool-' + schemeId);
+    const branches = pool.parentElement.parentElement.querySelectorAll('.branch-items');
+    branches.forEach(b => {
+      while (b.firstChild) {
+        const item = b.firstChild;
+        item.style.background = '';
+        item.style.borderColor = '';
+        pool.appendChild(item);
+      }
+    });
+    const fb = document.getElementById(schemeId + '-feedback');
+    if (fb) fb.textContent = '';
+  }
+
+  function checkScheme(schemeId) {
+    const pool = document.getElementById('pool-' + schemeId);
+    const branches = pool.parentElement.parentElement.querySelectorAll('.branch-items');
+    let correct = 0, total = 0, placed = 0;
+
+    branches.forEach(b => {
+      const cat = b.dataset.correct;
+      b.querySelectorAll('.draggable').forEach(item => {
+        total++;
+        placed++;
+        if (item.dataset.correct === cat) {
+          item.style.background = 'rgba(46, 204, 113, 0.3)';
+          item.style.borderColor = '#2ecc71';
+          correct++;
+        } else {
+          item.style.background = 'rgba(231, 76, 60, 0.3)';
+          item.style.borderColor = '#e74c3c';
+        }
+      });
+    });
+
+    const inPool = pool.querySelectorAll('.draggable').length;
+
+    const fb = document.getElementById(schemeId + '-feedback');
+    if (placed === 0) {
+      fb.className = 'scheme-feedback error';
+      fb.textContent = '⚠️ Перетащите примеры в ветви схемы';
+    } else if (correct === total && inPool === 0) {
+      fb.className = 'scheme-feedback success';
+      fb.textContent = `✅ Отлично! Все ${total} примеров размещены верно!`;
+    } else {
+      fb.className = 'scheme-feedback error';
+      const remaining = inPool > 0 ? ` Осталось в пуле: ${inPool}.` : '';
+      fb.textContent = `❌ Верно: ${correct} из ${total}.${remaining}`;
+    }
+  }
+
+  // ===== Quiz =====
+  const quizAnswers = { 1: 2, 2: 3, 3: 2, 4: 2, 5: { a: 1, b: 2, c: 1 } };
+  const userAnswers = { 1: null, 2: null, 3: null, 4: null, 5: { a: null, b: null, c: null } };
+
+  function initQuiz() {
+    // Questions 1-2: click options
+    document.querySelectorAll('.quiz-option').forEach(option => {
+      option.addEventListener('click', function() {
+        const parent = this.parentElement;
+        const q = parent.dataset.q;
+        parent.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+        this.classList.add('selected');
+        userAnswers[q] = parseInt(this.dataset.value);
+      });
+    });
+
+    // Questions 3-5: select dropdowns
+    document.querySelectorAll('.quiz-select').forEach(select => {
+      select.addEventListener('change', function() {
+        const q = this.dataset.q;
+        const sub = this.dataset.sub;
+        const val = this.value;
+        
+        if (sub) {
+          userAnswers[q][sub] = val ? parseInt(val) : null;
+        } else {
+          userAnswers[q] = val ? parseInt(val) : null;
+        }
+      });
+    });
+  }
+
+  function finishQuiz() {
+    let score = 0;
+    
+    // Questions 1-4
+    for (let q = 1; q <= 4; q++) {
+      const isCorrect = userAnswers[q] === quizAnswers[q];
+      if (isCorrect) score++;
+      document.getElementById('ans' + q).textContent = isCorrect ? '✅ Верно' : '❌ Неверно';
+    }
+    
+    // Question 5
+    const q5 = userAnswers[5];
+    const z5 = quizAnswers[5];
+    let q5correct = 0;
+    if (q5.a === z5.a) q5correct++;
+    if (q5.b === z5.b) q5correct++;
+    if (q5.c === z5.c) q5correct++;
+    if (q5correct === 3) score++;
+    document.getElementById('ans5').textContent = q5correct === 3 ? '✅ Верно' : `❌ (${q5correct}/3)`;
+
+    document.getElementById('final-score').textContent = score;
+    const msg = document.getElementById('score-message');
+    if (score === 5) { 
+      msg.textContent = '🏆 Превосходно!'; 
+      msg.style.color = '#2ecc71'; 
+    } else if (score >= 3) { 
+      msg.textContent = '👍 Хороший результат!'; 
+      msg.style.color = '#667eea'; 
+    } else { 
+      msg.textContent = '📚 Стоит повторить материал'; 
+      msg.style.color = '#ffa726'; 
+    }
+    
+    goToSlide(9);
+  }
+
+  function resetQuiz() {
+    document.querySelectorAll('.quiz-option').forEach(o => {
+      o.classList.remove('selected', 'correct', 'wrong');
+    });
+    document.querySelectorAll('.quiz-select').forEach(s => s.value = '');
+    for (let q = 1; q <= 4; q++) userAnswers[q] = null;
+    userAnswers[5] = { a: null, b: null, c: null };
+    for (let i = 1; i <= 5; i++) document.getElementById('ans' + i).textContent = '—';
+    document.getElementById('final-score').textContent = '0';
+    document.getElementById('score-message').textContent = 'Отлично!';
+    document.getElementById('score-message').style.color = '';
+    goToSlide(8);
+  }
+
+  // ===== Initialize everything =====
+  window.addEventListener('DOMContentLoaded', function() {
+    initBasicDragDrop();
+    initSchemesDragDrop();
+    initQuiz();
+    shuffleStages();
+  });
+</script>
+
+</body>
+</html>

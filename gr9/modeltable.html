@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Табличные модели — интерактивный практикум</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232563eb'/%3E%3Cpath d='M7 7h18v18H7z' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M16 7v18M7 16h18' stroke='white' stroke-width='2'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#eef2f8; --bg2:#f7f9fc; --card:#ffffff;
+  --line:#dfe6f0; --line2:#c7d4e6;
+  --ink:#12263f; --mut:#5a6b83; --dim:#8494a8;
+  --blue:#2563eb; --blue-d:#1d4ed8; --blue-t:#eaf1fe; --blue-b:#b9cffb;
+  --teal:#0e7490; --teal-t:#e6f4f8;
+  --green:#15803d; --green-t:#e9f7ef; --green-b:#b6e2c6;
+  --red:#c62828; --red-t:#fdecec; --red-b:#f2c0c0;
+  --amber:#b45309; --amber-t:#fdf3e3; --amber-b:#f0d6a8;
+  --violet:#6d28d9; --pink:#be185d;
+  --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+  --sans:'Inter','Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;
+  --shadow:0 1px 2px rgba(18,38,63,.05),0 8px 24px rgba(18,38,63,.06);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:var(--sans); color:var(--ink); background:var(--bg);
+  display:flex; flex-direction:column; overflow:hidden; font-size:15px; line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(37,99,235,.045) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(37,99,235,.045) 1px,transparent 1px);
+  background-size:32px 32px}
+body::after{content:'';position:fixed;left:0;right:0;top:0;height:340px;z-index:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(219,232,253,.75),rgba(238,242,248,0))}
+::selection{background:#c9dcfd}
+*{scrollbar-width:thin;scrollbar-color:#c2d0e4 #eef2f8}
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-track{background:#eef2f8}
+::-webkit-scrollbar-thumb{background:#c2d0e4;border-radius:8px;border:3px solid #eef2f8}
+::-webkit-scrollbar-thumb:hover{background:#9db6d8}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:6px}
+
+header{position:relative;z-index:5;flex:0 0 auto;background:#fff;border-bottom:1px solid var(--line)}
+.topbar{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:14px;padding:11px clamp(14px,3vw,30px)}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}
+.brand-mark{width:32px;height:32px;border-radius:8px;background:var(--blue);display:grid;place-items:center;flex:0 0 auto}
+.brand-t{font-size:13px;font-weight:800;letter-spacing:.09em;white-space:nowrap}
+.brand-s{font-size:11.5px;color:var(--dim);white-space:nowrap}
+.hchips{display:flex;align-items:center;gap:9px;margin-left:auto}
+.hchip{font-family:var(--mono);font-size:13px;color:var(--mut);background:var(--bg2);border:1px solid var(--line);
+  border-radius:8px;padding:6px 13px;white-space:nowrap}
+.hchip b{color:var(--ink);font-weight:700}
+#chipScore b{color:var(--blue)}
+#chipScore.pop{animation:pop .4s ease}
+@keyframes pop{40%{transform:scale(1.12)}}
+.progressline{height:3px;background:#e7edf6}
+.progressline i{display:block;height:100%;width:0;background:var(--blue);transition:width .45s ease}
+
+main.deck{position:relative;flex:1 1 auto;min-height:0;z-index:1}
+.slide{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;display:none;padding:30px clamp(14px,4vw,44px) 54px}
+.slide.active{display:block}
+.slide.enter-r{animation:inR .42s ease both}
+.slide.enter-l{animation:inL .42s ease both}
+@keyframes inR{from{opacity:0;transform:translateX(34px)}to{opacity:1;transform:none}}
+@keyframes inL{from{opacity:0;transform:translateX(-34px)}to{opacity:1;transform:none}}
+.wrap{max-width:1160px;margin:0 auto}
+.slide.active .reveal{animation:rise .45s ease both;animation-delay:calc(var(--i,0)*60ms)}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+footer{position:relative;z-index:5;flex:0 0 auto;background:#fff;border-top:1px solid var(--line)}
+.navbar{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:14px;padding:10px clamp(14px,3vw,30px)}
+.dots{display:flex;gap:8px;margin:0 auto}
+.dot-nav{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--line2);background:#fff;cursor:pointer;padding:0;transition:.2s;position:relative}
+.dot-nav:hover{border-color:var(--blue)}
+.dot-nav.cur{background:var(--blue);border-color:var(--blue);transform:scale(1.25)}
+.dot-nav.done{border-color:var(--green)}
+.dot-nav.done::after{content:'';position:absolute;inset:2px;border-radius:50%;background:var(--green)}
+.dot-nav.cur.done::after{background:#fff}
+.nav-hint{font-size:12px;color:var(--dim);white-space:nowrap}
+
+.btn{font-family:var(--sans);font-weight:600;font-size:14.5px;border-radius:9px;padding:11px 20px;cursor:pointer;
+  border:1px solid transparent;transition:.16s;display:inline-flex;align-items:center;gap:8px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--blue);color:#fff}
+.btn.primary:hover:not(:disabled){background:var(--blue-d)}
+.btn.ghost{background:#fff;border-color:var(--line2);color:var(--ink)}
+.btn.ghost:hover:not(:disabled){border-color:var(--blue);color:var(--blue-d);background:var(--blue-t)}
+.btn.soft{background:var(--blue-t);border-color:var(--blue-b);color:var(--blue-d)}
+.btn.soft:hover:not(:disabled){background:#dfeafd}
+.btn.success{background:var(--green-t);border-color:var(--green-b);color:var(--green)}
+.btn.small{padding:8px 14px;font-size:13px;border-radius:8px}
+.btn.pulse{animation:bp 1.8s ease infinite}
+@keyframes bp{50%{box-shadow:0 0 0 6px rgba(37,99,235,.12)}}
+.badge-pts{display:inline-block;font-size:12px;font-weight:600;padding:3px 11px;border-radius:99px;
+  background:var(--green-t);color:var(--green);border:1px solid var(--green-b)}
+.badge-new{display:inline-block;font-size:12px;font-weight:600;padding:3px 11px;border-radius:99px;
+  background:#f3ebfd;color:var(--violet);border:1px solid #ddcbf7}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;box-shadow:var(--shadow)}
+.block-head{margin-bottom:22px}
+.kicker{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);
+  margin-bottom:9px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+h2.slide-title{font-size:clamp(23px,3vw,33px);font-weight:800;letter-spacing:-.01em;line-height:1.2;margin-bottom:11px}
+.block-desc{color:var(--mut);font-size:15px;max-width:900px}
+.block-desc b{color:var(--ink)}
+.check-row{display:flex;align-items:center;gap:15px;margin-top:22px;flex-wrap:wrap}
+.check-hint{font-size:13px;color:var(--dim)}
+.fb{margin-top:18px;display:none}
+.fb.show{display:block;animation:rise .35s both}
+.fb .score-line{font-size:15px;font-weight:700;margin-bottom:10px}
+.fb .score-line.good{color:var(--green)} .fb .score-line.mid{color:var(--amber)} .fb .score-line.bad{color:var(--red)}
+.fb ul{list-style:none;display:grid;gap:8px}
+.fb li{font-size:13.5px;color:var(--mut);padding:11px 14px;border-radius:10px;background:var(--bg2);border:1px solid var(--line)}
+.fb li b{color:var(--ink)}
+.locked .m-card,.locked .opt-card,.locked .tf-btn,.locked .check-card,.locked .o-card,.locked .act-chip{pointer-events:none}
+
+.hero{display:grid;grid-template-columns:1.05fr .95fr;gap:32px;align-items:start;margin-bottom:26px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);margin-bottom:14px}
+h1.hero-title{font-size:clamp(38px,5.6vw,62px);font-weight:800;line-height:1.03;letter-spacing:-.025em;margin-bottom:20px}
+h1.hero-title span{color:var(--blue)}
+.goals-card{margin-bottom:18px}
+.goals-card h3{font-size:15px;font-weight:700;margin-bottom:13px}
+.goal{display:flex;gap:12px;align-items:flex-start;padding:9px 0;font-size:14.5px;color:var(--mut);border-top:1px solid var(--line)}
+.goal:first-of-type{border-top:none}
+.goal b{width:23px;height:23px;border-radius:6px;background:var(--blue-t);color:var(--blue-d);
+  display:grid;place-items:center;font-size:12px;font-weight:700;flex:0 0 auto;margin-top:1px}
+.stats-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.stat-chip{font-size:12.5px;color:var(--mut);background:#fff;border:1px solid var(--line);padding:6px 12px;border-radius:8px}
+.stat-chip b{color:var(--ink)}
+.start-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:var(--shadow)}
+.start-card label{display:block;font-size:14.5px;font-weight:700;margin-bottom:4px}
+.start-card .sub{font-size:12.5px;color:var(--mut);margin-bottom:12px}
+#nameInput{width:100%;font-family:var(--sans);font-size:15.5px;color:var(--ink);background:var(--bg2);
+  border:1.5px solid var(--line2);border-radius:9px;padding:11px 14px;outline:none;transition:.16s;margin-bottom:13px}
+#nameInput::placeholder{color:var(--dim)}
+#nameInput:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+#nameInput.shake{animation:shake .4s;border-color:var(--red)}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+#nameErr{display:none;font-size:12.5px;color:var(--red);margin:-6px 0 11px}
+#nameErr.show{display:block}
+.start-row{display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.start-hint{font-size:12.5px;color:var(--dim)}
+.preview-tabs{display:flex;gap:7px;margin-bottom:12px;flex-wrap:wrap}
+.ptab{font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:8px;cursor:pointer;
+  border:1px solid var(--line2);background:#fff;color:var(--mut);transition:.16s;font-family:var(--sans)}
+.ptab:hover{border-color:var(--blue);color:var(--blue-d)}
+.ptab.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.preview-cap{font-size:12px;color:var(--dim);margin-top:10px}
+.route h3{font-size:12px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--blue);margin-bottom:14px}
+.route-table{width:100%;border-collapse:collapse;font-size:14px}
+.route-table th{font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);text-align:left;
+  padding:9px 13px;border-bottom:1px solid var(--line2);font-weight:700}
+.route-table td{padding:10px 13px;border-bottom:1px solid var(--line);color:var(--mut)}
+.route-table tr.rrow{cursor:pointer}
+.route-table tr.rrow:hover td{background:var(--blue-t);color:var(--ink)}
+.route-table td:first-child{font-family:var(--mono);color:var(--blue);font-weight:700;width:44px}
+.route-table td:last-child{font-family:var(--mono);color:var(--ink);font-weight:700;text-align:right;width:70px}
+.route-table .fmt{font-size:12.5px;color:var(--dim)}
+.attrib{font-size:12px;color:var(--dim);margin-top:15px}
+
+.tbl-wrap{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;box-shadow:var(--shadow)}
+.tbl-scroll{overflow-x:auto}
+table.data{border-collapse:collapse;width:100%;font-size:13.5px}
+table.data th,table.data td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);
+  padding:9px 13px;text-align:left;white-space:nowrap}
+table.data th:last-child,table.data td:last-child{border-right:none}
+table.data tbody tr:last-child td,table.data tbody tr:last-child th{border-bottom:none}
+table.data thead th{background:var(--blue-t);color:#1e40af;font-weight:700;font-size:13px}
+table.data td{color:var(--ink);background:#fff;font-family:var(--mono);font-size:13px}
+table.data tbody tr:hover td{background:#f5f9ff}
+table.data td.pick{cursor:pointer}
+table.data .chrome{background:#f2f6fc;color:var(--dim);font-family:var(--mono);font-size:11px;
+  font-weight:600;text-align:center;padding:5px 9px;user-select:none}
+table.data.mini th,table.data.mini td{padding:7px 10px;font-size:12px}
+table.data td.sel{outline:2px solid var(--blue);outline-offset:-2px;background:var(--blue-t)!important}
+table.data .hl{background:#d7e5fd!important}
+table.data tr.row-ok td{background:var(--green-t)!important}
+table.data tr.row-bad td{background:var(--red-t)!important}
+table.data tr.row-miss td{background:var(--amber-t)!important}
+.cellinfo{font-family:var(--mono);font-size:11.5px;color:var(--dim);padding:7px 13px;background:var(--bg2);border-top:1px solid var(--line)}
+.cellinfo b{color:var(--blue-d)}
+.rowcheck{width:15px;height:15px;accent-color:var(--blue);cursor:pointer;vertical-align:middle;margin-left:7px}
+
+.tf-list{display:grid;gap:11px}
+.tf-item{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;padding:15px 17px;
+  background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+.tf-item p{font-size:14.5px}
+.tf-item .num{font-family:var(--mono);color:var(--blue);font-weight:700;margin-right:7px}
+.tf-btns{display:flex;gap:7px}
+.tf-btn{font-family:var(--sans);font-weight:600;font-size:13px;padding:8px 15px;border-radius:8px;cursor:pointer;
+  border:1.5px solid var(--line2);background:#fff;color:var(--mut);transition:.16s}
+.tf-btn:hover:not(:disabled){border-color:var(--blue);color:var(--blue-d)}
+.tf-btn.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.tf-item.ok{border-color:var(--green-b);background:var(--green-t)}
+.tf-item.bad{border-color:var(--red-b);background:var(--red-t)}
+.tf-why{grid-column:1/-1;display:none;font-size:13px;color:var(--mut);border-top:1px dashed var(--line2);padding-top:10px}
+.tf-why.show{display:block}
+.tf-why b.g{color:var(--green)} .tf-why b.r{color:var(--red)}
+
+.opts{display:grid;gap:9px}
+.opt-card{display:flex;gap:12px;align-items:center;padding:13px 15px;background:#fff;border:1.5px solid var(--line);
+  border-radius:11px;cursor:pointer;transition:.16s;font-size:14px;box-shadow:var(--shadow)}
+.opt-card:hover{border-color:var(--blue-b);background:#fafcff}
+.opt-card .letter{font-family:var(--mono);font-weight:700;font-size:12px;width:26px;height:26px;border-radius:7px;
+  display:grid;place-items:center;background:var(--bg2);color:var(--mut);border:1px solid var(--line);flex:0 0 auto}
+.opt-card.on{border-color:var(--blue);background:var(--blue-t)}
+.opt-card.on .letter{background:var(--blue);color:#fff;border-color:var(--blue)}
+.opt-card.ok{border-color:var(--green-b);background:var(--green-t)}
+.opt-card.ok .letter{background:var(--green);color:#fff;border-color:var(--green)}
+.opt-card.bad{border-color:var(--red-b);background:var(--red-t)}
+.opt-card.bad .letter{background:var(--red);color:#fff;border-color:var(--red)}
+.q-label{font-weight:700;font-size:15px;margin:22px 0 11px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.q-label .qn{font-size:11.5px;font-weight:700;letter-spacing:.07em;color:var(--teal);text-transform:uppercase}
+.examples{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.example-card{border:1.5px solid var(--line);border-radius:12px;padding:14px;background:#fff;cursor:pointer;transition:.16s;box-shadow:var(--shadow)}
+.example-card:hover{border-color:var(--blue-b)}
+.example-card.on{border-color:var(--blue);background:var(--blue-t)}
+.example-card.ok{border-color:var(--green-b);background:var(--green-t)}
+.example-card.bad{border-color:var(--red-b);background:var(--red-t)}
+.ex-cap{display:flex;align-items:center;gap:9px;font-weight:700;font-size:13.5px;margin-bottom:11px}
+.ex-cap .letter{font-family:var(--mono);font-size:11px;font-weight:700;width:23px;height:23px;border-radius:6px;
+  display:grid;place-items:center;background:var(--bg2);color:var(--mut);border:1px solid var(--line)}
+.example-card.on .ex-cap .letter{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.check-card{display:flex;gap:12px;align-items:flex-start;padding:14px 15px;background:#fff;border:1.5px solid var(--line);
+  border-radius:11px;cursor:pointer;transition:.16s;font-size:13.5px;box-shadow:var(--shadow)}
+.check-card:hover{border-color:var(--blue-b)}
+.check-card .box{width:20px;height:20px;border-radius:5px;border:1.5px solid var(--line2);flex:0 0 auto;margin-top:1px;
+  display:grid;place-items:center;font-size:13px;color:#fff;font-weight:900;background:#fff}
+.check-card.on{border-color:var(--blue);background:var(--blue-t)}
+.check-card.on .box{background:var(--blue);border-color:var(--blue)}
+.check-card.ok{border-color:var(--green-b);background:var(--green-t)}
+.check-card.ok .box{background:var(--green);border-color:var(--green)}
+.check-card.bad{border-color:var(--red-b);background:var(--red-t)}
+.check-card.bad .box{background:var(--red);border-color:var(--red)}
+.check-card.miss{border-color:var(--amber-b);background:var(--amber-t)}
+.check-card .verdict{margin-left:auto;font-size:10.5px;font-weight:700;flex:0 0 auto;padding:3px 8px;border-radius:6px;display:none;white-space:nowrap}
+.check-card.ok .verdict{display:block;background:#fff;color:var(--green);border:1px solid var(--green-b)}
+.check-card.bad .verdict{display:block;background:#fff;color:var(--red);border:1px solid var(--red-b)}
+.check-card.miss .verdict{display:block;background:#fff;color:var(--amber);border:1px solid var(--amber-b)}
+
+.match-layout{display:grid;gap:18px}
+.match-board{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.m-col{display:grid;gap:9px;align-content:start}
+.m-col-h{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);padding-left:3px}
+.m-card{display:flex;gap:11px;align-items:center;padding:12px 14px;background:#fff;border:1.5px solid var(--line);
+  border-radius:11px;cursor:pointer;font-size:13.5px;transition:.16s;min-height:56px;box-shadow:var(--shadow)}
+.m-card:hover{border-color:var(--blue-b);background:#fafcff}
+.m-card.selected{border-color:var(--blue);background:var(--blue-t);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.m-card .badge{width:23px;height:23px;border-radius:6px;display:grid;place-items:center;font-family:var(--mono);
+  font-size:12px;font-weight:700;flex:0 0 auto;background:var(--bg2);color:var(--dim);border:1px solid var(--line)}
+.m-card.paired{border-color:var(--pc,var(--blue))}
+.m-card.paired .badge{background:var(--pc,var(--blue));color:#fff;border-color:var(--pc,var(--blue))}
+.m-card.ok{border-color:var(--green-b);background:var(--green-t)}
+.m-card.bad{border-color:var(--red-b);background:var(--red-t)}
+.m-card .fix{display:block;font-size:11.5px;color:var(--amber);margin-top:5px}
+.m-card .m-inner{min-width:0}
+.match-hint{font-size:12.5px;color:var(--dim);margin-top:11px}
+.match-hint.warn{color:var(--red)}
+.act-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.act-chip{font-family:var(--sans);font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:8px;cursor:pointer;
+  border:1px solid var(--line2);background:#fff;color:var(--mut);transition:.16s}
+.act-chip:hover{border-color:var(--blue);color:var(--blue-d)}
+.act-chip.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.act-chip.hint{border-color:var(--amber);color:var(--amber);background:var(--amber-t)}
+.avg-badge{display:none;font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);
+  background:var(--green-t);border:1px solid var(--green-b);padding:6px 13px;border-radius:8px}
+.avg-badge.show{display:inline-block}
+
+.cond-chips{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:15px 0}
+.cond{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--teal);background:var(--teal-t);
+  border:1px solid #b7dce7;padding:8px 14px;border-radius:9px}
+.cond-and{font-size:12px;color:var(--pink);font-weight:800}
+.step-h{font-weight:700;font-size:15px;margin:24px 0 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.step-h .sn{font-size:11px;font-weight:700;letter-spacing:.07em;color:#fff;background:var(--blue);padding:4px 10px;border-radius:6px}
+.step-h .sp{font-size:12.5px;color:var(--dim);font-weight:500}
+.order-zone{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.o-panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px;box-shadow:var(--shadow)}
+.o-panel h4{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin-bottom:12px}
+.o-cards{display:flex;gap:9px;flex-wrap:wrap;min-height:44px;align-items:center}
+.o-card{font-family:var(--sans);font-weight:600;font-size:13.5px;padding:10px 17px;border-radius:9px;cursor:pointer;
+  border:1.5px solid var(--line2);background:var(--bg2);color:var(--ink);transition:.16s}
+.o-card:hover{border-color:var(--blue);background:var(--blue-t);color:var(--blue-d)}
+.o-slots{display:grid;gap:9px}
+.o-slot{display:flex;align-items:center;gap:10px;min-height:44px}
+.o-slot .slot-n{font-family:var(--mono);font-size:12px;color:var(--dim);width:18px;flex:0 0 auto}
+.o-empty{flex:1;border:1.5px dashed var(--line2);border-radius:9px;min-height:40px;display:grid;place-items:center;font-size:12px;color:var(--dim)}
+.o-slot .o-card.ok{border-color:var(--green-b);background:var(--green-t);color:var(--green)}
+.o-slot .o-card.bad{border-color:var(--red-b);background:var(--red-t);color:var(--red)}
+.o-none{font-size:12px;color:var(--dim)}
+
+.final-hero{display:grid;grid-template-columns:auto 1fr;gap:30px;align-items:center;margin-bottom:22px}
+.ring-box{position:relative;width:158px;height:158px;flex:0 0 auto}
+.ring-box svg{transform:rotate(-90deg)}
+.ring-num{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.ring-num b{font-size:40px;font-weight:800;display:block;line-height:1;letter-spacing:-.02em}
+.ring-num span{font-size:12px;color:var(--dim)}
+.grade-line{display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin-bottom:11px}
+.grade-badge{font-size:27px;font-weight:800;width:54px;height:54px;border-radius:12px;display:grid;place-items:center;flex:0 0 auto}
+.grade-badge.g5{background:var(--green-t);color:var(--green);border:1.5px solid var(--green-b)}
+.grade-badge.g4{background:var(--blue-t);color:var(--blue-d);border:1.5px solid var(--blue-b)}
+.grade-badge.g3{background:var(--amber-t);color:var(--amber);border:1.5px solid var(--amber-b)}
+.grade-badge.g2{background:var(--red-t);color:var(--red);border:1.5px solid var(--red-b)}
+.grade-word{font-size:clamp(20px,2.4vw,27px);font-weight:800;letter-spacing:-.01em}
+.final-name{font-size:15.5px;color:var(--mut);margin-bottom:12px}
+.final-name b{color:var(--ink)}
+.final-stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.final-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.all-ok{font-size:13px;font-weight:600;color:var(--green);background:var(--green-t);border:1px solid var(--green-b);padding:7px 14px;border-radius:8px}
+.banner{display:flex;gap:13px;align-items:center;background:var(--amber-t);border:1px solid var(--amber-b);
+  border-radius:12px;padding:14px 17px;margin-bottom:20px;font-size:14px;color:var(--amber);flex-wrap:wrap}
+.banner .btn{margin-left:auto}
+.report-panel{border:1px solid var(--blue-b);background:#f6faff;border-radius:14px;padding:21px;margin-bottom:22px}
+.report-panel h3{font-size:16px;font-weight:700;margin-bottom:7px}
+.report-meta{font-size:13px;color:var(--mut);margin-bottom:15px;line-height:1.85}
+.report-meta b{color:var(--ink)}
+.report-btns{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:13px}
+.send-status{display:flex;align-items:center;gap:10px;font-size:13.5px;border-radius:10px;padding:11px 14px;background:#fff;border:1px solid var(--line)}
+.send-status .sd{width:9px;height:9px;border-radius:50%;flex:0 0 auto;background:var(--dim)}
+.send-status.sending .sd{background:var(--blue);animation:blink 1s infinite}
+.send-status.sent{border-color:var(--green-b);background:var(--green-t);color:var(--green)}
+.send-status.sent .sd{background:var(--green)}
+.send-status.failed{border-color:var(--amber-b);background:var(--amber-t);color:var(--amber)}
+.send-status.failed .sd{background:var(--amber)}
+@keyframes blink{50%{opacity:.25}}
+.report-note{font-size:12px;color:var(--dim);margin-top:11px;line-height:1.65}
+.res-table{width:100%;border-collapse:collapse;font-size:14px}
+.res-table th{font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);text-align:left;padding:9px 13px;border-bottom:1px solid var(--line2)}
+.res-table td{padding:11px 13px;border-bottom:1px solid var(--line);color:var(--mut)}
+.res-table tr:last-child td{border-bottom:none}
+.res-table td:first-child{color:var(--ink)}
+.res-bar{height:8px;border-radius:99px;background:#e7edf6;overflow:hidden;min-width:90px}
+.res-bar i{display:block;height:100%;border-radius:99px;background:var(--blue);transition:width .8s ease}
+.res-bar.full i{background:var(--green)}
+.res-bar.zero i{background:var(--red)}
+.res-pts{font-family:var(--mono);font-weight:700;color:var(--ink);white-space:nowrap}
+h3.sec{font-size:12px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--blue);margin:26px 0 10px}
+.concl{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:13px;margin-top:14px}
+.concl-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:17px;box-shadow:var(--shadow)}
+.concl-card h4{font-size:14px;font-weight:700;margin-bottom:7px}
+.concl-card p{font-size:12.8px;color:var(--mut)}
+.concl-card .ci{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;margin-bottom:11px;font-size:15px}
+.final-verdict{margin-top:16px;padding:16px 19px;border-left:3px solid var(--blue);background:#fff;
+  border:1px solid var(--line);border-left-width:3px;border-radius:0 12px 12px 0;font-size:14.5px;box-shadow:var(--shadow)}
+
+#toasts{position:fixed;right:18px;bottom:74px;z-index:60;display:grid;gap:9px;pointer-events:none}
+.toast{font-size:13.5px;font-weight:600;background:#fff;border:1px solid var(--line);border-left:3px solid var(--blue);
+  border-radius:10px;padding:11px 16px;box-shadow:0 8px 26px rgba(18,38,63,.14);animation:tin .3s ease both;max-width:330px}
+.toast.good{border-left-color:var(--green)} .toast.bad{border-left-color:var(--red)}
+.toast.out{animation:tout .3s both}
+@keyframes tin{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+@keyframes tout{to{opacity:0;transform:translateX(30px)}}
+
+@media(max-width:1020px){.hero{grid-template-columns:1fr}.examples{grid-template-columns:1fr}.brand-s{display:none}}
+@media(max-width:860px){
+  .match-board,.checks,.order-zone{grid-template-columns:1fr}
+  .final-hero{grid-template-columns:1fr;justify-items:center;text-align:center}
+  .grade-line,.final-stats,.final-actions{justify-content:center}
+}
+@media(max-width:620px){
+  .brand-t{font-size:11.5px}
+  .hchip{padding:5px 10px;font-size:12px}
+  .nav-hint{display:none}
+  .tf-item{grid-template-columns:1fr}
+  .slide{padding:20px 14px 46px}
+  .card{padding:17px}
+  .btn{padding:10px 15px;font-size:13.5px}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001s!important;transition-duration:.001s!important}}
+</style>
+</head>
+<body>
+<noscript><div style="padding:28px">Для работы практикума включите JavaScript.</div></noscript>
+
+<header>
+  <div class="topbar">
+    <div class="brand">
+      <span class="brand-mark"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 3v18M3 12h18"/></svg></span>
+      <div><div class="brand-t">ТАБЛИЧНЫЕ МОДЕЛИ</div><div class="brand-s">интерактивный практикум · анализ данных</div></div>
+    </div>
+    <div class="hchips">
+      <div class="hchip" id="chipScore"><b id="scoreVal">0</b> / 20</div>
+      <div class="hchip"><b id="slideVal">1</b> / 8</div>
+    </div>
+  </div>
+  <div class="progressline"><i id="progressBar"></i></div>
+</header>
+
+<main class="deck" id="deck">
+  <section class="slide" data-slide="0">
+    <div class="wrap">
+      <div class="hero">
+        <div>
+          <div class="eyebrow reveal" style="--i:0">Информатика · информационное моделирование</div>
+          <h1 class="hero-title reveal" style="--i:1">Табличные<br><span>модели</span></h1>
+          <div class="card goals-card reveal" style="--i:2">
+            <h3>Цели практикума</h3>
+            <div class="goal"><b>1</b><span>Виды табличных моделей.</span></div>
+            <div class="goal"><b>2</b><span>Эффективная работа по поиску данных в модели.</span></div>
+            <div class="goal"><b>3</b><span>Практическая работа по поиску данных в модели.</span></div>
+          </div>
+          <div class="stats-row reveal" style="--i:3">
+            <span class="stat-chip"><b>8</b> слайдов</span><span class="stat-chip"><b>6</b> блоков заданий</span>
+            <span class="stat-chip"><b>20</b> баллов максимум</span><span class="stat-chip">≈ <b>10</b> минут</span>
+          </div>
+          <div class="start-card reveal" style="--i:4">
+            <label for="nameInput">Ваше имя и фамилия</label>
+            <div class="sub">Имя будет указано в итоговом отчёте, который сохранится в файл и отправится учителю.</div>
+            <input id="nameInput" type="text" maxlength="60" autocomplete="name" placeholder="Например: Мария Иванова">
+            <div id="nameErr">Введите имя (минимум 2 символа) — без него отчёт не сформируется.</div>
+            <div class="start-row">
+              <button class="btn primary" id="startBtn">Начать практикум</button>
+              <span class="start-hint">или клавиша → на клавиатуре</span>
+            </div>
+          </div>
+        </div>
+        <div class="reveal" style="--i:3">
+          <div class="preview-tabs" id="previewTabs">
+            <button class="ptab on" data-pv="os">объект-свойство</button>
+            <button class="ptab" data-pv="oo">объект-объект</button>
+            <button class="ptab" data-pv="db">база данных</button>
+          </div>
+          <div id="previewTable"></div>
+          <div class="preview-cap" id="previewCap">фрагмент таблицы · выделение ячейки</div>
+        </div>
+      </div>
+      <div class="card route reveal" style="--i:5">
+        <h3>Маршрут практикума</h3>
+        <div class="tbl-scroll"><table class="route-table">
+          <thead><tr><th>№</th><th>Блок</th><th>Формат</th><th style="text-align:right">Баллы</th></tr></thead>
+          <tbody id="routeBody"></tbody>
+        </table></div>
+        <div class="attrib">по материалам рабочего листа «Табличные модели.docx» · задания 4–5 добавлены: сопоставление по таблицам «объект-свойство»</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-slide="1">
+    <div class="wrap">
+      <div class="block-head reveal" style="--i:0">
+        <div class="kicker">Блок 1 · верно / неверно <span class="badge-pts" id="pts-0">до 4 баллов</span></div>
+        <h2 class="slide-title">Что такое табличная модель?</h2>
+        <p class="block-desc">Оцените каждое утверждение из рабочего листа: верно оно или нет. Каждое правильное решение — 1 балл. После проверки появится пояснение к каждому пункту.</p>
+      </div>
+      <div class="tf-list reveal" style="--i:1" id="b1-list"></div>
+      <div class="check-row reveal" style="--i:2">
+        <button class="btn primary" id="b1-check" disabled>Проверить</button>
+        <span class="check-hint" id="b1-hint">Ответьте на все 4 утверждения</span>
+      </div>
+      <div class="fb" id="b1-fb"></div>
+    </div>
+  </section>
+
+  <section class="slide" data-slide="2">
+    <div class="wrap">
+      <div class="block-head reveal" style="--i:0">
+        <div class="kicker">Блок 2 · анализ таблицы <span class="badge-pts" id="pts-1">до 2 баллов</span></div>
+        <h2 class="slide-title">Сравниваем смартфоны</h2>
+        <p class="block-desc">Ученик составил таблицу сравнения цен трёх смартфонов. Изучите её и ответьте на два вопроса: что это за вид таблицы и какую таблицу стоило построить для сравнения характеристик.</p>
+      </div>
+      <div class="reveal" style="--i:1" id="b2-student"></div>
+      <div class="q-label reveal" style="--i:2"><span class="qn">Вопрос 1 · 1 балл</span>Какой вид таблицы построил ученик?</div>
+      <div class="opts reveal" style="--i:2" id="b2-q1"></div>
+      <div class="q-label reveal" style="--i:3"><span class="qn">Вопрос 2 · 1 балл</span>Какую таблицу удобнее построить для сравнения цены, ОЗУ и камеры?</div>
+      <div class="examples reveal" style="--i:3" id="b2-q2"></div>
+      <div class="check-row reveal" style="--i:4">
+        <button class="btn primary" id="b2-check" disabled>Проверить</button>
+        <span class="check-hint" id="b2-hint">Ответьте на оба вопроса</span>
+      </div>
+      <div class="fb" id="b2-fb"></div>
+    </div>
+  </section>
+
+  <section class="slide" data-slide="3">
+    <div class="wrap">
+      <div class="block-head reveal" style="--i:0">
+        <div class="kicker">Блок 3 · базы данных <span class="badge-pts" id="pts-2">до 3 баллов</span></div>
+        <h2 class="slide-title">База данных или нет?</h2>
+        <p class="block-desc"><b>Часть 1 (2 балла):</b> отметьте все описания объектов, которые <b>НЕ являются</b> примером базы данных. <b>Часть 2 (1 балл):</b> выберите верное обоснование своего выбора.</p>
+      </div>
+      <div class="q-label reveal" style="--i:1"><span class="qn">Часть 1</span>Что из этого НЕ база данных?</div>
+      <div class="checks reveal" style="--i:1" id="b3-items"></div>
+      <div class="q-label reveal" style="--i:2"><span class="qn">Часть 2</span>Почему?</div>
+      <div class="opts reveal" style="--i:2" id="b3-reason"></div>
+      <div class="check-row reveal" style="--i:3">
+        <button class="btn primary" id="b3-check" disabled>Проверить</button>
+        <span class="check-hint" id="b3-hint">Отметьте хотя бы один пункт и выберите обоснование</span>
+      </div>
+      <div class="fb" id="b3-fb"></div>
+    </div>
+  </section>
+
+  <section class="slide" data-slide="4">
+    <div class="wrap">
+      <div class="block-head reveal" style="--i:0">
+        <div class="kicker">Блок 4 · сопоставление <span class="badge-new">новое задание</span> <span class="badge-pts" id="pts-3">до 4 баллов</span></div>
+        <h2 class="slide-title">«Объект-свойство»: как устроена таблица</h2>
+        <p class="block-desc">Перед вами таблица «Книги» вида «объект-свойство». Соедините элемент таблицы (слева) с тем, что он описывает (справа): нажмите карточку слева, затем соответствующую справа. Наведите курсор на элемент — он подсветится в таблице. Каждая верная пара — 1 балл.</p>
+      </div>
+      <div class="match-layout">
+        <div class="reveal" style="--i:1" id="b4-table"></div>
+        <div class="reveal" style="--i:2">
+          <div class="match-board" id="b4-board"></div>
+          <div class="match-hint" id="b4-mhint">Пары: 0 из 4 · клик по соединённой карточке слева разъединяет пару</div>
+        </div>
+      </div>
+      <div class="check-row reveal" style="--i:3">
+        <button class="btn primary" id="b4-check" disabled>Проверить</button>
+        <button class="btn ghost small" id="b4-reset">Сбросить пары</button>
+        <span class="check-hint" id="b4-hint">Соедините все 4 пары</span>
+      </div>
+      <div class="fb" id="b4-fb"></div>
+    </div>
+  </section>
+
+  <section class="slide" data-slide="5">
+    <div class="wrap">
+      <div class="block-head reveal" style="--i:0">
+        <div class="kicker">Блок 5 · сопоставление <span class="badge-new">новое задание</span> <span class="badge-pts" id="pts-4">до 4 баллов</span></div>
+        <h2 class="slide-title">«Объект-свойство»: таблица в работе</h2>
+        <p class="block-desc">Та же таблица «Книги». Теперь сопоставьте задачу анализа данных с действием в таблице, которое её решает. Именно эти действия превращают таблицу «объект-свойство» в инструмент анализа. Каждая верная пара — 1 балл.</p>
+      </div>
+      <div class="match-layout">
+        <div class="reveal" style="--i:1">
+          <div class="act-chips" id="b5-actions">
+            <button class="act-chip" data-act="filter">Фильтр: Цена &gt; 500</button>
+            <button class="act-chip" data-act="sort">Сортировка: Год ↑</button>
+            <button class="act-chip" data-act="avg">Средняя цена</button>
+            <button class="act-chip" data-act="search">Поиск: «Три товарища»</button>
+            <button class="act-chip" data-act="reset">Сброс</button>
+            <span class="avg-badge" id="b5-avg"></span>
+          </div>
+          <div id="b5-table"></div>
+        </div>
+        <div class="reveal" style="--i:2">
+          <div class="match-board" id="b5-board"></div>
+          <div class="match-hint" id="b5-mhint">Пары: 0 из 4 · наведите на задачу слева — соответствующая кнопка подсветится</div>
+        </div>
+      </div>
+      <div class="check-row reveal" style="--i:3">
+        <button class="btn primary" id="b5-check" disabled>Проверить</button>
+        <button class="btn ghost small" id="b5-reset">Сбросить пары</button>
+        <span class="check-hint" id="b5-hint">Соедините все 4 пары</span>
+      </div>
+      <div class="fb" id="b5-fb"></div>
+    </div>
+  </section>
+
+  <section class="slide" data-slide="6">
+    <div class="wrap">
+      <div class="block-head reveal" style="--i:0">
+        <div class="kicker">Блок 6 · практика поиска <span class="badge-pts" id="pts-5">до 3 баллов</span></div>
+        <h2 class="slide-title">Поиск по таблице «Сотрудники компании»</h2>
+        <p class="block-desc">Шаг 1: отметьте строки сотрудников, которые одновременно удовлетворяют трём условиям. Шаг 2: выстройте их фамилии по возрастанию стажа, нажимая на карточки. Шаг 3: укажите должность сотрудника с максимальной зарплатой среди найденных. Каждый верный шаг — 1 балл.</p>
+      </div>
+      <div class="step-h reveal" style="--i:1"><span class="sn">ШАГ 1</span>Три условия одновременно <span class="sp">· 1 балл</span></div>
+      <div class="cond-chips reveal" style="--i:1">
+        <span class="cond">Отдел = «Разработка»</span><span class="cond-and">И</span>
+        <span class="cond">Стаж ≥ 5 лет</span><span class="cond-and">И</span>
+        <span class="cond">Зарплата ≤ 100 000 ₽</span>
+      </div>
+      <div class="reveal" style="--i:2" id="b6-table"></div>
+      <div class="step-h reveal" style="--i:3"><span class="sn">ШАГ 2</span>Фамилии найденных по возрастанию стажа <span class="sp">· 1 балл</span></div>
+      <div class="order-zone reveal" style="--i:3" id="b6-order"></div>
+      <div class="step-h reveal" style="--i:4"><span class="sn">ШАГ 3</span>Должность с максимальной зарплатой среди найденных <span class="sp">· 1 балл</span></div>
+      <div class="opts reveal" style="--i:4" id="b6-pos"></div>
+      <div class="check-row reveal" style="--i:5">
+        <button class="btn primary" id="b6-check" disabled>Проверить</button>
+        <span class="check-hint" id="b6-hint">Выполните все три шага</span>
+      </div>
+      <div class="fb" id="b6-fb"></div>
+    </div>
+  </section>
+
+  <section class="slide" data-slide="7">
+    <div class="wrap" id="finalWrap"></div>
+  </section>
+</main>
+
+<footer>
+  <div class="navbar">
+    <button class="btn ghost small" id="prevBtn">← Назад</button>
+    <div class="dots" id="dots"></div>
+    <button class="btn primary small" id="nextBtn">Далее →</button>
+    <span class="nav-hint">← → — навигация</span>
+  </div>
+</footer>
+
+<div id="toasts" aria-live="polite"></div>
+
+<script>
+(()=>{ 'use strict';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const LET='ABCDEFGH', fmtN=n=>n.toLocaleString('ru-RU'), pad=n=>String(n).padStart(2,'0');
+const TEACHER_EMAIL='val-sk@yandex.ru';
+const MAX=[4,2,3,4,4,3];
+const BLOCK_NAMES=['Что такое табличная модель?','Сравниваем смартфоны','База данных или нет?','«Объект-свойство»: устройство','«Объект-свойство»: действия','Поиск по таблице сотрудников'];
+const BLOCK_FMT=['верно / неверно','выбор ответа и примера','мультивыбор + обоснование','сопоставление','сопоставление','практика: фильтр + сортировка'];
+const PAIR_C=['#2563eb','#0e7490','#b45309','#6d28d9'];
+
+const B1=[
+ {t:'В таблице «объект-свойство» каждая строка описывает один объект, а каждый столбец — одно из его свойств.',a:true,
+  w:'Это и есть схема «объект-свойство»: строки — объекты (записи), столбцы — свойства (поля), на пересечении — значения.'},
+ {t:'Таблица «объект-объект» удобнее всего подходит для сравнения множества характеристик каждого объекта.',a:false,
+  w:'«Объект-объект» показывает отношения между парами объектов (кто дороже, кто старше). Для сравнения многих характеристик нужен вид «объект-свойство».'},
+ {t:'Табличная модель нужна только для наглядного оформления данных — анализировать по ней ничего нельзя.',a:false,
+  w:'Таблица — инструмент анализа: поиск, фильтрация, сортировка и вычисления дают ответы на вопросы к данным.'},
+ {t:'Таблица с однотипными записями и одинаковыми полями — прообраз базы данных.',a:true,
+  w:'В базе данных те же элементы: поля (столбцы), записи (строки) и запросы. Организованная таблица — шаг к БД.'}];
+const PHONES=[['iPhone 15','80 000','8 Гб','48 Мп'],['Galaxy S24','75 000','12 Гб','50 Мп'],['Xiaomi 14','50 000','12 Гб','50 Мп']];
+const PRICE_MATRIX=[['iPhone 15','—','дороже','дороже'],['Galaxy S24','дешевле','—','дороже'],['Xiaomi 14','дешевле','дешевле','—']];
+const CAM_MATRIX=[['iPhone 15','—','меньше','меньше'],['Galaxy S24','больше','—','равно'],['Xiaomi 14','больше','равно','—']];
+const B2Q1=['«объект-свойство»','«объект-объект»','база данных'];
+const B3=[
+ {t:'Каталог школьной библиотеки: автор, название, год издания, инвентарный номер — 1 200 книг',db:true},
+ {t:'Записка на холодильнике: «Купить хлеб, молоко и яйца»',db:false},
+ {t:'Объявление на двери: «Магазин закрыт на ремонт до пятницы»',db:false},
+ {t:'Телефонный справочник сотрудников организации',db:true},
+ {t:'Список учеников класса с датой рождения и телефоном, оформленный таблицей',db:true},
+ {t:'Стихотворение, переписанное в тетрадь',db:false}];
+const B3_REASONS=[
+ 'Это просто тексты: в них нет полей, записей и однотипных объектов — нет структуры базы данных',
+ 'Они слишком короткие: база данных не может быть меньше страницы',
+ 'Они записаны на бумаге, а база данных существует только в компьютере',
+ 'В них нет числовых данных'];
+const BOOK_COLS=['Название','Автор','Год','Страниц','Цена, ₽'];
+const BOOK_ROWS=[
+ ['Мастер и Маргарита','М. А. Булгаков','1967','480','650'],
+ ['Капитанская дочка','А. С. Пушкин','1836','240','320'],
+ ['Гарри Поттер и ф. камень','Дж. К. Роулинг','1997','432','890'],
+ ['Три товарища','Э. М. Ремарк','1936','480','540']];
+const B4L=[
+ {label:'Строка 3 · «Капитанская дочка»',hl:{type:'row',r:2}},
+ {label:'Столбец D · «Страниц»',hl:{type:'col',c:3}},
+ {label:'Ячейка C2 · «1967»',hl:{type:'cell',r:1,c:2}},
+ {label:'Строка 1 · заголовки столбцов',hl:{type:'head'}}];
+const B4R=['Объект (запись): одна книга со всеми своими свойствами','Свойство (поле): один признак, общий для всех книг','Значение свойства конкретного объекта','Структура таблицы: имена полей (свойств)'];
+const B4_ORDER=[2,0,3,1];
+const B5L=[
+ {label:'Показать только книги дороже 500 ₽',chip:'filter'},
+ {label:'Расставить книги от самой старой к новой',chip:'sort'},
+ {label:'Узнать, сколько в среднем стоит книга',chip:'avg'},
+ {label:'Быстро найти книгу «Три товарища»',chip:'search'}];
+const B5R=['Фильтрация по условию: Цена > 500','Сортировка по возрастанию столбца «Год»','Вычисление: среднее значение по столбцу «Цена»','Поиск по значению в столбце «Название»'];
+const B5_ORDER=[1,3,0,2];
+const EMP_COLS=['Фамилия','Должность','Отдел','Стаж, лет','Зарплата, ₽'];
+const EMP_ROWS=[
+ ['Смирнов','Разработчик','Разработка','7','95 000'],
+ ['Иванова','Бухгалтер','Бухгалтерия','10','70 000'],
+ ['Козлов','Тестировщик','Разработка','3','60 000'],
+ ['Петрова','Аналитик','Разработка','6','90 000'],
+ ['Волков','Разработчик','Разработка','9','120 000'],
+ ['Соколова','Дизайнер','Дизайн','6','80 000'],
+ ['Лебедев','Тимлид','Разработка','6','110 000'],
+ ['Новикова','Разработчик','Разработка','5','85 000']];
+const B6_OK_ROWS=[0,3,7], B6_ORDER=['Новикова','Петрова','Смирнов'], B6_POOL=['Смирнов','Новикова','Петрова'];
+const B6_POS=['Тимлид','Разработчик','Аналитик','Бухгалтер'], B6_POS_OK=1;
+const CONCL=[
+ ['🗂','Структурируют данные.','Вид «объект-свойство» наводит порядок: строка — объект, столбец — свойство, ячейка — значение. Разрозненные сведения становятся сопоставимыми записями.','#2563eb'],
+ ['⚖️','Упрощают сравнение.','Вид «объект-объект» показывает отношения между парами объектов — кто дороже, кто старше, что с чем связано. Но для сравнения свойств удобнее «объект-свойство».','#0e7490'],
+ ['🔎','Позволяют анализировать.','Поиск, фильтрация, сортировка и вычисления превращают сырые данные в ответы: задача про сотрудников решается тремя условиями и одним упорядочиванием.','#15803d'],
+ ['🗄','Ведут к базам данных.','Организованная таблица с однотипными записями — прообраз базы данных: те же поля, записи и запросы. Одиночная записка или объявление структурой не обладают.','#b45309'],
+ ['✨','Делают данные наглядными.','Компактная форма делает видимыми связи, пробелы и закономерности, которые в сплошном тексте легко пропустить.','#6d28d9']];
+
+const state={name:'',started:false,startTime:null,endTime:null,slide:0,
+  scores:[null,null,null,null,null,null],checked:[false,false,false,false,false,false],
+  details:[null,null,null,null,null,null],finalized:false,sendStatus:'idle',report:null,fileName:''};
+let RT={};
+const totalScore=()=>state.scores.reduce((a,b)=>a+(b||0),0);
+const allChecked=()=>state.checked.every(Boolean);
+const gradeOf=s=>s>=18?{m:'5',w:'Отлично',c:'g5',col:'#15803d'}:s>=14?{m:'4',w:'Хорошо',c:'g4',col:'#2563eb'}:s>=9?{m:'3',w:'Удовлетворительно',c:'g3',col:'#b45309'}:{m:'2',w:'Стоит повторить тему',c:'g2',col:'#c62828'};
+
+function toast(msg,type=''){const box=$('#toasts');if(box.children.length>3)box.firstChild.remove();
+  const d=document.createElement('div');d.className='toast '+type;d.textContent=msg;box.appendChild(d);
+  setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),300)},3400);}
+
+function makeTable({cols,rows,chrome=false,selectable=true,mini=false,rowExtra=null}){
+  const el=document.createElement('div');el.className='tbl-wrap';
+  el.innerHTML=`<div class="tbl-scroll"><table class="data${mini?' mini':''}"></table></div>`+
+    (selectable?'<div class="cellinfo">выделена ячейка <b>A1</b> · <span class="cv"></span></div>':'');
+  const table=el.querySelector('table'),ci=el.querySelector('.cellinfo');
+  function build(list){
+    let h='<thead>';
+    if(chrome)h+='<tr><th class="chrome"></th>'+cols.map((_,c)=>`<th class="chrome">${LET[c]}</th>`).join('')+'</tr>';
+    h+='<tr>'+(chrome?'<th class="chrome">1</th>':'')+
+      cols.map((c,j)=>`<th data-r="0" data-c="${j}"${selectable?' class="pick"':''}>${esc(c)}</th>`).join('')+'</tr></thead><tbody>';
+    list.forEach(it=>{h+=`<tr data-orig="${it.r}">`+(chrome?`<th class="chrome rn">${it.r+2}</th>`:'')+
+      it.cells.map((v,j)=>`<td data-r="${it.r+1}" data-c="${j}"${selectable?' class="pick"':''}>${esc(v)}</td>`).join('')+'</tr>';});
+    table.innerHTML=h+'</tbody>';
+    if(rowExtra)table.querySelectorAll('tbody tr').forEach(tr=>tr.querySelector('.rn').appendChild(rowExtra(+tr.dataset.orig)));
+    if(selectable)table.querySelectorAll('[data-r]').forEach(c=>c.addEventListener('click',()=>select(+c.dataset.r,+c.dataset.c)));
+  }
+  function select(r,c){table.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));
+    const cell=table.querySelector(`[data-r="${r}"][data-c="${c}"]`);if(!cell||!ci)return;
+    cell.classList.add('sel');ci.querySelector('b').textContent=LET[c]+(r+1);ci.querySelector('.cv').textContent=cell.textContent;}
+  function highlight(spec){clearHl();if(!spec)return;
+    table.querySelectorAll('[data-r]').forEach(cell=>{const r=+cell.dataset.r,c=+cell.dataset.c;
+      const hit=spec.type==='row'?r===spec.r:spec.type==='col'?c===spec.c:
+        spec.type==='cell'?(r===spec.r&&c===spec.c):spec.type==='head'?r===0:false;
+      if(hit)cell.classList.add('hl');});}
+  function clearHl(){table.querySelectorAll('.hl').forEach(x=>x.classList.remove('hl'));}
+  function markRows(map){table.querySelectorAll('tbody tr').forEach(tr=>{const c=map[+tr.dataset.orig];if(c)tr.classList.add('row-'+c);});}
+  build(rows.map((cells,r)=>({r,cells})));
+  if(selectable)select(1,1);
+  return{el,select,highlight,clearHl,markRows,setRows:build};
+}
+
+function makeChoice(root,opts,onChange){
+  let val=null,locked=false;const cards=[];
+  opts.forEach((txt,i)=>{const d=document.createElement('div');d.className='opt-card';d.tabIndex=0;d.setAttribute('role','button');
+    d.innerHTML=`<span class="letter">${'АБВГДЕ'[i]}</span><span>${esc(txt)}</span>`;
+    const pick=()=>{if(locked||state.finalized)return;val=i;cards.forEach((c,j)=>c.classList.toggle('on',j===i));onChange&&onChange();};
+    d.addEventListener('click',pick);
+    d.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pick();}});
+    root.appendChild(d);cards.push(d);});
+  return{get:()=>val,lock(){locked=true;},
+    reveal(ok){locked=true;cards.forEach((c,j)=>{c.classList.remove('on');if(j===ok)c.classList.add('ok');else if(j===val)c.classList.add('bad');});}};
+}
+
+function makeMatch(root,{left,right,order,onHover,onCount}){
+  let pairs={},sel=null,locked=false;
+  root.innerHTML='<div class="m-col"><div class="m-col-h">Элемент / задача</div></div><div class="m-col"><div class="m-col-h">Что описывает / действие</div></div>';
+  const cols=root.querySelectorAll('.m-col'),lc=[],rc=[];
+  left.forEach((it,i)=>{const d=document.createElement('div');d.className='m-card';d.tabIndex=0;
+    d.innerHTML=`<span class="badge">${i+1}</span><span class="m-inner">${esc(it.label)}</span>`;
+    d.addEventListener('click',()=>{if(locked||state.finalized)return;
+      if(pairs[i]!==undefined){delete pairs[i];sel=null;}else sel=sel===i?null:i;sync();});
+    d.addEventListener('mouseenter',()=>onHover&&onHover(i,true));
+    d.addEventListener('mouseleave',()=>onHover&&onHover(i,false));
+    cols[0].appendChild(d);lc.push(d);});
+  order.forEach(ri=>{const d=document.createElement('div');d.className='m-card';d.tabIndex=0;d.dataset.ri=ri;
+    d.innerHTML=`<span class="badge">·</span><span class="m-inner">${esc(right[ri])}</span>`;
+    d.addEventListener('click',()=>{if(locked||state.finalized)return;
+      if(sel===null){const h=root.parentElement.querySelector('.match-hint');
+        if(h){h.textContent='Сначала выберите карточку слева';h.classList.add('warn');
+          setTimeout(()=>{h.classList.remove('warn');onCount&&onCount(Object.keys(pairs).length);},1600);}return;}
+      for(const k in pairs)if(pairs[k]===ri)delete pairs[k];
+      pairs[sel]=ri;sel=null;sync();});
+    cols[1].appendChild(d);rc.push(d);});
+  function sync(){
+    lc.forEach((d,i)=>{const ri=pairs[i];d.classList.toggle('selected',sel===i);d.classList.toggle('paired',ri!==undefined);
+      if(ri!==undefined)d.style.setProperty('--pc',PAIR_C[i]);});
+    rc.forEach(d=>{const ri=+d.dataset.ri,own=Object.keys(pairs).find(k=>pairs[k]===ri),b=d.querySelector('.badge');
+      d.classList.toggle('paired',own!==undefined);
+      if(own!==undefined){b.textContent=+own+1;d.style.setProperty('--pc',PAIR_C[own]);}
+      else{b.textContent='·';d.style.removeProperty('--pc');}});
+    onCount&&onCount(Object.keys(pairs).length);}
+  return{pairs:()=>({...pairs}),resetPairs(){if(locked)return;pairs={};sel=null;sync();},lock(){locked=true;},
+    reveal(){locked=true;let s=0;lc.forEach((d,i)=>{const ok=pairs[i]===i;if(ok)s++;
+      d.classList.remove('selected');d.classList.add(ok?'ok':'bad');
+      if(!ok)d.querySelector('.m-inner').insertAdjacentHTML('beforeend',`<span class="fix">верно: ${esc(right[i])}</span>`);});
+      return s;}};
+}
+
+function makeOrder(root,poolLabels,n){
+  let pool=[...poolLabels],seq=[],locked=false,cb=null;
+  root.innerHTML='<div class="o-panel"><h4>Карточки · нажмите, чтобы поставить</h4><div class="o-cards"></div></div>'+
+                 '<div class="o-panel"><h4>Ваша последовательность</h4><div class="o-slots"></div></div>';
+  const pe=root.querySelector('.o-cards'),se=root.querySelector('.o-slots');
+  function render(){pe.innerHTML='';se.innerHTML='';
+    pool.forEach(name=>{const b=document.createElement('button');b.className='o-card';b.textContent=name;
+      b.addEventListener('click',()=>{if(locked||state.finalized||seq.length>=n)return;
+        pool=pool.filter(x=>x!==name);seq.push(name);render();cb&&cb();});pe.appendChild(b);});
+    if(!pool.length)pe.innerHTML='<span class="o-none">все карточки расставлены</span>';
+    for(let i=0;i<n;i++){const s=document.createElement('div');s.className='o-slot';
+      s.innerHTML=`<span class="slot-n">${i+1}.</span>`;
+      if(seq[i]!==undefined){const b=document.createElement('button');b.className='o-card';b.textContent=seq[i];
+        b.title='Вернуть карточку';
+        b.addEventListener('click',()=>{if(locked||state.finalized)return;pool.push(seq[i]);seq.splice(i,1);render();cb&&cb();});
+        s.appendChild(b);}
+      else s.insertAdjacentHTML('beforeend','<span class="o-empty">пусто</span>');
+      se.appendChild(s);}}
+  render();
+  return{seq:()=>[...seq],onChange(f){cb=f;},lock(){locked=true;},
+    reveal(correct){locked=true;let ok=true;
+      se.querySelectorAll('.o-card').forEach((b,i)=>{const good=seq[i]===correct[i];b.classList.add(good?'ok':'bad');if(!good)ok=false;});
+      return ok;}};
+}
+
+const DEFAULT_HINT=['Ответьте на все 4 утверждения','Ответьте на оба вопроса','Отметьте хотя бы один пункт и выберите обоснование','Соедините все 4 пары','Соедините все 4 пары','Выполните все три шага'];
+function setReady(i,ready){if(state.checked[i]||state.finalized)return;
+  $(`#b${i+1}-check`).disabled=!ready;
+  $(`#b${i+1}-hint`).textContent=ready?'Всё готово — можно проверять':DEFAULT_HINT[i];}
+
+function buildBlocks(){
+  const l1=$('#b1-list');l1.innerHTML='';const ans1=[null,null,null,null],items1=[];
+  B1.forEach((q,i)=>{const d=document.createElement('div');d.className='tf-item';
+    d.innerHTML=`<p><span class="num">${i+1}.</span>${esc(q.t)}</p>
+      <div class="tf-btns"><button class="tf-btn">Верно</button><button class="tf-btn">Неверно</button></div>
+      <div class="tf-why"></div>`;
+    d.querySelectorAll('.tf-btn').forEach((b,bi)=>b.addEventListener('click',()=>{
+      if(state.checked[0]||state.finalized)return;
+      ans1[i]=bi===0;d.querySelectorAll('.tf-btn').forEach(x=>x.classList.toggle('on',x===b));
+      setReady(0,ans1.every(v=>v!==null));}));
+    l1.appendChild(d);items1.push(d);});
+  RT[0]={lock(){items1.forEach(d=>d.querySelectorAll('.tf-btn').forEach(b=>b.disabled=true));},
+    check(){let s=0;const det=[];
+      B1.forEach((q,i)=>{const ok=ans1[i]===q.a;if(ok)s++;const it=items1[i];it.classList.add(ok?'ok':'bad');
+        const why=it.querySelector('.tf-why');why.classList.add('show');
+        why.innerHTML=(ok?'<b class="g">Верно.</b> ':'<b class="r">Ошибка. Правильный ответ: '+(q.a?'«верно»':'«неверно»')+'.</b> ')+esc(q.w);
+        det.push(`${i+1}) ${ok?'[+]':'[-]'} ответ: ${ans1[i]?'верно':'неверно'}; правильно: ${q.a?'верно':'неверно'} — ${q.t}`);});
+      return{score:s,details:det};}};
+
+  const bs=$('#b2-student');bs.innerHTML='';
+  bs.appendChild(makeTable({cols:['Смартфон','iPhone 15','Galaxy S24','Xiaomi 14'],rows:PRICE_MATRIX}).el);
+  bs.insertAdjacentHTML('beforeend','<div class="preview-cap">таблица ученика · сравнение цен «каждый с каждым»: в клетках — отношения «дороже / дешевле»</div>');
+  $('#b2-q1').innerHTML='';
+  const q1=makeChoice($('#b2-q1'),B2Q1,()=>setReady(1,q1.get()!==null&&q2v!==null));
+  let q2v=null;const ex=$('#b2-q2');ex.innerHTML='';const exCards=[];
+  [{cap:'Вариант А · одна таблица со свойствами',cols:['Объект','Цена, ₽','ОЗУ','Камера'],rows:PHONES},
+   {cap:'Вариант Б · «камера: каждый с каждым»',cols:['Смартфон','iPhone 15','Galaxy S24','Xiaomi 14'],rows:CAM_MATRIX}]
+  .forEach((def,i)=>{const d=document.createElement('div');d.className='example-card';d.tabIndex=0;
+    d.innerHTML=`<div class="ex-cap"><span class="letter">${'АБ'[i]}</span>${esc(def.cap)}</div>`;
+    d.appendChild(makeTable({cols:def.cols,rows:def.rows,selectable:false,mini:true}).el);
+    const pick=()=>{if(state.checked[1]||state.finalized)return;q2v=i;
+      exCards.forEach((c,j)=>c.classList.toggle('on',j===i));setReady(1,q1.get()!==null&&q2v!==null);};
+    d.addEventListener('click',pick);d.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();pick();}});
+    ex.appendChild(d);exCards.push(d);});
+  RT[1]={lock(){q1.lock();},
+    check(){const a=q1.get(),ok1=a===1,ok2=q2v===0;q1.reveal(1);
+      exCards.forEach((c,j)=>{c.classList.remove('on');if(j===0)c.classList.add('ok');else if(j===q2v)c.classList.add('bad');});
+      return{score:(ok1?1:0)+(ok2?1:0),details:[
+        `Вопрос 1: ${ok1?'[+]':'[-]'} ответ «${B2Q1[a]}»; правильно «объект-объект» — в клетках отношения между парами смартфонов, а не значения свойств.`,
+        `Вопрос 2: ${ok2?'[+]':'[-]'} выбран вариант ${q2v===0?'А':'Б'}; правильно А — «объект-свойство»: строки-смартфоны, столбцы-характеристики.`]};}};
+
+  const sel3=new Set(),ic=$('#b3-items');ic.innerHTML='';const cards3=[];
+  B3.forEach((it,i)=>{const d=document.createElement('div');d.className='check-card';d.tabIndex=0;
+    d.innerHTML=`<span class="box"></span><span>${esc(it.t)}</span><span class="verdict"></span>`;
+    const pick=()=>{if(state.checked[2]||state.finalized)return;
+      if(sel3.has(i))sel3.delete(i);else sel3.add(i);
+      d.classList.toggle('on',sel3.has(i));d.querySelector('.box').textContent=sel3.has(i)?'✓':'';
+      setReady(2,sel3.size>0&&r3.get()!==null);};
+    d.addEventListener('click',pick);d.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();pick();}});
+    ic.appendChild(d);cards3.push(d);});
+  $('#b3-reason').innerHTML='';
+  const r3=makeChoice($('#b3-reason'),B3_REASONS,()=>setReady(2,sel3.size>0&&r3.get()!==null));
+  RT[2]={lock(){r3.lock();},
+    check(){let diff=0;B3.forEach((it,i)=>{const should=!it.db,isSel=sel3.has(i);if(should!==isSel)diff++;
+        const c=cards3[i],v=c.querySelector('.verdict');c.classList.remove('on');
+        if(should&&isSel){c.classList.add('ok');v.textContent='НЕ БД';}
+        else if(should&&!isSel){c.classList.add('miss');v.textContent='ПРОПУСК';}
+        else if(!should&&isSel){c.classList.add('bad');v.textContent='ЭТО БД';}});
+      const s1=diff===0?2:diff===1?1:0,rv=r3.get(),ok2=rv===0;r3.reveal(0);
+      return{score:s1+(ok2?1:0),details:[
+        `Часть 1 (${s1}/2): отмечены как «НЕ БД»: ${[...sel3].map(i=>'«'+B3[i].t.slice(0,42)+'…»').join('; ')||'ничего'}. Верно: записка, объявление, стихотворение.`,
+        `Часть 2 (${ok2?1:0}/1): обоснование ${ok2?'верное':'неверное'} — в этих текстах нет полей, записей и однотипных объектов.`]};}};
+
+  $('#b4-table').innerHTML='';
+  const t4=makeTable({cols:BOOK_COLS,rows:BOOK_ROWS,chrome:true});$('#b4-table').appendChild(t4.el);
+  $('#b4-board').innerHTML='';
+  const m4=makeMatch($('#b4-board'),{left:B4L,right:B4R,order:B4_ORDER,
+    onHover:(i,on)=>t4.highlight(on?B4L[i].hl:null),
+    onCount:n=>{$('#b4-mhint').textContent=`Пары: ${n} из 4 · клик по соединённой карточке слева разъединяет пару`;setReady(3,n===4);}});
+  $('#b4-reset').onclick=()=>{if(!state.checked[3]&&!state.finalized)m4.resetPairs();};
+  RT[3]={lock(){m4.lock();$('#b4-reset').disabled=true;},
+    check(){const s=m4.reveal(),p=m4.pairs();
+      return{score:s,details:B4L.map((l,i)=>`${i+1}) ${p[i]===i?'[+]':'[-]'} «${l.label}» → «${p[i]!==undefined?B4R[p[i]]:'нет пары'}»${p[i]===i?'':'; верно: «'+B4R[i]+'»'}`)};}};
+
+  $('#b5-table').innerHTML='';
+  const t5=makeTable({cols:BOOK_COLS,rows:BOOK_ROWS,chrome:true});$('#b5-table').appendChild(t5.el);
+  const acts={filter:false,sort:false,avg:false,search:false};
+  function renderB5(){let list=BOOK_ROWS.map((cells,r)=>({r,cells}));
+    if(acts.search)list=list.filter(x=>x.r===3);
+    if(acts.filter)list=list.filter(x=>parseInt(x.cells[4],10)>500);
+    if(acts.sort)list=[...list].sort((a,b)=>+a.cells[2]-+b.cells[2]);
+    t5.setRows(list);t5.select(1,1);
+    const av=$('#b5-avg');
+    if(acts.avg&&list.length){const a=Math.round(list.reduce((s,x)=>s+parseInt(x.cells[4],10),0)/list.length);
+      av.textContent='Средняя цена: '+fmtN(a)+' ₽';av.classList.add('show');}
+    else av.classList.remove('show');
+    $$('#b5-actions .act-chip').forEach(c=>{const k=c.dataset.act;c.classList.toggle('on',k!=='reset'&&acts[k]);});}
+  $$('#b5-actions .act-chip').forEach(c=>c.addEventListener('click',()=>{if(state.finalized)return;
+    const k=c.dataset.act;
+    if(k==='reset'){acts.filter=acts.sort=acts.avg=acts.search=false;}else acts[k]=!acts[k];
+    renderB5();}));
+  $('#b5-board').innerHTML='';
+  const m5=makeMatch($('#b5-board'),{left:B5L,right:B5R,order:B5_ORDER,
+    onHover:(i,on)=>{const c=$(`#b5-actions [data-act="${B5L[i].chip}"]`);if(c)c.classList.toggle('hint',on);},
+    onCount:n=>{$('#b5-mhint').textContent=`Пары: ${n} из 4 · наведите на задачу слева — соответствующая кнопка подсветится`;setReady(4,n===4);}});
+  $('#b5-reset').onclick=()=>{if(!state.checked[4]&&!state.finalized)m5.resetPairs();};
+  RT[4]={lock(){m5.lock();$('#b5-reset').disabled=true;},
+    check(){const s=m5.reveal(),p=m5.pairs();
+      return{score:s,details:B5L.map((l,i)=>`${i+1}) ${p[i]===i?'[+]':'[-]'} «${l.label}» → «${p[i]!==undefined?B5R[p[i]]:'нет пары'}»${p[i]===i?'':'; верно: «'+B5R[i]+'»'}`)};}};
+
+  const sel6=new Set();$('#b6-table').innerHTML='';
+  const t6=makeTable({cols:EMP_COLS,rows:EMP_ROWS,chrome:true,rowExtra:idx=>{
+    const cb=document.createElement('input');cb.type='checkbox';cb.className='rowcheck';cb.title='Отметить: '+EMP_ROWS[idx][0];
+    cb.addEventListener('click',e=>e.stopPropagation());
+    cb.addEventListener('change',()=>{if(state.checked[5]||state.finalized){cb.checked=sel6.has(idx);return;}
+      if(cb.checked)sel6.add(idx);else sel6.delete(idx);upd6();});
+    return cb;}});
+  $('#b6-table').appendChild(t6.el);
+  $('#b6-order').innerHTML='';const ord6=makeOrder($('#b6-order'),B6_POOL,3);
+  $('#b6-pos').innerHTML='';const pos6=makeChoice($('#b6-pos'),B6_POS,upd6);
+  function upd6(){setReady(5,sel6.size>0&&ord6.seq().length===3&&pos6.get()!==null);}
+  ord6.onChange(upd6);
+  RT[5]={lock(){t6.el.querySelectorAll('.rowcheck').forEach(c=>c.disabled=true);ord6.lock();pos6.lock();},
+    check(){const rowsOk=B6_OK_ROWS.length===sel6.size&&B6_OK_ROWS.every(r=>sel6.has(r));
+      const map={};B6_OK_ROWS.forEach(r=>map[r]=sel6.has(r)?'ok':'miss');
+      sel6.forEach(r=>{if(!B6_OK_ROWS.includes(r))map[r]='bad';});
+      t6.markRows(map);
+      const orderOk=ord6.reveal(B6_ORDER),pv=pos6.get(),posOk=pv===B6_POS_OK;pos6.reveal(B6_POS_OK);
+      return{score:(rowsOk?1:0)+(orderOk?1:0)+(posOk?1:0),details:[
+        `Шаг 1 (${rowsOk?1:0}/1): отмечены ${[...sel6].map(r=>EMP_ROWS[r][0]).join(', ')||'никто'}; верно: Смирнов, Петрова, Новикова.`,
+        `Шаг 2 (${orderOk?1:0}/1): порядок ${ord6.seq().join(' → ')||'не задан'}; верно: Новикова (5) → Петрова (6) → Смирнов (7).`,
+        `Шаг 3 (${posOk?1:0}/1): ответ «${B6_POS[pv]}»; верно «Разработчик» — максимум среди найденных у Смирнова: 95 000 ₽.`]};}};
+
+  for(let i=0;i<6;i++){const b=$(`#b${i+1}-check`);b.disabled=true;b.className='btn primary';b.textContent='Проверить';
+    $(`#b${i+1}-hint`).textContent=DEFAULT_HINT[i];
+    const fb=$(`#b${i+1}-fb`);fb.className='fb';fb.innerHTML='';
+    $(`#pts-${i}`).textContent='до '+MAX[i]+' баллов';
+    b.onclick=()=>checkBlock(i);}
+}
+
+const EXTRA=['Каждое верное решение — 1 балл.','«Объект-объект» — про отношения; для характеристик — «объект-свойство».',
+ 'БД — это структура: поля, записи, однотипные объекты.','Строка — объект, столбец — свойство, ячейка — значение, заголовки — структура.',
+ 'Фильтр, сортировка, вычисление и поиск — четыре действия анализа.','Три условия → фильтр, возрастание стажа → сортировка, максимум → анализ.'];
+function checkBlock(i){
+  if(state.checked[i]||state.finalized)return;
+  const res=RT[i].check();
+  state.checked[i]=true;state.scores[i]=res.score;state.details[i]=res.details;
+  RT[i].lock();
+  const b=$(`#b${i+1}-check`);b.disabled=true;b.className='btn success';b.textContent=`Проверено · ${res.score} из ${MAX[i]}`;
+  $(`#b${i+1}-hint`).textContent='Пояснения — ниже';
+  $(`#pts-${i}`).textContent=`${res.score} / ${MAX[i]} баллов`;
+  const fb=$(`#b${i+1}-fb`);fb.className='fb show';
+  const cls=res.score===MAX[i]?'good':res.score>0?'mid':'bad';
+  fb.innerHTML=`<div class="score-line ${cls}">${res.score===MAX[i]?'Всё верно':res.score>0?'Частично верно':'Есть ошибки'} · ${res.score} из ${MAX[i]} баллов</div>
+    <ul><li>${esc(EXTRA[i])}</li></ul>`;
+  updateScore(true);updateNav();
+  toast(`Блок ${i+1} · ${res.score} из ${MAX[i]} баллов`,res.score===MAX[i]?'good':res.score>0?'':'bad');
+  $('#nextBtn').classList.add('pulse');
+  if(allChecked())toast('Все блоки выполнены — переходите к итогам','good');
+}
+function updateScore(pop){$('#scoreVal').textContent=totalScore();
+  if(pop){const c=$('#chipScore');c.classList.remove('pop');void c.offsetWidth;c.classList.add('pop');}}
+
+const slides=$$('.slide'),dotsBox=$('#dots');
+for(let i=0;i<8;i++){const d=document.createElement('button');d.className='dot-nav';
+  d.title=i===0?'Старт':i===7?'Итоги':`Блок ${i} · ${BLOCK_NAMES[i-1]}`;
+  d.addEventListener('click',()=>goTo(i));dotsBox.appendChild(d);}
+function goTo(i,dir){
+  if(i===state.slide||i<0||i>7)return;
+  if(i>0&&!state.started){gatePulse();return;}
+  dir=dir||(i>state.slide?'fwd':'back');
+  slides[state.slide].classList.remove('active','enter-r','enter-l');
+  state.slide=i;
+  const s=slides[i];s.classList.remove('enter-r','enter-l');void s.offsetWidth;
+  s.classList.add('active',dir==='back'?'enter-l':'enter-r');s.scrollTop=0;
+  $('#nextBtn').classList.remove('pulse');
+  updateNav();
+  if(i===7)onFinalEnter();
+}
+function updateNav(){
+  $('#slideVal').textContent=state.slide+1;
+  $('#progressBar').style.width=(state.slide/7*100)+'%';
+  $('#prevBtn').disabled=state.slide===0;
+  $('#nextBtn').disabled=state.slide===7||(state.slide===0&&!state.started);
+  $$('.dot-nav').forEach((d,i)=>{d.classList.toggle('cur',i===state.slide);
+    d.classList.toggle('done',i>=1&&i<=6&&state.checked[i-1]);});
+}
+$('#prevBtn').addEventListener('click',()=>goTo(state.slide-1,'back'));
+$('#nextBtn').addEventListener('click',()=>goTo(state.slide+1));
+document.addEventListener('keydown',e=>{
+  const t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.tagName==='SELECT'||t.isContentEditable))return;
+  if(e.key==='ArrowRight'){e.preventDefault();state.slide===0&&!state.started?attemptStart():goTo(state.slide+1);}
+  else if(e.key==='ArrowLeft'){e.preventDefault();goTo(state.slide-1,'back');}});
+
+const nameInput=$('#nameInput');
+nameInput.value=localStorage.getItem('tm_name')||'';
+nameInput.addEventListener('input',()=>$('#nameErr').classList.remove('show'));
+nameInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();attemptStart();}});
+$('#startBtn').addEventListener('click',attemptStart);
+function gatePulse(){goTo(0,'back');setTimeout(()=>{nameInput.focus();
+  nameInput.classList.remove('shake');void nameInput.offsetWidth;nameInput.classList.add('shake');
+  $('#nameErr').classList.add('show');},80);}
+function attemptStart(){
+  const v=nameInput.value.trim().replace(/\s+/g,' ');
+  if(v.length<2){nameInput.classList.remove('shake');void nameInput.offsetWidth;nameInput.classList.add('shake');
+    $('#nameErr').classList.add('show');nameInput.focus();return;}
+  state.name=v;state.started=true;if(!state.startTime)state.startTime=Date.now();
+  localStorage.setItem('tm_name',v);
+  $('#startBtn').textContent='Продолжить практикум';
+  toast(`Практикум начат. Отчёт будет подписан: ${v}`,'good');
+  goTo(1);
+}
+
+const rb=$('#routeBody');
+BLOCK_NAMES.forEach((n,i)=>{const tr=document.createElement('tr');tr.className='rrow';
+  tr.innerHTML=`<td>${i+1}</td><td>${esc(n)}</td><td class="fmt">${esc(BLOCK_FMT[i])}</td><td>${MAX[i]}</td>`;
+  tr.addEventListener('click',()=>{state.started?goTo(i+1):gatePulse();});rb.appendChild(tr);});
+rb.insertAdjacentHTML('beforeend','<tr><td></td><td>Итоговый слайд: результат и общий вывод</td><td class="fmt">подсчёт баллов</td><td>20</td></tr>');
+const PV={os:{cols:['Объект','Цена','ОЗУ','Камера'],rows:PHONES,cap:'фрагмент таблицы · выделение ячейки'},
+ oo:{cols:['Смартфон','iPhone 15','Galaxy S24','Xiaomi 14'],rows:PRICE_MATRIX,cap:'«объект-объект» · отношения между парами объектов'},
+ db:{cols:['Фамилия','Должность','Стаж','Зарплата'],rows:[EMP_ROWS[0],EMP_ROWS[3],EMP_ROWS[7]].map(r=>[r[0],r[1],r[3],r[4]]),cap:'база данных · поля, записи и запросы к ним'}};
+function setPreview(key){const box=$('#previewTable');box.innerHTML='';
+  box.appendChild(makeTable(PV[key]).el);$('#previewCap').textContent=PV[key].cap;
+  $$('#previewTabs .ptab').forEach(t=>t.classList.toggle('on',t.dataset.pv===key));}
+setPreview('os');
+$$('#previewTabs .ptab').forEach(t=>t.addEventListener('click',()=>setPreview(t.dataset.pv)));
+
+function durationStr(){if(!state.startTime)return '—';
+  const s=Math.floor(((state.endTime||Date.now())-state.startTime)/1000);
+  return `${Math.floor(s/60)} мин ${s%60} с`;}
+function dateStr(){return new Date(state.endTime||Date.now()).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+function fileDate(){const d=new Date(state.endTime||Date.now());return `${pad(d.getDate())}-${pad(d.getMonth()+1)}-${d.getFullYear()}`;}
+function safeName(){return (state.name||'Ученик').replace(/\s+/g,'_').replace(/[^\wа-яёА-ЯЁ\-]/gi,'')||'Ученик';}
+function reportFileName(){return `Результат_${safeName()}_${fileDate()}.txt`;}
+function buildReport(){
+  const t=totalScore(),pct=Math.round(t/20*100),g=gradeOf(t),L=[];
+  L.push('ОТЧЁТ О ПРОХОЖДЕНИИ ПРАКТИКУМА');
+  L.push('«Табличные модели» · информатика, информационное моделирование');
+  L.push('='.repeat(62));
+  L.push('Участник: '+state.name);
+  L.push('Дата: '+dateStr());
+  L.push('Время прохождения: '+durationStr());
+  L.push(`Результат: ${t} из 20 баллов (${pct}% верных решений)`);
+  L.push(`Оценка: ${g.m} — ${g.w}`);
+  L.push('-'.repeat(62));
+  L.push('РЕЗУЛЬТАТЫ ПО БЛОКАМ');
+  for(let i=0;i<6;i++)L.push(`${i+1}. ${BLOCK_NAMES[i]} — ${state.checked[i]?state.scores[i]+'/'+MAX[i]:'не выполнен (0/'+MAX[i]+')'}`);
+  L.push('-'.repeat(62));
+  L.push('ДЕТАЛИ ОТВЕТОВ');
+  for(let i=0;i<6;i++){L.push('');L.push(`Блок ${i+1}. ${BLOCK_NAMES[i]}`);
+    if(state.details[i])state.details[i].forEach(d=>L.push('  '+d));else L.push('  — блок не выполнен');}
+  L.push('');L.push('='.repeat(62));
+  L.push('Файл сформирован автоматически практикумом «Табличные модели».');
+  return L.join('\r\n');
+}
+function buildShortMail(){
+  const t=totalScore(),g=gradeOf(t);
+  return `Здравствуйте!\r\n\r\nУченик: ${state.name}\r\nПрактикум «Табличные модели»: ${t}/20 баллов (${Math.round(t/20*100)}%), оценка ${g.m} — ${g.w}.\r\nДата: ${dateStr()} · время: ${durationStr()}\r\n\r\nПо блокам: ${[0,1,2,3,4,5].map(i=>`${i+1}) ${state.checked[i]?state.scores[i]:0}/${MAX[i]}`).join('; ')}.\r\n\r\nПодробный отчёт — в файле «${state.fileName||reportFileName()}» (прикрепите его к письму).`;}
+function downloadReport(auto){
+  const report=state.report||buildReport();
+  state.fileName=state.fileName||reportFileName();
+  const blob=new Blob(['\uFEFF'+report],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=state.fileName;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  toast((auto?'Отчёт сохранён: ':'Файл скачан: ')+state.fileName,'good');
+}
+function mailSubject(){return `Практикум «Табличные модели» — ${state.name} — ${totalScore()}/20`;}
+function openMail(){
+  if(!state.report)state.report=buildReport();
+  state.fileName=state.fileName||reportFileName();
+  const a=document.createElement('a');
+  a.href=`mailto:${TEACHER_EMAIL}?subject=${encodeURIComponent(mailSubject())}&body=${encodeURIComponent(buildShortMail())}`;
+  document.body.appendChild(a);a.click();a.remove();
+  toast('Открылась почтовая программа — нажмите «Отправить»');
+  setSendStatus('mail');
+}
+function setSendStatus(s){state.sendStatus=s;renderSendStatus();}
+async function sendReportAuto(){
+  setSendStatus('sending');
+  const ctrl=new AbortController(),to=setTimeout(()=>ctrl.abort(),12000);
+  try{
+    const res=await fetch('https://formsubmit.co/ajax/'+TEACHER_EMAIL,{method:'POST',signal:ctrl.signal,
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({_subject:mailSubject(),_template:'table',_captcha:'false',
+        'Участник':state.name,'Результат':`${totalScore()} из 20 (${Math.round(totalScore()/20*100)}%)`,
+        'Оценка':gradeOf(totalScore()).m+' — '+gradeOf(totalScore()).w,'Дата':dateStr(),'Отчёт':state.report})});
+    const data=await res.json().catch(()=>null);
+    setSendStatus(res.ok&&data&&String(data.success)==='true'?'sent':'failed');
+  }catch(e){setSendStatus('failed');}
+  finally{clearTimeout(to);}
+}
+function renderSendStatus(){
+  const el=$('#sendStatus');if(!el)return;
+  const map={idle:['idle','Отчёт готов к отправке на '+TEACHER_EMAIL+'.'],
+    sending:['sending','Отправляем отчёт на '+TEACHER_EMAIL+'…'],
+    sent:['sent','Отчёт автоматически отправлен на '+TEACHER_EMAIL+'.'],
+    mail:['sent','Письмо для '+TEACHER_EMAIL+' создано в почтовой программе — нажмите «Отправить».'],
+    failed:['failed','Автоотправка недоступна (нет сети или сервис ждёт подтверждения). Нажмите «Отправить письмом» — откроется готовое письмо для '+TEACHER_EMAIL+'.']};
+  const[c,t]=map[state.sendStatus]||map.idle;
+  el.className='send-status '+c;el.innerHTML=`<span class="sd"></span><span>${esc(t)}</span>`;
+}
+
+function onFinalEnter(){renderFinal();if(allChecked()&&!state.finalized)finalize();}
+function finalize(){
+  if(state.finalized)return;
+  state.finalized=true;state.endTime=Date.now();
+  for(let i=0;i<6;i++){RT[i]&&RT[i].lock();
+    const b=$(`#b${i+1}-check`);b.disabled=true;
+    if(!state.checked[i]){b.className='btn ghost';b.textContent='Не выполнен';
+      $(`#b${i+1}-hint`).textContent='Практикум завершён';}
+    slides[i+1].querySelector('.wrap').classList.add('locked');}
+  state.report=buildReport();state.fileName=reportFileName();
+  renderFinal();downloadReport(true);sendReportAuto();
+}
+let countRaf=null;
+function renderFinal(){
+  const t=totalScore(),pct=Math.round(t/20*100),g=gradeOf(t),done=state.checked.filter(Boolean).length;
+  const firstBad=state.checked.findIndex((c,i)=>c&&state.scores[i]<MAX[i]);
+  const firstUn=state.checked.findIndex(c=>!c);
+  const target=firstBad>=0?firstBad:firstUn;
+  const C=2*Math.PI*50;
+  $('#finalWrap').innerHTML=`
+    <div class="block-head reveal" style="--i:0">
+      <div class="kicker">Итоги практикума</div>
+      <h2 class="slide-title">Ваш результат</h2>
+    </div>
+    ${!allChecked()&&!state.finalized?`<div class="banner reveal" style="--i:1">Выполнено ${done} из 6 блоков — баллы начислены только за проверенные. После завершения изменить ответы будет нельзя.
+      <button class="btn primary small" id="finalizeBtn">Завершить и отправить отчёт</button></div>`:''}
+    <div class="card final-hero reveal" style="--i:1">
+      <div class="ring-box">
+        <svg width="158" height="158" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="50" fill="none" stroke="#e7edf6" stroke-width="9"/>
+          <circle id="ringFg" cx="60" cy="60" r="50" fill="none" stroke="${g.col}" stroke-width="9" stroke-linecap="round"
+            stroke-dasharray="${C}" stroke-dashoffset="${C}" style="transition:stroke-dashoffset 1s ease"/>
+        </svg>
+        <div class="ring-num"><div><b id="ringNum">0</b><span>из 20 баллов</span></div></div>
+      </div>
+      <div>
+        <div class="final-name">Участник: <b>${esc(state.name||'—')}</b></div>
+        <div class="grade-line"><span class="grade-badge ${g.c}">${g.m}</span><span class="grade-word">${g.w}</span></div>
+        <div class="final-stats">
+          <span class="stat-chip"><b>${pct}%</b> верных решений</span>
+          <span class="stat-chip">время: <b>${durationStr()}</b></span>
+          <span class="stat-chip"><b>${done}/6</b> блоков выполнено</span>
+          <span class="stat-chip">${dateStr()}</span>
+        </div>
+        <div class="final-actions">
+          ${target>=0?`<button class="btn ghost" id="reviewBtn">${state.finalized?'Посмотреть разбор':'Разобрать ошибки'}</button>`:'<span class="all-ok">Все решения верны</span>'}
+        </div>
+      </div>
+    </div>
+    <div class="report-panel reveal" style="--i:2">
+      <h3>Отчёт для учителя</h3>
+      <div class="report-meta">Участник: <b>${esc(state.name||'—')}</b> · Получатель: <b>${TEACHER_EMAIL}</b><br>
+        Файл: <b>${esc(state.fileName||reportFileName())}</b> · результат <b>${t}/20</b> · оценка <b>${g.m}</b></div>
+      <div class="report-btns">
+        <button class="btn primary" id="dlBtn">Скачать отчёт (.txt)</button>
+        <button class="btn ghost" id="mailBtn">Отправить письмом</button>
+        ${state.finalized?'':'<button class="btn soft" id="finalizeBtn2">Завершить и отправить</button>'}
+      </div>
+      <div class="send-status idle" id="sendStatus"></div>
+      <div class="report-note">При завершении отчёт автоматически скачивается в .txt и отправляется на ${TEACHER_EMAIL} через сервис FormSubmit (при самой первой отправке владельцу почты приходит письмо-активация — её нужно подтвердить один раз). Кнопка «Отправить письмом» — резервный способ: она открывает почтовую программу с готовым письмом; прикрепите скачанный файл и нажмите «Отправить».</div>
+    </div>
+    <h3 class="sec reveal" style="--i:3">Результаты по блокам</h3>
+    <div class="card reveal" style="--i:3"><div class="tbl-scroll"><table class="res-table">
+      <thead><tr><th>Блок</th><th>Баллы</th><th style="width:34%">Прогресс</th></tr></thead>
+      <tbody>${[0,1,2,3,4,5].map(i=>{const s=state.checked[i]?state.scores[i]:0,p=s/MAX[i]*100;
+        return `<tr><td>${i+1}. ${esc(BLOCK_NAMES[i])}</td><td class="res-pts">${s} / ${MAX[i]}</td>
+        <td><div class="res-bar ${p===100?'full':p===0?'zero':''}"><i style="width:0" data-w="${p}"></i></div></td></tr>`;}).join('')}
+      </tbody></table></div></div>
+    <h3 class="sec reveal" style="--i:4">Общий вывод: таблицы как инструмент анализа данных</h3>
+    <p class="block-desc reveal" style="--i:4">Таблица — это не просто аккуратная запись данных, а рабочий инструмент анализа. Правильно выбранный вид таблицы сам подсказывает, какие вопросы данным можно задать и какими действиями получить ответ.</p>
+    <div class="concl reveal" style="--i:5">
+      ${CONCL.map(c=>`<div class="concl-card"><div class="ci" style="background:${c[3]}14;border:1px solid ${c[3]}33">${c[0]}</div><h4>${c[1]}</h4><p>${c[2]}</p></div>`).join('')}
+    </div>
+    <div class="final-verdict reveal" style="--i:6"><b>Вывод:</b> прежде чем собирать данные, выберите вид таблицы под задачу — и анализ сведётся к нескольким понятным действиям: найти, отфильтровать, упорядочить, посчитать.</div>`;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const r=$('#ringFg');if(r)r.style.strokeDashoffset=C*(1-pct/100);
+    $$('.res-bar i').forEach(b=>b.style.width=b.dataset.w+'%');}));
+  if(countRaf)cancelAnimationFrame(countRaf);
+  const numEl=$('#ringNum'),t0=performance.now();
+  (function cnt(now){const k=Math.min(1,(now-t0)/850);
+    numEl.textContent=Math.round(t*(1-Math.pow(1-k,3)));
+    if(k<1)countRaf=requestAnimationFrame(cnt);else countRaf=null;})(t0);
+  $('#dlBtn').addEventListener('click',()=>{if(!state.report)state.report=buildReport();downloadReport(false);});
+  $('#mailBtn').addEventListener('click',openMail);
+  const f1=$('#finalizeBtn'),f2=$('#finalizeBtn2');
+  if(f1)f1.addEventListener('click',finalize);
+  if(f2)f2.addEventListener('click',finalize);
+  const rv=$('#reviewBtn');if(rv)rv.addEventListener('click',()=>{if(target>=0)goTo(target+1,'back');});
+  renderSendStatus();
+}
+
+buildBlocks();
+slides[0].classList.add('active','enter-r');
+updateNav();updateScore(false);
+})();
+</script>
+</body>
+</html>

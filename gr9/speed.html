@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Интернет и скорость передачи данных</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  :root {
+    --primary: #0077FF;
+    --primary-dark: #0055CC;
+    --accent: #FFCC00;
+    --accent-dark: #FFB800;
+    --bg: #F4F8FB;
+    --card-bg: #FFFFFF;
+    --text: #1A1A1A;
+    --text-dim: #5A6B7C;
+    --success: #10B981;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+    --shadow: 0 8px 30px rgba(0, 119, 255, 0.08);
+    --radius: 16px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+  }
+
+  /* ── Progress bar ── */
+  .progress-bar {
+    position: fixed; top: 0; left: 0; height: 4px; z-index: 1000;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    transition: width 0.4s ease;
+  }
+
+  /* ── Slide container ── */
+  .deck { position: relative; width: 100vw; height: 100vh; }
+
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    padding: 60px 80px 100px;
+    opacity: 0;
+    transform: translateX(60px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    pointer-events: none;
+    overflow-y: auto;
+    background: var(--bg);
+  }
+  .slide.active {
+    opacity: 1; transform: translateX(0);
+    pointer-events: auto; z-index: 2;
+  }
+  .slide.exit-left {
+    opacity: 0; transform: translateX(-60px);
+  }
+
+  /* ── Typography ── */
+  h1 {
+    font-size: clamp(2rem, 4.5vw, 3.2rem);
+    font-weight: 800;
+    color: var(--primary-dark);
+    text-align: center; line-height: 1.2; margin-bottom: 16px;
+  }
+  h2 {
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    font-weight: 700;
+    color: var(--primary-dark);
+    text-align: center; margin-bottom: 24px;
+  }
+  h3 { font-size: 1.2rem; font-weight: 600; color: var(--primary); margin-bottom: 12px; }
+  p, li { font-size: clamp(1rem, 1.4vw, 1.15rem); line-height: 1.6; color: var(--text); }
+  .dim { color: var(--text-dim); }
+  .accent { color: var(--primary); font-weight: 600; }
+  .accent-warn { color: var(--warning); font-weight: 600; }
+  .accent-success { color: var(--success); font-weight: 600; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    box-shadow: var(--shadow);
+    width: 100%; max-width: 900px;
+    margin-bottom: 16px;
+    border-left: 5px solid var(--primary);
+  }
+  .card.accent-border { border-left-color: var(--accent); }
+  .card.success-border { border-left-color: var(--success); }
+  .card.warning-border { border-left-color: var(--warning); }
+
+  /* ── Grid ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; max-width: 900px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; width: 100%; max-width: 1000px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; width: 100%; max-width: 1000px; }
+
+  /* ── Reveal animation ── */
+  .rv { opacity: 0; transform: translateY(20px); transition: opacity 0.5s, transform 0.5s; }
+  .rv.vis { opacity: 1; transform: translateY(0); }
+
+  /* ── Tags ── */
+  .tag {
+    display: inline-block; padding: 4px 12px;
+    border-radius: 99px; font-size: 0.85rem; font-weight: 600;
+    background: rgba(0, 119, 255, 0.1); color: var(--primary);
+    margin: 4px 4px 4px 0;
+  }
+
+  /* ── Table ── */
+  .tbl {
+    width: 100%; border-collapse: collapse;
+    font-size: clamp(0.9rem, 1.2vw, 1.05rem);
+  }
+  .tbl th {
+    background: rgba(0, 119, 255, 0.08); color: var(--primary-dark);
+    padding: 10px 12px; text-align: left; font-weight: 600;
+    border-bottom: 2px solid rgba(0, 119, 255, 0.15);
+  }
+  .tbl td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #E2E8F0;
+  }
+
+  /* ── Timeline ── */
+  .timeline { position: relative; padding-left: 32px; width: 100%; max-width: 800px; }
+  .timeline::before {
+    content: ''; position: absolute; left: 10px; top: 0; bottom: 0;
+    width: 3px; background: linear-gradient(to bottom, var(--primary), var(--accent));
+    border-radius: 3px;
+  }
+  .tl-item { position: relative; margin-bottom: 16px; }
+  .tl-item::before {
+    content: ''; position: absolute; left: -28px; top: 6px;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--card-bg); border: 3px solid var(--primary);
+  }
+  .tl-item .year { font-weight: 700; color: var(--primary); font-size: 1.05rem; }
+
+  /* ── Schema ── */
+  .schema {
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px; flex-wrap: wrap; margin: 16px 0;
+  }
+  .schema-node {
+    background: var(--card-bg); border: 2px solid #E2E8F0;
+    border-radius: 10px; padding: 10px 16px; text-align: center;
+    font-size: 0.9rem; font-weight: 500;
+  }
+  .schema-node.highlight { border-color: var(--primary); background: rgba(0, 119, 255, 0.05); }
+  .schema-arrow { color: var(--primary); font-size: 1.4rem; font-weight: 700; }
+
+  /* ── Task card ── */
+  .task-card {
+    background: var(--card-bg); border-radius: 20px;
+    padding: 32px 36px; box-shadow: var(--shadow);
+    max-width: 800px; width: 100%; text-align: center;
+    border-top: 5px solid var(--accent);
+  }
+  .task-num {
+    display: inline-block; padding: 6px 18px;
+    border-radius: 99px; font-weight: 700; font-size: 0.9rem;
+    background: var(--primary); color: white; margin-bottom: 16px;
+  }
+  .task-text { font-size: clamp(1.1rem, 1.5vw, 1.25rem); line-height: 1.6; margin-bottom: 24px; }
+
+  .solve-btn {
+    background: var(--accent); color: var(--text);
+    border: none; padding: 12px 28px; border-radius: 99px;
+    font-size: 1rem; font-weight: 600; cursor: pointer;
+    transition: all 0.3s; box-shadow: 0 4px 15px rgba(255, 204, 0, 0.3);
+  }
+  .solve-btn:hover { background: var(--accent-dark); transform: translateY(-2px); }
+
+  .solution {
+    display: none; margin-top: 24px; padding: 20px 24px;
+    background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 12px; text-align: left;
+    animation: fadeUp 0.4s ease;
+  }
+  .solution.open { display: block; }
+  .solution .step { margin-bottom: 8px; font-family: 'Courier New', monospace; font-size: 1.05rem; }
+  .solution .ans { color: var(--success); font-weight: 700; font-size: 1.15rem; margin-top: 12px; border-top: 1px dashed rgba(16,185,129,0.3); padding-top: 8px; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Formula box ── */
+  .formula-box {
+    background: linear-gradient(135deg, rgba(0,119,255,0.08), rgba(255,204,0,0.08));
+    border: 2px solid var(--primary);
+    border-radius: 12px; padding: 16px 24px;
+    text-align: center; font-size: clamp(1.2rem, 2vw, 1.6rem);
+    font-weight: 700; color: var(--primary-dark);
+    font-family: 'Courier New', monospace; margin: 16px 0;
+  }
+
+  /* ── URL breakdown ── */
+  .url-box {
+    font-family: 'Courier New', monospace;
+    font-size: clamp(0.9rem, 1.5vw, 1.2rem);
+    background: #F8FAFC; border-radius: 12px;
+    padding: 16px 20px; text-align: center;
+    border: 1px solid #E2E8F0; word-break: break-all;
+  }
+  .url-part { padding: 4px 8px; border-radius: 6px; margin: 0 2px; font-weight: 600; }
+
+  /* ── Reflection clouds ── */
+  .clouds {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 16px; width: 100%; max-width: 900px; margin-top: 20px;
+  }
+  .cloud {
+    padding: 24px 16px; border-radius: 16px;
+    text-align: center; box-shadow: var(--shadow);
+    background: var(--card-bg); transition: transform 0.3s;
+    border: 2px solid transparent;
+  }
+  .cloud:hover { transform: translateY(-5px); }
+  .cloud .icon { font-size: 2.5rem; margin-bottom: 12px; }
+  .cloud.storm { border-color: #94A3B8; }
+  .cloud.sun { border-color: var(--accent); background: #FFFBEB; }
+  .cloud.rainbow { border-color: var(--primary); background: rgba(0,119,255,0.05); }
+
+  /* ── Nav ── */
+  .nav {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 12px; align-items: center;
+    background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px);
+    padding: 10px 20px; border-radius: 99px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    border: 1px solid #E2E8F0; z-index: 100;
+  }
+  .nav button {
+    background: var(--primary); color: white;
+    border: none; width: 42px; height: 42px; border-radius: 50%;
+    cursor: pointer; font-size: 1.1rem; transition: all 0.25s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .nav button:hover { background: var(--primary-dark); transform: scale(1.1); }
+  .nav button:disabled { background: #CBD5E1; cursor: not-allowed; transform: none; }
+  .nav .counter { font-size: 0.95rem; color: var(--text-dim); font-weight: 600; min-width: 60px; text-align: center; }
+
+  .hint {
+    position: fixed; top: 16px; right: 20px;
+    font-size: 0.8rem; color: var(--text-dim);
+    background: rgba(255,255,255,0.9); padding: 8px 14px;
+    border-radius: 10px; z-index: 100;
+    border: 1px solid #E2E8F0;
+  }
+
+  /* ── Title slide special ── */
+  .title-slide {
+    background: linear-gradient(135deg, #FFFFFF 0%, #F0F7FF 100%);
+  }
+  .title-slide .globe {
+    font-size: clamp(4rem, 9vw, 6rem);
+    animation: float 3s ease-in-out infinite;
+    margin-bottom: 16px;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .slide { padding: 40px 24px 100px; }
+    .grid-2, .grid-3, .grid-4, .clouds { grid-template-columns: 1fr; }
+    .schema { flex-direction: column; }
+    .schema-arrow { transform: rotate(90deg); }
+    .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progress"></div>
+<div class="hint">← → пробел · F — полный экран</div>
+
+<div class="deck" id="deck">
+
+<!-- SLIDE 0: TITLE -->
+<div class="slide title-slide active">
+  <div class="globe">🌐</div>
+  <h1>Интернет и скорость<br>передачи данных</h1>
+  <p class="dim" style="font-size: 1.3rem; text-align: center; max-width: 600px;">
+    История · Протоколы · Адресация · Решение задач
+  </p>
+</div>
+
+<!-- SLIDE 1: ЧТО ТАКОЕ ИНТЕРНЕТ -->
+<div class="slide">
+  <h2>Что такое Интернет?</h2>
+  <div class="card rv" style="text-align: center;">
+    <p style="font-size: 1.4rem;"><span class="accent">Inter</span> («между») + <span class="accent">Net</span> («сеть») = <b>Глобальная сеть</b>, объединяющая компьютерные сети.</p>
+  </div>
+  <h3 class="rv" style="margin-top: 24px;">Каналы связи:</h3>
+  <div class="grid-3 rv">
+    <div class="card" style="text-align: center;"><p>🔌 Электрические кабели</p></div>
+    <div class="card" style="text-align: center;"><p>💎 Оптоволоконные</p></div>
+    <div class="card" style="text-align: center;"><p>🛰️ Спутниковая радиосвязь</p></div>
+  </div>
+  <div class="card accent-border rv" style="margin-top: 16px;">
+    <p><b>Провайдер</b> — фирма, предоставляющая конечным пользователям выход в Интернет через свою локальную сеть.</p>
+  </div>
+</div>
+
+<!-- SLIDE 2: ПОДКЛЮЧЕНИЕ -->
+<div class="slide">
+  <h2>Способы подключения к Интернету</h2>
+  <div class="card rv">
+    <h3>📞 Dial-up (устаревшее)</h3>
+    <div class="schema">
+      <div class="schema-node">💻 ПК</div><div class="schema-arrow">→</div>
+      <div class="schema-node">📠 Модем</div><div class="schema-arrow">→</div>
+      <div class="schema-node">🔀 Сплиттер</div><div class="schema-arrow">→</div>
+      <div class="schema-node highlight">🌐 Провайдер</div>
+    </div>
+  </div>
+  <div class="card rv">
+    <h3>📡 ADSL</h3>
+    <div class="schema">
+      <div class="schema-node">💻 ПК</div><div class="schema-arrow">→</div>
+      <div class="schema-node">📡 ADSL-модем</div><div class="schema-arrow">→</div>
+      <div class="schema-node">🔀 Сплиттер</div><div class="schema-arrow">→</div>
+      <div class="schema-node highlight">🌐 Провайдер</div>
+    </div>
+  </div>
+  <div class="card rv">
+    <h3>🔗 Выделенная линия</h3>
+    <div class="schema">
+      <div class="schema-node">💻 ПК</div><div class="schema-arrow">→</div>
+      <div class="schema-node">🔀 Роутер / Хаб</div><div class="schema-arrow">→</div>
+      <div class="schema-node highlight">🌐 Провайдер</div><div class="schema-arrow">→</div>
+      <div class="schema-node">🛰️ Оптоволокно / Спутник</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: ИСТОРИЯ 1 -->
+<div class="slide">
+  <h2>Как возник Интернет? (1958–1974)</h2>
+  <div class="timeline">
+    <div class="tl-item rv"><div class="year">1958</div><div class="desc">Создание <span class="accent">ARPA</span> в США</div></div>
+    <div class="tl-item rv"><div class="year">1960-е</div><div class="desc">Проект <span class="accent">ARPANet</span>: нет единого центра, пакетный обмен, шлюзы</div></div>
+    <div class="tl-item rv"><div class="year">1965</div><div class="desc">📧 <span class="accent">E-mail</span> — обмен сообщениями</div></div>
+    <div class="tl-item rv"><div class="year">1969</div><div class="desc">💻 <span class="accent">TelNet</span> — удалённое управление</div></div>
+    <div class="tl-item rv"><div class="year">1971</div><div class="desc">📁 <span class="accent">FTP</span> — приём и передача файлов</div></div>
+    <div class="tl-item rv"><div class="year">1974</div><div class="desc">🔧 Разработка протокола <span class="accent">TCP/IP</span></div></div>
+  </div>
+</div>
+
+<!-- SLIDE 4: ИСТОРИЯ 2 -->
+<div class="slide">
+  <h2>Как возник Интернет? (1982–2025)</h2>
+  <div class="timeline">
+    <div class="tl-item rv"><div class="year">1983</div><div class="desc">Разделение на <span class="accent-warn">MilNet</span> (военная) и <span class="accent">Internet</span> (общедоступная)</div></div>
+    <div class="tl-item rv"><div class="year">1984</div><div class="desc">🏷 Система доменных имён <span class="accent">DNS</span> (адреса вида www.mail.ru)</div></div>
+    <div class="tl-item rv"><div class="year">1991</div><div class="desc">🌍 Разработка <span class="accent">WWW</span> (Тим Бернерс-Ли) и подключение <span class="accent">России</span></div></div>
+    <div class="tl-item rv"><div class="year">1994</div><div class="desc">🛒 Первые Интернет-магазины</div></div>
+    <div class="tl-item rv"><div class="year">2025</div><div class="desc">Более <span class="accent-success">1 млрд</span> сайтов (активны не более 18%)</div></div>
+  </div>
+</div>
+
+<!-- SLIDE 5: ВОЗМОЖНОСТИ -->
+<div class="slide">
+  <h2>Возможности (сервисы) Интернета</h2>
+  <div class="grid-3">
+    <div class="card rv" style="text-align:center;"><p>🌐 <b>WWW</b><br><span class="dim">Гипертекстовые документы</span></p></div>
+    <div class="card rv" style="text-align:center;"><p>📧 <b>E-mail</b><br><span class="dim">Электронная почта</span></p></div>
+    <div class="card rv" style="text-align:center;"><p>📁 <b>FTP</b><br><span class="dim">Обмен файлами</span></p></div>
+    <div class="card rv" style="text-align:center;"><p>💬 <b>Форумы и Чаты</b></p></div>
+    <div class="card rv" style="text-align:center;"><p>🔍 <b>Поисковые системы</b></p></div>
+    <div class="card rv" style="text-align:center;"><p>👥 <b>Социальные сети</b></p></div>
+  </div>
+  <div class="card accent-border rv" style="margin-top: 16px; text-align: center;">
+    <p><span class="accent">Гипертекст</span> — текст, в котором слова являются активными ссылками на другие документы.</p>
+    <p><span class="accent">Гипермедиа</span> — гипертекст, содержащий также звук и видео.</p>
+  </div>
+</div>
+
+<!-- SLIDE 6: ПРОТОКОЛЫ -->
+<div class="slide">
+  <h2>Протоколы Интернета</h2>
+  <div class="card rv" style="text-align: center;">
+    <p><b>Протокол</b> — набор соглашений и правил, определяющих порядок обмена информацией.</p>
+  </div>
+  <div class="grid-2 rv">
+    <div class="card">
+      <h3>TCP (Transmission Control Protocol)</h3>
+      <ul>
+        <li>📦 Файл делится на пакеты (≤ 1,5 Кб)</li>
+        <li>🚀 Пакеты передаются независимо</li>
+        <li>🧩 В месте назначения собираются в файл</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>IP (Internet Protocol)</h3>
+      <ul>
+        <li>🗺️ Определяет наилучший маршрут движения пакетов по сети</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card success-border rv" style="text-align: center; margin-top: 16px;">
+    <p>Все протоколы служб (HTTP, FTP, SMTP, POP3) основаны на <span class="accent-success">TCP/IP</span>!</p>
+  </div>
+</div>
+
+<!-- SLIDE 7: IP-АДРЕСА -->
+<div class="slide">
+  <h2>IP-адреса</h2>
+  <div class="formula-box rv">193 . 162 . 230 . 115</div>
+  <p class="rv dim" style="text-align: center; margin-bottom: 20px;">Каждое число: <span class="accent">0 … 255</span> &nbsp;|&nbsp; Формат: <b>номер сети + номер компьютера</b></p>
+  <div class="card rv" style="overflow-x: auto;">
+    <table class="tbl">
+      <tr><th>Класс</th><th>Первый октет (w)</th><th>Номер сети</th><th>Номер ПК</th><th>Число сетей</th><th>Число ПК</th></tr>
+      <tr><td><span class="accent">A</span></td><td>1 – 126</td><td>w</td><td>x.y.z</td><td>126</td><td>16 777 214</td></tr>
+      <tr><td><span class="accent-warn">B</span></td><td>128 – 191</td><td>w.x</td><td>y.z</td><td>16 384</td><td>65 534</td></tr>
+      <tr><td><span class="accent-success">C</span></td><td>192 – 223</td><td>w.x.y</td><td>z</td><td>2 097 151</td><td>254</td></tr>
+    </table>
+  </div>
+  <p class="rv dim" style="text-align: center; margin-top: 12px;">Классы D и E используются для служебных целей.</p>
+</div>
+
+<!-- SLIDE 8: ДОМЕНЫ И URL -->
+<div class="slide">
+  <h2>Доменные адреса и URL</h2>
+  <div class="card rv" style="text-align: center;">
+    <p><b>Домен</b> — группа компьютеров, объединённых по признаку (организация или страна).</p>
+  </div>
+  <div class="url-box rv" style="margin: 16px 0;">
+    <span class="url-part" style="background: rgba(0,119,255,0.1); color: var(--primary);">http:</span>//
+    <span class="url-part" style="background: rgba(245,158,11,0.1); color: var(--warning);">www.vasya.ru</span> /
+    <span class="url-part" style="background: rgba(16,185,129,0.1); color: var(--success);">images/new/</span>
+    <span class="url-part" style="background: rgba(239,68,68,0.1); color: var(--danger);">qq.jpg</span>
+  </div>
+  <div class="grid-4 rv">
+    <div class="card" style="text-align: center; padding: 12px;"><p style="font-size: 0.9rem;"><span class="accent">Протокол</span></p></div>
+    <div class="card" style="text-align: center; padding: 12px;"><p style="font-size: 0.9rem;"><span class="accent-warn">Адрес сайта</span></p></div>
+    <div class="card" style="text-align: center; padding: 12px;"><p style="font-size: 0.9rem;"><span class="accent-success">Каталог</span></p></div>
+    <div class="card" style="text-align: center; padding: 12px;"><p style="font-size: 0.9rem;"><span class="danger">Имя файла</span></p></div>
+  </div>
+</div>
+
+<!-- SLIDE 9: МИНИ-КВЕСТ -->
+<div class="slide">
+  <h2>🎯 Мини-квест: Проверь себя!</h2>
+  <div class="task-card rv" style="border-top-color: var(--primary);">
+    <p class="task-text">Какая формула связывает объём данных (<span class="accent">I</span>), скорость (<span class="accent-warn">v</span>) и время (<span class="accent-success">t</span>)?</p>
+    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+      <button class="solve-btn" style="background: #E2E8F0; color: var(--text);" onclick="checkQuest(this, false)">I = v + t</button>
+      <button class="solve-btn" style="background: #E2E8F0; color: var(--text);" onclick="checkQuest(this, true)">I = v · t</button>
+      <button class="solve-btn" style="background: #E2E8F0; color: var(--text);" onclick="checkQuest(this, false)">v = I · t</button>
+    </div>
+    <div class="solution" id="quest-sol">
+      <p class="ans">✅ Верно! I = v · t (как расстояние в физике: S = v · t)</p>
+    </div>
+  </div>
+  <div class="card warning-border rv" style="margin-top: 20px; text-align: center;">
+    <p>⚠️ <b>Главное правило:</b> Перед расчётом всегда приводите единицы измерения к одному виду!<br>
+    <span class="dim">1 байт = 8 бит &nbsp;|&nbsp; 1 Кбайт = 1024 байт &nbsp;|&nbsp; 1 мин = 60 с</span></p>
+  </div>
+</div>
+
+<!-- SLIDE 10: ШПАРГАЛКА -->
+<div class="slide">
+  <h2>📝 Шпаргалка для решения задач</h2>
+  <div class="grid-3">
+    <div class="card rv" style="text-align: center;">
+      <h3>Объём (I)</h3>
+      <p class="formula-box" style="font-size: 1.2rem; padding: 10px;">I = v · t</p>
+    </div>
+    <div class="card rv" style="text-align: center;">
+      <h3>Скорость (v)</h3>
+      <p class="formula-box" style="font-size: 1.2rem; padding: 10px;">v = I / t</p>
+    </div>
+    <div class="card rv" style="text-align: center;">
+      <h3>Время (t)</h3>
+      <p class="formula-box" style="font-size: 1.2rem; padding: 10px;">t = I / v</p>
+    </div>
+  </div>
+  <div class="card accent-border rv" style="margin-top: 16px;">
+    <h3>Цепочка перевода единиц:</h3>
+    <p style="text-align: center; font-size: 1.2rem; font-weight: 600; color: var(--primary-dark);">
+      бит <span class="dim">÷ 8</span> ➔ байт <span class="dim">÷ 1024</span> ➔ Кбайт <span class="dim">÷ 1024</span> ➔ Мбайт
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 11: ЗАДАЧА 1 -->
+<div class="slide">
+  <h2>Решаем задачи</h2>
+  <div class="task-card rv">
+    <div class="task-num">Задача 1</div>
+    <p class="task-text">Скорость передачи — <span class="accent">80 бит/с</span>.<br>Сколько <b>байт</b> будет передано за <span class="accent-warn">5 минут</span>?</p>
+    <button class="solve-btn" onclick="toggleSol(this)">Показать решение</button>
+    <div class="solution">
+      <div class="step">1. Переводим время: t = 5 мин = 5 · 60 = 300 с</div>
+      <div class="step">2. Находим объём в битах: I = v · t = 80 · 300 = 24 000 бит</div>
+      <div class="step">3. Переводим в байты: 24 000 / 8 = 3 000 байт</div>
+      <div class="ans">Ответ: 3 000 байт</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 12: ЗАДАЧА 2 -->
+<div class="slide">
+  <h2>Решаем задачи</h2>
+  <div class="task-card rv">
+    <div class="task-num">Задача 2</div>
+    <p class="task-text">Скорость передачи — <span class="accent">100 бит/с</span>.<br>Сколько <b>секунд</b> потребуется на передачу файла размером <span class="accent-warn">125 байт</span>?</p>
+    <button class="solve-btn" onclick="toggleSol(this)">Показать решение</button>
+    <div class="solution">
+      <div class="step">1. Переводим объём в биты: I = 125 · 8 = 1 000 бит</div>
+      <div class="step">2. Находим время: t = I / v = 1 000 / 100 = 10 с</div>
+      <div class="ans">Ответ: 10 секунд</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 13: ЗАДАЧА 3 -->
+<div class="slide">
+  <h2>Решаем задачи</h2>
+  <div class="task-card rv">
+    <div class="task-num">Задача 3</div>
+    <p class="task-text">Какова средняя скорость передачи (в <b>битах/с</b>), если файл размером <span class="accent">200 байт</span> был передан за <span class="accent-warn">16 с</span>?</p>
+    <button class="solve-btn" onclick="toggleSol(this)">Показать решение</button>
+    <div class="solution">
+      <div class="step">1. Переводим объём в биты: I = 200 · 8 = 1 600 бит</div>
+      <div class="step">2. Находим скорость: v = I / t = 1 600 / 16 = 100 бит/с</div>
+      <div class="ans">Ответ: 100 бит/с</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 14: ЗАДАЧА 4 -->
+<div class="slide">
+  <h2>Решаем задачи</h2>
+  <div class="task-card rv">
+    <div class="task-num">Задача 4</div>
+    <p class="task-text">Сколько <b>Кбайт</b> будет передано за <span class="accent">16 секунд</span>, если скорость передачи — <span class="accent-warn">128 000 бит/с</span>?</p>
+    <button class="solve-btn" onclick="toggleSol(this)">Показать решение</button>
+    <div class="solution">
+      <div class="step">1. Находим объём в битах: I = 128 000 · 16 = 2 048 000 бит</div>
+      <div class="step">2. Переводим в байты: 2 048 000 / 8 = 256 000 байт</div>
+      <div class="step">3. Переводим в Кбайты: 256 000 / 1024 = 250 Кбайт</div>
+      <div class="ans">Ответ: 250 Кбайт</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 15: ЗАДАЧА 5 -->
+<div class="slide">
+  <h2>Решаем задачи</h2>
+  <div class="task-card rv">
+    <div class="task-num">Задача 5</div>
+    <p class="task-text">Скорость передачи — <span class="accent">128 000 бит/с</span>.<br>Сколько <b>минут</b> потребуется на передачу файла размером <span class="accent-warn">250 Кбайт</span>?</p>
+    <button class="solve-btn" onclick="toggleSol(this)">Показать решение</button>
+    <div class="solution">
+      <div class="step">1. Переводим объём в биты: I = 250 · 1024 · 8 = 2 048 000 бит</div>
+      <div class="step">2. Находим время в секундах: t = 2 048 000 / 128 000 = 16 с</div>
+      <div class="step">3. Переводим в минуты: 16 / 60 = 4/15 мин ≈ 0,27 мин</div>
+      <div class="ans">Ответ: 16 секунд (или 4/15 минуты)</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 16: ЗАДАЧА 6 -->
+<div class="slide">
+  <h2>Решаем задачи</h2>
+  <div class="task-card rv">
+    <div class="task-num">Задача 6</div>
+    <p class="task-text">Какова средняя скорость (в <b>Кбитах/с</b>), если файл размером <span class="accent">250 Кбайт</span> был передан за <span class="accent-warn">16 с</span>?</p>
+    <button class="solve-btn" onclick="toggleSol(this)">Показать решение</button>
+    <div class="solution">
+      <div class="step">1. Переводим объём в Кбиты: I = 250 · 8 = 2 000 Кбит</div>
+      <div class="step">2. Находим скорость: v = I / t = 2 000 / 16 = 125 Кбит/с</div>
+      <div class="ans">Ответ: 125 Кбит/с</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 17: ЗАДАЧА 7 -->
+<div class="slide">
+  <h2>Решаем задачи</h2>
+  <div class="task-card rv">
+    <div class="task-num">Задача 7</div>
+    <p class="task-text">Скорость через ADSL — <span class="accent">512 000 бит/с</span>.<br>Передача заняла <span class="accent-warn">1 минуту</span>. Определить размер файла в <b>Кбайт</b>.</p>
+    <button class="solve-btn" onclick="toggleSol(this)">Показать решение</button>
+    <div class="solution">
+      <div class="step">1. Переводим время: t = 1 мин = 60 с</div>
+      <div class="step">2. Находим объём в битах: I = 512 000 · 60 = 30 720 000 бит</div>
+      <div class="step">3. Переводим в байты: 30 720 000 / 8 = 3 840 000 байт</div>
+      <div class="step">4. Переводим в Кбайты: 3 840 000 / 1024 = 3 750 Кбайт</div>
+      <div class="ans">Ответ: 3 750 Кбайт</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 18: ЗАДАЧА 8 -->
+<div class="slide">
+  <h2>Решаем задачи</h2>
+  <div class="task-card rv">
+    <div class="task-num">Задача 8</div>
+    <p class="task-text">Почтовый ящик — <span class="accent">1,535 Мбайт</span>. Скорость приёма — <span class="accent-warn">2,5 Кбайт/с</span>.<br>Через сколько <b>секунд</b> ящик переполнится? (округлить до целых)</p>
+    <button class="solve-btn" onclick="toggleSol(this)">Показать решение</button>
+    <div class="solution">
+      <div class="step">1. Переводим объём в Кбайты: I = 1,535 · 1024 = 1 571,84 Кбайт</div>
+      <div class="step">2. Находим время: t = I / v = 1 571,84 / 2,5 = 628,736 с</div>
+      <div class="step">3. Округляем до целых: 629 с</div>
+      <div class="ans">Ответ: 629 секунд</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 19: ЗАДАЧА 10 (Пропорция) -->
+<div class="slide">
+  <h2>Решаем задачи (Метод пропорции)</h2>
+  <div class="task-card rv">
+    <div class="task-num">Задача 10</div>
+    <p class="task-text">Файл <span class="accent">64 Кбайт</span> передаётся со скоростью <span class="accent-warn">1024 бит/с</span>.<br>Какой файл (в Кбайт) можно передать за <b>то же время</b> со скоростью <span class="accent-success">256 бит/с</span>?</p>
+    <button class="solve-btn" onclick="toggleSol(this)">Показать решение</button>
+    <div class="solution">
+      <div class="step">💡 Лайфхак: Время одинаковое, значит объём прямо пропорционален скорости.</div>
+      <div class="step">Скорость уменьшилась в 4 раза (1024 / 256 = 4).</div>
+      <div class="step">Значит, и объём будет в 4 раза меньше: 64 / 4 = 16 Кбайт.</div>
+      <div class="ans">Ответ: 16 Кбайт</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 20: ЗАДАЧА 11 -->
+<div class="slide">
+  <h2>Решаем задачи (Метод пропорции)</h2>
+  <div class="task-card rv">
+    <div class="task-num">Задача 11</div>
+    <p class="task-text">Файл <span class="accent">100 Кбайт</span> передаётся со скоростью <span class="accent-warn">1536 бит/с</span>.<br>Какой файл (в Кбайт) можно передать за <b>то же время</b> со скоростью <span class="accent-success">768 бит/с</span>?</p>
+    <button class="solve-btn" onclick="toggleSol(this)">Показать решение</button>
+    <div class="solution">
+      <div class="step">Скорость уменьшилась в 2 раза (1536 / 768 = 2).</div>
+      <div class="step">Объём тоже уменьшится в 2 раза: 100 / 2 = 50 Кбайт.</div>
+      <div class="ans">Ответ: 50 Кбайт</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 21: ЗАДАЧА 12 -->
+<div class="slide">
+  <h2>Решаем задачи (Сравнение)</h2>
+  <div class="task-card rv">
+    <div class="task-num">Задача 12</div>
+    <p class="task-text">Файл <span class="accent">60 Кбайт</span> передаётся со скоростью <span class="accent-warn">4096 бит/с</span>.<br>На сколько секунд <b>медленнее</b> можно передать этот же файл со скоростью <span class="accent-success">1024 бит/с</span>?</p>
+    <button class="solve-btn" onclick="toggleSol(this)">Показать решение</button>
+    <div class="solution">
+      <div class="step">1. Объём в битах: I = 60 · 1024 · 8 = 491 520 бит</div>
+      <div class="step">2. Время 1: t₁ = 491 520 / 4096 = 120 с</div>
+      <div class="step">3. Время 2: t₂ = 491 520 / 1024 = 480 с</div>
+      <div class="step">4. Разница: Δt = 480 − 120 = 360 с</div>
+      <div class="ans">Ответ: на 360 секунд медленнее</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 22: РЕФЛЕКСИЯ -->
+<div class="slide">
+  <h2>🌦️ Облачный барометр</h2>
+  <p class="dim" style="text-align: center; margin-bottom: 16px;">Оцените своё понимание темы, выбрав облако:</p>
+  <div class="clouds">
+    <div class="cloud storm rv">
+      <div class="icon">⛈️</div>
+      <h3>Грозовое</h3>
+      <p class="dim" style="font-size: 0.95rem;">Путаюсь в формулах и переводе единиц (биты ↔ байты). Нужна помощь.</p>
+    </div>
+    <div class="cloud sun rv">
+      <div class="icon">🌤️</div>
+      <h3>Солнечное</h3>
+      <p class="dim" style="font-size: 0.95rem;">Понял принцип, могу решить задачу по алгоритму, но иногда делаю арифметические ошибки.</p>
+    </div>
+    <div class="cloud rainbow rv">
+      <div class="icon">🌈</div>
+      <h3>Радужное</h3>
+      <p class="dim" style="font-size: 0.95rem;">Я мастер! Свободно решаю задачи, в том числе методом пропорции, и могу объяснить другим.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 23: ИТОГИ И ДЗ -->
+<div class="slide title-slide">
+  <div class="globe">🎓</div>
+  <h1>Спасибо за работу!</h1>
+  <div class="card accent-border rv" style="max-width: 700px; text-align: center; margin-top: 24px;">
+    <h3>Домашнее задание:</h3>
+    <p>1. Повторить конспект (раздаточный материал А4).</p>
+    <p>2. Решить 2 любые нерешённые задачи из презентации в тетради.</p>
+    <p style="margin-top: 12px; color: var(--primary); font-weight: 600;">Главная формула: I = v · t</p>
+  </div>
+</div>
+
+</div>
+
+<!-- Nav -->
+<div class="nav">
+  <button id="prevBtn" onclick="go(-1)">←</button>
+  <span class="counter" id="counter">1 / 24</span>
+  <button id="nextBtn" onclick="go(1)">→</button>
+  <button onclick="fs()" title="Полный экран">⛶</button>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const N = slides.length;
+let cur = 0;
+const $c = document.getElementById('counter');
+const $p = document.getElementById('progress');
+const $prev = document.getElementById('prevBtn');
+const $next = document.getElementById('nextBtn');
+
+function show(n) {
+  slides.forEach((s, i) => {
+    s.classList.remove('active', 'exit-left');
+    if (i === n) s.classList.add('active');
+    else if (i < n) s.classList.add('exit-left');
+  });
+  cur = n;
+  $c.textContent = `${n + 1} / ${N}`;
+  $p.style.width = `${((n + 1) / N) * 100}%`;
+  $prev.disabled = n === 0;
+  $next.disabled = n === N - 1;
+
+  // Reveal items
+  const items = slides[n].querySelectorAll('.rv');
+  items.forEach((el, i) => {
+    el.classList.remove('vis');
+    setTimeout(() => el.classList.add('vis'), 150 + i * 120);
+  });
+}
+
+function go(d) { const n = cur + d; if (n >= 0 && n < N) show(n); }
+
+function toggleSol(btn) {
+  const sol = btn.nextElementSibling;
+  sol.classList.toggle('open');
+  btn.textContent = sol.classList.contains('open') ? 'Скрыть решение' : 'Показать решение';
+}
+
+function checkQuest(btn, isCorrect) {
+  const sol = document.getElementById('quest-sol');
+  if (isCorrect) {
+    btn.style.background = 'var(--success)';
+    btn.style.color = 'white';
+    sol.innerHTML = '<p class="ans">✅ Верно! I = v · t (как расстояние в физике: S = v · t)</p>';
+  } else {
+    btn.style.background = 'var(--danger)';
+    btn.style.color = 'white';
+    sol.innerHTML = '<p class="ans" style="color: var(--danger);">❌ Неверно. Подумай ещё: объём = скорость × время.</p>';
+  }
+  sol.classList.add('open');
+}
+
+function fs() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(-1); }
+  else if (e.key === 'Home') show(0);
+  else if (e.key === 'End') show(N - 1);
+  else if (e.key.toLowerCase() === 'f') fs();
+});
+
+let tx = 0;
+document.addEventListener('touchstart', e => { tx = e.changedTouches[0].screenX; });
+document.addEventListener('touchend', e => {
+  const d = tx - e.changedTouches[0].screenX;
+  if (Math.abs(d) > 50) go(d > 0 ? 1 : -1);
+});
+
+show(0);
+</script>
+</body>
+</html>

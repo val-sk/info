@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Облачные технологии</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: linear-gradient(135deg, #74b9ff, #a29bfe);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #2d3436;
+  }
+  .slide {
+    display: none;
+    width: 90vw;
+    max-width: 1000px;
+    min-height: 85vh;
+    background: #fff;
+    border-radius: 24px;
+    padding: 40px 50px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    flex-direction: column;
+    justify-content: center;
+    animation: fadeIn 0.5s ease;
+    cursor: pointer;
+  }
+  .slide.active { display: flex; }
+  @keyframes fadeIn { from {opacity:0; transform:translateY(20px);} to {opacity:1; transform:translateY(0);} }
+  h1 { font-size: 2.4em; color: #0984e3; margin-bottom: 20px; }
+  h2 { font-size: 1.8em; color: #6c5ce7; margin: 15px 0; }
+  h3 { font-size: 1.3em; color: #00b894; margin: 10px 0; }
+  p, li { font-size: 1.2em; line-height: 1.6; margin: 8px 0; }
+  ul { list-style: none; padding-left: 0; }
+  .emoji { font-size: 1.5em; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
+  .card {
+    background: #f1f2f6;
+    padding: 20px;
+    border-radius: 16px;
+    border-left: 6px solid #0984e3;
+  }
+  .card.green { border-color: #00b894; background: #e8f8f5; }
+  .card.red { border-color: #d63031; background: #ffeaea; }
+  .card.yellow { border-color: #fdcb6e; background: #fff8e1; }
+  .card.purple { border-color: #6c5ce7; background: #f0ecff; }
+  .code-box {
+    background: #2d3436;
+    color: #55efc4;
+    padding: 30px;
+    border-radius: 16px;
+    font-size: 3em;
+    text-align: center;
+    font-family: monospace;
+    letter-spacing: 10px;
+    margin: 20px 0;
+  }
+  .btn {
+    background: #0984e3;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1em;
+    margin-top: 10px;
+  }
+  .btn:hover { background: #0769b5; }
+  .answer { display: none; margin-top: 15px; padding: 15px; background: #dfe6e9; border-radius: 10px; }
+  .answer.show { display: block; }
+  .nav {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.6);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-size: 0.9em;
+  }
+  .highlight { background: #ffeaa7; padding: 2px 8px; border-radius: 6px; }
+  .group-A { background: #ffe0e0; border-left: 6px solid #d63031; }
+  .group-B { background: #e0f0ff; border-left: 6px solid #0984e3; }
+  
+  /* Всплывающие блоки */
+  .step {
+    opacity: 0;
+    transform: translateY(15px);
+    transition: all 0.4s ease;
+  }
+  .step.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .step-hint {
+    position: absolute;
+    bottom: 15px;
+    right: 25px;
+    font-size: 0.85em;
+    color: #b2bec3;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+<!-- Слайд 1: Титульный -->
+<div class="slide active">
+  <h1 class="step visible">☁️ Облачные технологии</h1>
+  <h3 class="step">Использование онлайн-офиса для разработки документов</h3>
+  <p class="step"><b>Информатика • 9 класс • Урок-квест</b></p>
+  <p class="step" style="margin-top:30px; font-size:1.1em; color:#636e72;">← → или пробел — навигация | F — полный экран</p>
+  <span class="step-hint">клик по слайду — следующий блок</span>
+</div>
+
+<!-- Слайд 2: Ситуация -->
+<div class="slide">
+  <h1 class="step visible">Представьте ситуацию…</h1>
+  <p class="step emoji">📝 Вы 3 дня писали реферат</p>
+  <p class="step emoji">💾 Сохранили его на рабочем столе ноутбука</p>
+  <p class="step emoji">🌧️ По дороге в школу попали под дождь</p>
+  <p class="step emoji">💥 Ноутбук упал в лужу и не включается</p>
+  <p class="step emoji">⏰ Завтра сдача работы…</p>
+  <h2 class="step" style="margin-top:30px;">Что делать?</h2>
+  <span class="step-hint">клик по слайду — следующий блок</span>
+</div>
+
+<!-- Слайд 3: Решение -->
+<div class="slide">
+  <h1 class="step visible">Ваши спасители — Облачные технологии!</h1>
+  <div class="grid-3">
+    <div class="card step"><p class="emoji">📱</p><p>Открыли телефон</p></div>
+    <div class="card step"><p class="emoji">🌐</p><p>Зашли в браузер</p></div>
+    <div class="card step"><p class="emoji">✍️</p><p>Продолжили работу</p></div>
+  </div>
+  <h2 class="step" style="text-align:center; margin-top:30px;">Вывод: Файл должен быть в Облаке!</h2>
+  <span class="step-hint">клик по слайду — следующий блок</span>
+</div>
+
+<!-- Слайд 4: Цели -->
+<div class="slide">
+  <h1 class="step visible">Сегодня мы:</h1>
+  <ul>
+    <li class="step">🎯 Узнаем, что такое облачные технологии</li>
+    <li class="step">🔐 Пройдём квест «Секретные коды Облака»</li>
+    <li class="step">👥 Создадим документ в паре в Яндекс / Google / Apple Документах</li>
+    <li class="step">🤝 Объединимся в четверки для общего документа</li>
+    <li class="step">🌟 Освоим совместное редактирование</li>
+  </ul>
+  <span class="step-hint">клик по слайду — следующий блок</span>
+</div>
+
+<!-- Слайд 5: Квест -->
+<div class="slide">
+  <h1 class="step visible">🎮 Квест «Секретные коды Облака»</h1>
+  <p class="step">Школьные серверы заражены вирусом локального хранения данных.</p>
+  <p class="step">Чтобы перевести документооборот в безопасное Облако, нужно взломать 3 шлюза и получить 3-значный код доступа.</p>
+  <p class="step" style="font-size:2em; text-align:center; margin-top:30px;">🔒🔒🔒</p>
+  <span class="step-hint">клик по слайду — следующий блок</span>
+</div>
+
+<!-- Слайд 6: Шлюз 1 -->
+<div class="slide">
+  <h1 class="step visible">🔐 Шлюз 1. Распредели сервисы</h1>
+  <div class="grid-3">
+    <div class="card step"><p class="emoji">📄</p><h3>Онлайн-офис</h3></div>
+    <div class="card step"><p class="emoji">✉️</p><h3>Почта/календарь</h3></div>
+    <div class="card step"><p class="emoji">☁️</p><h3>Хранилище</h3></div>
+  </div>
+  <p class="step"><b>Яндекс:</b> Диск · Документы · Таблицы · Презентации · Почта · Календарь</p>
+  <p class="step"><b>Google:</b> Drive · Docs · Sheets · Slides · Gmail · Calendar</p>
+  <p class="step"><b>Apple:</b> iCloud Drive · Pages · Numbers · Keynote · Mail · Calendar</p>
+  <button class="btn step" onclick="event.stopPropagation(); document.getElementById('a1').classList.add('show')">Показать ответ</button>
+  <div class="answer" id="a1">
+    <p>☁️ <b>Хранилище:</b> Яндекс.Диск / Google Drive / iCloud Drive</p>
+    <p>📄 <b>Онлайн-офис:</b> Документы / Таблицы / Презентации (у всех трёх)</p>
+    <p>✉️ <b>Почта/календарь:</b> Почта + Календарь (у всех трёх)</p>
+    <p style="color:#00b894; font-size:1.3em; margin-top:15px;">✅ Шлюз 1 пройден! ПЕРВАЯ цифра кода: <b>5</b></p>
+  </div>
+  <span class="step-hint">клик по слайду — следующий блок</span>
+</div>
+
+<!-- Слайд 7: Шлюз 2 -->
+<div class="slide">
+  <h1 class="step visible">🔐 Шлюз 2. Плюс или минус?</h1>
+  <p class="step">🟢 Правая рука — ПЛЮС облаков</p>
+  <p class="step">🔴 Левая рука — МИНУС / РИСК</p>
+  <ol style="margin:20px 0 20px 30px;">
+    <li class="step">Доступ к файлу с любого устройства</li>
+    <li class="step">Зависимость от интернета</li>
+    <li class="step">Одновременная работа над документом</li>
+    <li class="step">100% гарантия безопасности при любых настройках</li>
+  </ol>
+  <button class="btn step" onclick="event.stopPropagation(); document.getElementById('a2').classList.add('show')">Показать ответ</button>
+  <div class="answer" id="a2">
+    <p>1. 🟢 ПЛЮС</p>
+    <p>2. 🔴 МИНУС</p>
+    <p>3. 🟢 ПЛЮС</p>
+    <p>4. 🔴 РИСК — важны настройки!</p>
+    <p style="color:#00b894; font-size:1.3em; margin-top:15px;">✅ Шлюз 2 пройден! ВТОРАЯ цифра кода: <b>5</b></p>
+  </div>
+  <span class="step-hint">клик по слайду — следующий блок</span>
+</div>
+
+<!-- Слайд 8: Шлюз 3 -->
+<div class="slide">
+  <h1 class="step visible">🔐 Шлюз 3. Выбери права доступа</h1>
+  <p class="step">Три роли: 👁 Просмотр • 💬 Комментирование • ✏️ Редактирование</p>
+  <ol style="margin:20px 0 20px 30px;">
+    <li class="step">Скинул другу расписание — пусть посмотрит</li>
+    <li class="step">Скинул текст учителю для правок</li>
+    <li class="step">Вместе с другом пишем сценарий праздника</li>
+  </ol>
+  <button class="btn step" onclick="event.stopPropagation(); document.getElementById('a3').classList.add('show')">Показать ответ</button>
+  <div class="answer" id="a3">
+    <p>1. 👁 Просмотр</p>
+    <p>2. 💬 Комментирование</p>
+    <p>3. ✏️ Редактирование</p>
+    <p style="color:#00b894; font-size:1.3em; margin-top:15px;">✅ Все шлюзы пройдены!</p>
+  </div>
+  <span class="step-hint">клик по слайду — следующий блок</span>
+</div>
+
+<!-- Слайд 9: Код -->
+<div class="slide">
+  <h1 class="step visible">🎉 Код доступа получен!</h1>
+  <h2 class="step" style="text-align:center;">Итоговый код:</h2>
+  <div class="code-box step">555</div>
+  <p class="step" style="text-align:center; font-size:1.3em;">🗝 Теперь можно открыть шаблоны документов!</p>
+  <span class="step-hint">клик по слайду — следующий блок</span>
+</div>
+
+<!-- Слайд 10: Практика — разделение на группы -->
+<div class="slide">
+  <h1 class="step visible">🚀 Практика: «Облачный тандем → Альянс»</h1>
+  <h2 class="step">📋 Этап 1. Работа в парах (10 минут)</h2>
+  <p class="step">Класс делится на <b>две группы</b>. Каждая пара получает свой текст из папки <span class="highlight">9 класс\!Задания</span>:</p>
+  <div class="grid">
+    <div class="card group-A step">
+      <h3>🔴 Группа А — «Угрозы»</h3>
+      <p>Тема: <b>Информационная безопасность: угрозы</b></p>
+      <p>📄 Текст: <i>«ИБ_угрозы.txt»</i></p>
+      <p>🎯 Задача: выделить виды угроз и составить таблицу</p>
+    </div>
+    <div class="card group-B step">
+      <h3>🔵 Группа Б — «Защита»</h3>
+      <p>Тема: <b>Информационная безопасность: защита</b></p>
+      <p>📄 Текст: <i>«ИБ_защита.txt»</i></p>
+      <p>🎯 Задача: выделить способы защиты и составить таблицу</p>
+    </div>
+  </div>
+  <span class="step-hint">клик по слайду — следующий блок</span>
+</div>
+
+<!-- Слайд 11: Роли в парах -->
+<div class="slide">
+  <h1>🤝 Ваши роли в паре</h1>
+  <div class="grid">
+    <div class="card purple">
+      <h3>👷 Ученик 1 — Архитектор</h3>
+      <ul>
+        <li>Создает файл в своем облаке (Яндекс / Google / Apple)</li>
+        <li>Настраивает доступ: <b>«По ссылке → Редактирование»</b></li>
+        <li>Отправляет ссылку партнёру</li>
+        <li>Создает таблицу по своей теме</li>
+      </ul>
+    </div>
+    <div class="card green">
+      <h3>🔍 Ученик 2 — Аналитик</h3>
+      <ul>
+        <li>Переходит по ссылке</li>
+        <li>Заполняет таблицу из текста</li>
+        <li>Выделяет заголовки цветом</li>
+        <li>Отправляет ссылку учителю через Моджо</li>
+      </ul>
+    </div>
+  </div>
+  <h3 style="margin-top:20px;">📊 Формат таблицы:</h3>
+  <div class="grid">
+    <div class="card group-A"><b>🔴 Группа А:</b> «Вид угрозы / Пример / Последствия»</div>
+    <div class="card group-B"><b>🔵 Группа Б:</b> «Угроза / Правило защиты / Инструмент»</div>
+  </div>
+</div>
+
+<!-- Слайд 12: Этап 2, объединение в четверки -->
+<div class="slide">
+  <h1>🔗 Этап 2: «Облачный альянс»</h1>
+  <h2>Объединяемся в четверки! (8 минут)</h2>
+  <p style="font-size:1.2em;">Пара из <b>Группы А</b> + Пара из <b>Группы Б</b> = <b>Четверка «Щит и Меч»</b> 🛡⚔️</p>
+  <div class="card yellow" style="margin-top:20px;">
+    <h3>🎯 Задача четверки:</h3>
+    <p>Создать <b>ОДИН общий облачный документ</b> «Памятка: Кибербезопасность школьника»</p>
+    <p style="margin-top:15px;"><b>📑 Структура документа:</b></p>
+    <ol style="margin-left:30px;">
+      <li>🔴 Сначала — <b>раздел «Угрозы»</b> (копируем таблицу от Группы А)</li>
+      <li>🔵 Затем — <b>раздел «Защита»</b> (копируем таблицу от Группы Б)</li>
+      <li>✨ В конце — <b>вывод</b> от всей четверки</li>
+    </ol>
+  </div>
+  <p style="margin-top:20px;"><b>👑 Роль лидера четверки:</b> один из Архитекторов создает новый общий документ и шарит ссылку остальным троим на <b>«Редактирование»</b>.</p>
+</div>
+
+<!-- Слайд 13: Алгоритм объединения -->
+<div class="slide">
+  <h1>📋 Алгоритм работы в четверке</h1>
+  <div class="card">
+    <p><b>Шаг 1.</b> 🔗 Обменяйтесь ссылками между парами (А ↔ Б)</p>
+  </div>
+  <div class="card green">
+    <p><b>Шаг 2.</b> 📄 Лидер создает новый документ <i>«Памятка_четверки_№__»</i></p>
+  </div>
+  <div class="card purple">
+    <p><b>Шаг 3.</b> ✏️ Открывает доступ «По ссылке → Редактирование» для троих</p>
+  </div>
+  <div class="card yellow">
+    <p><b>Шаг 4.</b> 📋 Группа А вставляет свой раздел «Угрозы» в начало</p>
+  </div>
+  <div class="card" style="border-color:#0984e3;">
+    <p><b>Шаг 5.</b> 📋 Группа Б вставляет свой раздел «Защита» ниже</p>
+  </div>
+  <div class="card red">
+    <p><b>Шаг 6.</b> 💬 Все четверо добавляют по 1 комментарию с тегом @партнёр</p>
+  </div>
+  <div class="card green">
+    <p><b>Шаг 7.</b> 📤 Лидер отправляет итоговую ссылку учителю через Моджо</p>
+  </div>
+</div>
+
+<!-- Слайд 14: Шпаргалка -->
+<div class="slide">
+  <h1>💡 Шпаргалка</h1>
+  <div class="grid">
+    <div class="card">
+      <p class="emoji">🔘</p>
+      <p>Кнопка <b>«Доступ»</b> / <b>«Share»</b> в правом верхнем углу</p>
+    </div>
+    <div class="card">
+      <p class="emoji">⌨️</p>
+      <p>Комментарий: <b>Ctrl + Alt + M</b></p>
+    </div>
+    <div class="card">
+      <p class="emoji">🏷</p>
+      <p>Тег партнёра: <b>@логин</b></p>
+    </div>
+    <div class="card">
+      <p class="emoji">✅</p>
+      <p>Закрыть обсуждение: <b>«Решено»</b></p>
+    </div>
+  </div>
+  <div class="card yellow" style="margin-top:20px;">
+    <p><b>🌐 Работает везде:</b> Яндекс.Документы, Google Docs, Apple Pages — интерфейс похож!</p>
+  </div>
+  <div class="card red" style="margin-top:10px;">
+    <p>🔒 <b>Важно:</b> Не передавайте ссылки с «Редактированием» посторонним!</p>
+  </div>
+</div>
+
+<!-- Слайд 15: Звезда и Желание -->
+<div class="slide">
+  <h1>🌟 «Звезда и Желание»</h1>
+  <p>1. Откройте документ <b>соседней четверки</b></p>
+  <p>2. Оставьте по одному комментарию в режиме «Комментирование»:</p>
+  <div class="grid">
+    <div class="card yellow">
+      <p class="emoji">🌟 <b>Звезда</b></p>
+      <p>Что получилось отлично</p>
+      <p><i>«Крутая структура!»</i></p>
+    </div>
+    <div class="card purple">
+      <p class="emoji">🌠 <b>Желание</b></p>
+      <p>Что можно улучшить</p>
+      <p><i>«Добавьте картинки»</i></p>
+    </div>
+  </div>
+  <p style="text-align:center; margin-top:20px;">⏱ 3 минуты</p>
+</div>
+
+<!-- Слайд 16: Барометр -->
+<div class="slide">
+  <h1>🌦️ Облачный барометр</h1>
+  <p>Подойдите к доске и прикрепите стикер к своему облаку:</p>
+  <div class="grid-3">
+    <div class="card red">
+      <p class="emoji">⛈️</p>
+      <h3>Грозовое</h3>
+      <p>Понял теорию, но нужна помощь с настройкой прав</p>
+    </div>
+    <div class="card yellow">
+      <p class="emoji">🌤️</p>
+      <h3>Солнечное</h3>
+      <p>Всё понял, мы с четверкой успешно справились</p>
+    </div>
+    <div class="card green">
+      <p class="emoji">🚀</p>
+      <h3>Профи</h3>
+      <p>Я — облачный мастер! Могу объяснить другому</p>
+    </div>
+  </div>
+</div>
+
+<!-- Слайд 17: ДЗ -->
+<div class="slide">
+  <h1>🏠 Домашнее задание (на выбор)</h1>
+  <div class="card" style="margin-bottom:20px;">
+    <h3>📌 Базовое</h3>
+    <p>Создать в Яндекс / Google / Apple Документах список покупок для семьи, расшарить ссылку в режиме «Комментирование»</p>
+  </div>
+  <div class="card green">
+    <h3>🚀 Продвинутое</h3>
+    <p>Изучить «Историю версий» (Файл → История версий). Написать мини-эссе в общем документе класса о том, как эта функция может спасти курсовую работу</p>
+  </div>
+</div>
+
+<!-- Слайд 18: Финал -->
+<div class="slide">
+  <h1 style="text-align:center;">☁️✨ Спасибо за урок!</h1>
+  <p style="text-align:center; font-size:1.4em; font-style:italic; margin:40px 0;">
+    «Облачные технологии — это не просто файлы в интернете.<br>Это новый способ работать вместе».
+  </p>
+  <p style="text-align:center; font-size:1.5em;">До встречи! 🚀</p>
+</div>
+
+<div class="nav">← 1 / 18 → ⛶</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const nav = document.querySelector('.nav');
+  
+  function show(i) {
+    slides.forEach(s => s.classList.remove('active'));
+    slides[i].classList.add('active');
+    nav.textContent = `← ${i+1} / ${slides.length} → ⛶`;
+    // Сбрасываем step-элементы при переходе на слайд
+    resetSteps(i);
+  }
+  
+  function resetSteps(i) {
+    const steps = slides[i].querySelectorAll('.step');
+    steps.forEach((s, idx) => {
+      // Первый элемент (обычно заголовок) показываем сразу
+      if (s.classList.contains('visible')) return;
+      s.classList.remove('visible');
+    });
+  }
+  
+  function revealNextStep() {
+    const steps = slides[current].querySelectorAll('.step');
+    for (let s of steps) {
+      if (!s.classList.contains('visible')) {
+        s.classList.add('visible');
+        return true;
+      }
+    }
+    return false; // все показаны
+  }
+  
+  // Клик по слайду — показывает следующий блок
+  slides.forEach(slide => {
+    slide.addEventListener('click', (e) => {
+      // Не срабатывает на кнопках
+      if (e.target.closest('.btn')) return;
+      const revealed = revealNextStep();
+      if (!revealed) {
+        // Если все блоки показаны — переход на следующий слайд
+        current = (current + 1) % slides.length;
+        show(current);
+      }
+    });
+  });
+  
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') {
+      e.preventDefault();
+      // Сначала пытаемся показать следующий step
+      const revealed = revealNextStep();
+      if (!revealed) {
+        current = (current + 1) % slides.length;
+        show(current);
+      }
+    }
+    if (e.key === 'ArrowLeft') {
+      current = (current - 1 + slides.length) % slides.length;
+      show(current);
+    }
+    if (e.key.toLowerCase() === 'f') {
+      if (document.fullscreenElement) {
+        document.exitFullscreen?.();
+      } else {
+        document.documentElement.requestFullscreen?.();
+      }
+    }
+  });
+  
+  // Инициализация: первый слайд уже показан
+  show(0);
+</script>
+</body>
+</html>

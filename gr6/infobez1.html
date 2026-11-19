@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🛡️ Кибер-тест: Основы безопасности компьютера | 6 класс</title>
+<style>
+  :root{
+    --bg:#f2f7ff; --card:#ffffff; --ink:#1f2a44; --muted:#6b7a99;
+    --blue:#2f7cf6; --blue-soft:#e8f1ff; --green:#16a34a; --green-soft:#e7f8ee;
+    --red:#e11d48; --red-soft:#ffe9ee; --yellow:#f59e0b; --line:#e3ebf7;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:"Segoe UI",Verdana,Tahoma,sans-serif; color:var(--ink);
+    background:
+      radial-gradient(circle at 10% 5%, #fff6e0 0, transparent 35%),
+      radial-gradient(circle at 90% 10%, #e6f7ff 0, transparent 40%),
+      var(--bg);
+    padding:18px 12px 60px;
+  }
+  .wrap{max-width:900px;margin:0 auto}
+  header.hero{
+    background:var(--card); border:2px solid var(--line); border-radius:22px;
+    padding:22px; text-align:center; box-shadow:0 8px 24px rgba(47,124,246,.08);
+  }
+  header.hero h1{margin:6px 0;font-size:27px}
+  header.hero p{margin:6px 0;color:var(--muted)}
+  .badges{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+  .badge{background:var(--blue-soft);color:#1b5fd0;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:700}
+  .panel{
+    background:var(--card);border:2px solid var(--line);border-radius:20px;
+    padding:18px;margin-top:16px;box-shadow:0 6px 18px rgba(31,42,68,.05)
+  }
+  .panel h2{margin:0 0 12px;font-size:19px}
+  .rules li{margin:6px 0}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  label.fld{display:block;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:4px}
+  input[type=text], select, textarea{
+    width:100%;padding:10px 12px;border:2px solid var(--line);border-radius:12px;
+    font-size:15px;font-family:inherit;background:#fbfdff;color:var(--ink)
+  }
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue)}
+  textarea{min-height:70px;resize:vertical}
+  .bar{height:12px;background:var(--blue-soft);border-radius:999px;overflow:hidden;margin:10px 0 4px}
+  .bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#4ade80,#2f7cf6);transition:.3s}
+  .sticky{position:sticky;top:8px;z-index:5}
+  .q{border-left:6px solid var(--blue)}
+  .q.multi{border-left-color:var(--yellow)}
+  .q.match{border-left-color:#a855f7}
+  .qhead{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+  .num{background:var(--blue);color:#fff;border-radius:10px;padding:4px 10px;font-weight:800;font-size:14px}
+  .q.multi .num{background:var(--yellow)} .q.match .num{background:#a855f7}
+  .tag{font-size:12px;color:var(--muted);background:#f4f7fd;border-radius:8px;padding:4px 8px}
+  .qtext{font-size:17px;font-weight:700;margin:10px 0 12px}
+  .opt{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:2px solid var(--line);
+       border-radius:12px;margin:8px 0;cursor:pointer;background:#fbfdff;transition:.15s}
+  .opt:hover{border-color:var(--blue);background:var(--blue-soft)}
+  .opt input{margin-top:3px;transform:scale(1.2)}
+  table.mt{width:100%;border-collapse:collapse}
+  table.mt td{padding:8px;border-bottom:1px dashed var(--line);vertical-align:middle}
+  table.mt td.l{width:52%;font-weight:600}
+  .letters{background:#faf5ff;border:2px dashed #e9d5ff;border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:14px}
+  .letters div{margin:4px 0}
+  .fb{margin-top:10px;padding:10px 12px;border-radius:12px;font-size:14px;display:none}
+  .fb.ok{display:block;background:var(--green-soft);border:2px solid #bbf7d0}
+  .fb.no{display:block;background:var(--red-soft);border:2px solid #fecdd3}
+  .btn{border:none;border-radius:14px;padding:14px 22px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit}
+  .btn.main{background:linear-gradient(90deg,#2f7cf6,#22c55e);color:#fff;width:100%}
+  .btn.dl{background:var(--green);color:#fff}
+  .btn.re{background:#eef3fc;color:#1b5fd0}
+  .btn:hover{filter:brightness(1.06)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  #result{display:none;text-align:center}
+  .score{font-size:44px;font-weight:900;margin:6px 0}
+  .grade{font-size:20px;font-weight:800}
+  .codex{text-align:left;background:var(--blue-soft);border-radius:14px;padding:14px;margin-top:14px}
+  .codex li{margin:6px 0}
+  .warn{color:var(--red);font-weight:700;display:none;margin-top:8px}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:22px}
+  @media(max-width:640px){.grid{grid-template-columns:1fr}table.mt td.l{width:46%}header.hero h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div style="font-size:40px">🛡️💻🔐</div>
+    <h1>Кибер-тест: Основы безопасности компьютера</h1>
+    <p>Миссия «Цифровой Щит» • 6 класс • Ты — кибер-агент 🕵️</p>
+    <div class="badges">
+      <span class="badge">⭕ 3 вопроса с одним ответом</span>
+      <span class="badge">☑️ 3 вопроса с выбором ответов</span>
+      <span class="badge">🔗 4 вопроса на сопоставление</span>
+      <span class="badge">🏆 максимум 25 баллов</span>
+    </div>
+  </header>
+
+  <section class="panel">
+    <h2>⚡ Правила игры</h2>
+    <ul class="rules">
+      <li>📖 Внимательно читай задание: где-то один ответ, где-то несколько.</li>
+      <li>⭕ Одиночный вопрос — <b>1 балл</b>, ☑️ выбор ответов — <b>2 балла</b>, 🔗 сопоставление — <b>4 балла</b> (по 1 за пару).</li>
+      <li>🤔 Не знаешь ответ? Запиши это в «Лист открытий» — он попадёт в файл результатов.</li>
+      <li>📄 В конце нажми «Скачать результат (.txt)» и сдай файл учителю.</li>
+    </ul>
+    <div class="grid">
+      <div><label class="fld">👤 Фамилия и имя</label><input type="text" id="name" placeholder="Например: Иванов Макс"></div>
+      <div><label class="fld">🏫 Класс</label><input type="text" id="klass" placeholder="6 Б" value="6 "></div>
+    </div>
+    <div class="warn" id="warn">✋ Напиши фамилию и имя — без них агент не опознан!</div>
+  </section>
+
+  <section class="panel sticky">
+    <b>📊 Прогресс: <span id="ptext">0 / 10</span></b> <span style="float:right;color:var(--muted)">⏱️ <span id="timer">00:00</span></span>
+    <div class="bar"><i id="pbar"></i></div>
+  </section>
+
+  <div id="quiz"></div>
+
+  <section class="panel">
+    <h2>📚 Лист открытий</h2>
+    <p style="color:var(--muted);margin-top:0">Что было новым или непонятным? О чём хочу спросить учителя? 🤔</p>
+    <textarea id="discovery" placeholder="Я не знал, что..."></textarea>
+    <div class="row"><button class="btn main" id="check">✅ Проверить и получить результат</button></div>
+  </section>
+
+  <section class="panel" id="result">
+    <div style="font-size:40px" id="emoji">🏆</div>
+    <div class="score" id="scoreTxt"></div>
+    <div class="grade" id="gradeTxt"></div>
+    <p id="msg" style="color:var(--muted)"></p>
+    <div class="row" style="justify-content:center">
+      <button class="btn dl" id="download">📄 Скачать результат (.txt)</button>
+      <button class="btn re" id="retry">🔄 Пройти заново</button>
+    </div>
+    <div class="codex">
+      <b>🏆 КОДЕКС КИБЕР-АГЕНТА</b>
+      <ul>
+        <li>🖱️ Думай, прежде чем кликнуть (ссылки и фишинг)</li>
+        <li>🔑 Сложный пароль + 2FA (защита аккаунтов)</li>
+        <li>👣 Цифровой след вечен (думаем, что постим)</li>
+        <li>🕵️ Незнакомец = угроза (даже если притворяется другом)</li>
+        <li>🔍 Не верь мифам — проверяй факты!</li>
+      </ul>
+      <b>📚 Домашнее задание:</b> включи двухфакторную аутентификацию (2FA) в мессенджере или соцсети вместе с родителями. ✅
+    </div>
+  </section>
+
+  <footer>🛡️ Своя кибер-игра • 6 класс • Безопасность в интернете 💚</footer>
+</div>
+
+<script>
+/* ================= ВОПРОСЫ ================= */
+const Q = [
+  /* --- 3 вопроса с ОДНИМ вариантом --- */
+  {type:"single",icon:"🔐",cat:"Секретные коды",
+   text:"Агент нашёл профиль: Макс_2014, пароль — «Барсик2014» (кличка собаки + год рождения). Почему такой пароль опасен?",
+   options:["Он слишком длинный, его трудно запомнить",
+            "Его легко угадать: кличка и год рождения видны в профиле Макса",
+            "В пароле нельзя использовать цифры",
+            "Он опасен только если Макс живёт в большом городе"],
+   correct:1,
+   explain:"Пароль из личных данных (кличка, год, имя) взламывается первым. Надёжный пароль — длинный, без личной информации. 🐕🚫"},
+
+  {type:"single",icon:"🎣",cat:"Ловушки сети",
+   text:"В профиле закреплён пост: «Бесплатные скины для CS2 — переходи по ссылке!». Что это, скорее всего?",
+   options:["Настоящая акция от разработчиков игры",
+            "Фишинг: заманчивая приманка, чтобы украсть аккаунт или занести вирус",
+            "Обычная реклама, полностью безопасная",
+            "Проверка антивируса"],
+   correct:1,
+   explain:"«Халява + срочно + перейди по ссылке» = классическая приманка мошенников. Думай, прежде чем кликнуть! 🖱️"},
+
+  {type:"single",icon:"🛡️",cat:"Кибер-щит",
+   text:"Что такое двухфакторная аутентификация (2FA)?",
+   options:["Два пароля, которые нужно вводить подряд",
+            "Вход по паролю + дополнительный код из СМС или приложения",
+            "Два аккаунта в одной соцсети",
+            "Проверка компьютера двумя антивирусами"],
+   correct:1,
+   explain:"2FA — второй «замок» на двери аккаунта: даже украв пароль, мошенник не войдёт без кода. 🔑📲"},
+
+  /* --- 3 вопроса с ВЫБОРОМ ответов --- */
+  {type:"multi",icon:"👤",cat:"Цифровой след",
+   text:"Профиль Макса: школа №45, 6 «Б», фото у подъезда №15, телефон виден всем, 523 друга, пароль-подсказка про собаку. Какие данные опасно оставлять открытыми? (выбери все верные)",
+   options:["Номер школы и класс","Фото у подъезда с номером дома","Номер телефона, видимый всем",
+            "Подсказку к паролю (кличка собаки и год рождения)","Аватарку с котом 🐱","Любимый мультфильм 🍿"],
+   correct:[0,1,2,3],
+   explain:"Адрес, школа, телефон и подсказки к паролю — подарок для мошенника. Кот и мультик сами по себе не опасны. 🐱✅"},
+
+  {type:"multi",icon:"🕵️",cat:"Ловушки сети",
+   text:"Какие признаки говорят о том, что сайт — мошеннический (фишинговый)? (выбери все верные)",
+   options:["Адрес с опечатками: vk-free-skins.top вместо vk.com",
+            "Просят ввести логин, пароль и код из СМС",
+            "Обещают дорогую награду бесплатно и торопят: «осталось 2 минуты!»",
+            "Есть значок замка и https",
+            "Красивый дизайн и много картинок"],
+   correct:[0,1,2],
+   explain:"Замок и https только шифруют связь — мошенник тоже может их получить! Смотри на адрес и на то, что у тебя просят. 🔍"},
+
+  {type:"multi",icon:"💻",cat:"Кибер-щит",
+   text:"Что реально помогает защитить компьютер и данные? (выбери все верные)",
+   options:["Обновлять систему и программы","Использовать антивирус и проверять загрузки",
+            "Разные сложные пароли + 2FA","Делать резервные копии важных файлов",
+            "Скачивать «взломанные» программы с торрентов","Отключить обновления, чтобы не мешали",
+            "Один пароль на все сайты — так проще помнить"],
+   correct:[0,1,2,3],
+   explain:"Щит агента: обновления + антивирус + пароли с 2FA + бэкапы. Пиратские сборки и один пароль везде — дыры в щите. 🛡️"},
+
+  /* --- 4 вопроса на СОПОСТАВЛЕНИЕ --- */
+  {type:"match",icon:"🧩",cat:"Кибер-словарь",
+   text:"Сопоставь термин и его значение.",
+   left:["🎣 Фишинг","🔑 2FA","👣 Цифровой след","🦠 Антивирус"],
+   right:["Программа, которая находит и обезвреживает вредоносные файлы",
+          "Всё, что остаётся в сети о тебе: посты, фото, комментарии",
+          "Поддельные сайты и письма, выманивающие пароли и данные",
+          "Вход по паролю + дополнительный код"],
+   correct:[2,3,1,0],
+   explain:"Фишинг — обман, 2FA — второй замок, цифровой след — память интернета, антивирус — санитар компьютера. 🧩"},
+
+  {type:"match",icon:"🚨",cat:"Кибер-щит",
+   text:"Сопоставь ситуацию и правильное действие кибер-агента.",
+   left:["🕵️ Незнакомец в чате спрашивает адрес школы и просит фото",
+         "📩 Письмо: «Аккаунт заблокирован! Введи пароль по ссылке»",
+         "💬 Друг в соцсети просит прислать код из СМС",
+         "⚠️ Антивирус ругается на скачанный файл"],
+   right:["Никому не отправлять код, перезвонить другу по телефону — его могли взломать",
+          "Удалить файл и запустить полную проверку компьютера",
+          "Не сообщать личные данные, заблокировать и рассказать взрослым",
+          "Не переходить по ссылке, открыть приложение или сайт вручную и проверить"],
+   correct:[2,3,0,1],
+   explain:"Незнакомец = угроза; ссылки из писем не открываем; коды из СМС — никому; предупреждения антивируса не игнорируем. 🚨"},
+
+  {type:"match",icon:"🔑",cat:"Секретные коды",
+   text:"Сопоставь пароль и его «диагноз».",
+   left:["12345678","Барсик2014","Qwerty2014","K7#mQp!2vLz9"],
+   right:["Надёжный: длинный, разные регистры, цифры и символы",
+          "Слабый: личные данные, которые видны в профиле",
+          "Очень слабый: один из самых популярных паролей мира, взлом мгновенный",
+          "Слабый: словарное слово + год, легко подбирается"],
+   correct:[2,1,3,0],
+   explain:"Хороший пароль — длинный и бессмысленный для чужого: буквы, цифры, символы. Для каждого сайта — свой! 🔐"},
+
+  {type:"match",icon:"🃏",cat:"Кибер-мифы",
+   text:"Разоблачи миф: сопоставь миф и правду.",
+   left:["«Удалил сообщение — оно исчезло навсегда»",
+         "«В режиме инкогнито я полностью анонимен»",
+         "«Антивирус защитит от всех угроз»",
+         "«Есть замок и https — значит сайт безопасный»"],
+   right:["Замок лишь шифрует соединение, сайт всё равно может быть мошенническим",
+          "Инкогнито не сохраняет историю на устройстве, но провайдер и сайты видят действия",
+          "Антивирус не спасёт, если ты сам отдал пароль мошеннику",
+          "Скриншоты и копии остаются — цифровой след вечен"],
+   correct:[3,1,2,0],
+   explain:"Не верь мифам — проверяй факты! Главный антивирус — твоя голова. 🧠🔍"}
+];
+
+const MAX = Q.reduce((s,q)=>s+(q.type==="single"?1:q.type==="multi"?2:4),0);
+const LETTERS=["А","Б","В","Г","Д","Е"];
+let answers = Q.map(q=>q.type==="multi"?[]:q.type==="match"?q.left.map(()=>""):null);
+let report=null, seconds=0, checked=false;
+
+/* ================= РЕНДЕР ================= */
+const quiz=document.getElementById("quiz");
+Q.forEach((q,i)=>{
+  const sec=document.createElement("section");
+  sec.className="panel q "+(q.type==="multi"?"multi":q.type==="match"?"match":"");
+  const typeName=q.type==="single"?"⭕ один ответ • 1 балл":q.type==="multi"?"☑️ несколько ответов • 2 балла":"🔗 сопоставление • 4 балла";
+  let body="";
+  if(q.type==="single"){
+    body=q.options.map((o,j)=>`<label class="opt"><input type="radio" name="q${i}" value="${j}"><span>${o}</span></label>`).join("");
+  } else if(q.type==="multi"){
+    body=q.options.map((o,j)=>`<label class="opt"><input type="checkbox" name="q${i}" value="${j}"><span>${o}</span></label>`).join("");
+  } else {
+    body=`<div class="letters"><b>Варианты справа:</b>${q.right.map((r,k)=>`<div><b>${LETTERS[k]}.</b> ${r}</div>`).join("")}</div>
+    <table class="mt">${q.left.map((l,j)=>`<tr><td class="l">${l}</td><td>
+      <select data-q="${i}" data-row="${j}"><option value="">— выбери —</option>
+      ${q.right.map((r,k)=>`<option value="${k}">${LETTERS[k]}) ${r.length>52?r.slice(0,52)+"…":r}</option>`).join("")}
+      </select></td></tr>`).join("")}</table>`;
+  }
+  sec.innerHTML=`<div class="qhead"><span class="num">№${i+1}</span><span style="font-size:22px">${q.icon}</span>
+      <span class="tag">${q.cat}</span><span class="tag">${typeName}</span></div>
+      <div class="qtext">${q.text}</div>${body}<div class="fb" id="fb${i}"></div>`;
+  quiz.appendChild(sec);
+});
+
+quiz.addEventListener("change",e=>{
+  if(checked) return;
+  const t=e.target;
+  if(t.type==="radio"){answers[+t.name.slice(1)]=+t.value;}
+  else if(t.type==="checkbox"){
+    const i=+t.name.slice(1), v=+t.value;
+    answers[i]=t.checked?[...new Set([...answers[i],v])]:answers[i].filter(x=>x!==v);
+  } else if(t.tagName==="SELECT"){answers[+t.dataset.q][+t.dataset.row]=t.value;}
+  progress();
+});
+
+function answered(i){
+  const q=Q[i],a=answers[i];
+  if(q.type==="single")return a!==null;
+  if(q.type==="multi")return a.length>0;
+  return a.every(v=>v!=="");
+}
+function progress(){
+  const n=Q.filter((_,i)=>answered(i)).length;
+  document.getElementById("ptext").textContent=n+" / "+Q.length;
+  document.getElementById("pbar").style.width=(n/Q.length*100)+"%";
+}
+setInterval(()=>{if(!checked){seconds++;const m=String(Math.floor(seconds/60)).padStart(2,"0"),s=String(seconds%60).padStart(2,"0");document.getElementById("timer").textContent=m+":"+s;}},1000);
+
+/* ================= ПРОВЕРКА ================= */
+function eq(a,b){return a.length===b.length&&[...a].sort().every((v,i)=>v===[...b].sort()[i]);}
+
+document.getElementById("check").onclick=()=>{
+  const name=document.getElementById("name").value.trim();
+  if(!name){document.getElementById("warn").style.display="block";document.getElementById("name").focus();window.scrollTo({top:0,behavior:"smooth"});return;}
+  document.getElementById("warn").style.display="none";
+  const empty=Q.map((_,i)=>i+1).filter(n=>!answered(n-1));
+  if(empty.length && !confirm("⚠️ Не заполнены вопросы: №"+empty.join(", ")+". Всё равно проверить?")) return;
+
+  let total=0; const details=[];
+  Q.forEach((q,i)=>{
+    let got=0,max=q.type==="single"?1:q.type==="multi"?2:4, given="", right="";
+    if(q.type==="single"){
+      got = answers[i]===q.correct?1:0;
+      given = answers[i]===null?"— нет ответа —":q.options[answers[i]];
+      right = q.options[q.correct];
+    } else if(q.type==="multi"){
+      got = eq(answers[i],q.correct)?2:0;
+      given = answers[i].length?answers[i].sort((a,b)=>a-b).map(j=>q.options[j]).join("; "):"— нет ответа —";
+      right = q.correct.map(j=>q.options[j]).join("; ");
+    } else {
+      got = answers[i].reduce((s,v,j)=>s+(+v===q.correct[j]&&v!==""?1:0),0);
+      given = q.left.map((l,j)=>l+" → "+(answers[i][j]===""?"нет ответа":LETTERS[answers[i][j]]+") "+q.right[answers[i][j]])).join(" | ");
+      right = q.left.map((l,j)=>l+" → "+LETTERS[q.correct[j]]+") "+q.right[q.correct[j]]).join(" | ");
+    }
+    total+=got;
+    const fb=document.getElementById("fb"+i);
+    fb.className="fb "+(got===max?"ok":"no");
+    fb.innerHTML=(got===max?"✅ Верно! ":"❌ Ошибка. ")+"<b>"+got+"/"+max+" б.</b><br>💡 "+q.explain+
+      (got===max?"":"<br>✔️ Правильно: "+right);
+    details.push({n:i+1,q,got,max,given,right});
+  });
+
+  document.querySelectorAll("#quiz input,#quiz select,#discovery").forEach(el=>el.disabled=true);
+  checked=true;
+  const pct=Math.round(total/MAX*100);
+  const grade = pct>=90?5 : pct>=72?4 : pct>=52?3 : 2;
+  const emoji = grade===5?"🏆🥇":grade===4?"🥈😎":grade===3?"🥉🙂":"🚨📚";
+  const msg = grade===5?"Ты — элитный кибер-агент! Щит держит на 100% 🛡️":
+              grade===4?"Крепкий щит! Осталось залатать пару дыр 🔧":
+              grade===3?"Щит есть, но местами тонкий — повтори кодекс агента 📖":
+                        "Тревога! Срочно перечитай кодекс кибер-агента и пройди тест снова 💪";
+  document.getElementById("emoji").textContent=emoji;
+  document.getElementById("scoreTxt").textContent=total+" / "+MAX+" баллов ("+pct+"%)";
+  document.getElementById("gradeTxt").textContent="Оценка: "+grade;
+  document.getElementById("msg").textContent=msg;
+  document.getElementById("result").style.display="block";
+  document.getElementById("result").scrollIntoView({behavior:"smooth"});
+
+  report={name,klass:document.getElementById("klass").value.trim()||"—",total,pct,grade,emoji,msg,details,
+          time:document.getElementById("timer").textContent,
+          discovery:document.getElementById("discovery").value.trim()||"—"};
+};
+
+/* ================= ВЫГРУЗКА В TXT ================= */
+document.getElementById("download").onclick=()=>{
+  const r=report, d=new Date();
+  const L=[];
+  L.push("==================================================");
+  L.push("   🛡️ КИБЕР-ТЕСТ: ОСНОВЫ БЕЗОПАСНОСТИ КОМПЬЮТЕРА");
+  L.push("        Миссия «Цифровой Щит» • 6 класс");
+  L.push("==================================================");
+  L.push("Агент (ФИ):        "+r.name);
+  L.push("Класс:             "+r.klass);
+  L.push("Дата и время:      "+d.toLocaleDateString("ru-RU")+" "+d.toLocaleTimeString("ru-RU"));
+  L.push("Время выполнения:  "+r.time);
+  L.push("");
+  L.push("ИТОГ: "+r.total+" из "+MAX+" баллов ("+r.pct+"%)   |   ОЦЕНКА: "+r.grade+" "+r.emoji);
+  L.push("Вердикт: "+r.msg);
+  L.push("");
+  L.push("------------------ ОТВЕТЫ ПО ЗАДАНИЯМ ------------------");
+  r.details.forEach(x=>{
+    const t=x.q.type==="single"?"один ответ":x.q.type==="multi"?"выбор ответов":"сопоставление";
+    L.push("");
+    L.push("№"+x.n+" ["+x.q.cat+" | "+t+"] "+(x.got===x.max?"✅ ВЕРНО":"❌ ОШИБКА")+" — "+x.got+"/"+x.max+" б.");
+    L.push("Вопрос: "+x.q.text);
+    L.push("Ответ агента: "+x.given);
+    if(x.got!==x.max) L.push("Правильный ответ: "+x.right);
+  });
+  L.push("");
+  L.push("------------------ 📚 ЛИСТ ОТКРЫТИЙ ------------------");
+  L.push(r.discovery);
+  L.push("");
+  L.push("------------------ 🏆 КОДЕКС КИБЕР-АГЕНТА ------------------");
+  L.push("1) Думай, прежде чем кликнуть (ссылки и фишинг).");
+  L.push("2) Сложный пароль + 2FA (защита аккаунтов).");
+  L.push("3) Цифровой след вечен (думаем, что постим).");
+  L.push("4) Незнакомец = угроза (даже если притворяется другом).");
+  L.push("5) Не верь мифам — проверяй факты!");
+  L.push("");
+  L.push("Домашнее задание: включить двухфакторную аутентификацию (2FA)");
+  L.push("в мессенджере или соцсети вместе с родителями.");
+  L.push("==================================================");
+
+  const safe=r.name.replace(/[^\wа-яА-ЯёЁ -]/g,"").trim().replace(/\s+/g,"_")||"agent";
+  const fname="Кибербез_6кл_"+safe+"_"+d.toLocaleDateString("ru-RU").replace(/\./g,"-")+".txt";
+  const blob=new Blob(["\uFEFF"+L.join("\r\n")],{type:"text/plain;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download=fname;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+};
+
+document.getElementById("retry").onclick=()=>location.reload();
+progress();
+</script>
+</body>
+</html>

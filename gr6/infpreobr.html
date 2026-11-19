@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Преобразование информации · Информатика · 6 класс</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Golos+Text:wght@400;500;600;800&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FBF6EA;
+  --ink:#22304F;
+  --ink-soft:rgba(34,48,79,.16);
+  --yellow:#FFD34D; --yellow-l:#FFF3B8;
+  --coral:#FF6B6B;  --coral-l:#FFE1E1;
+  --teal:#17B8A6;   --teal-l:#D7F5F0;
+  --blue:#4D96FF;   --blue-l:#DDEBFF;
+  --lilac:#9B6BDF;  --lilac-l:#EBE1FF;
+  --green:#2F9E51;  --green-l:#DFF5E4;
+  --red:#E5484D;
+  --line:rgba(76,139,190,.16);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:"Golos Text",system-ui,sans-serif;
+  background:var(--paper); color:var(--ink);
+  overflow:hidden; line-height:1.5;
+}
+button{font-family:inherit;color:inherit}
+
+/* ── тетрадный лист ─────────────────────────── */
+.paper-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),
+                   linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:28px 28px;}
+.paper-grid::after{content:"";position:absolute;top:0;bottom:0;left:78px;width:2px;background:rgba(255,107,107,.35)}
+
+/* плавающие значки-дудлы */
+.floaties{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.floaties span{position:absolute;opacity:.13;filter:saturate(.9);animation:drift 14s ease-in-out infinite alternate}
+@keyframes drift{from{transform:translate(0,0) rotate(-6deg)}to{transform:translate(26px,-30px) rotate(8deg)}}
+
+/* ── верхняя панель ─────────────────────────── */
+.progress{position:fixed;top:0;left:0;right:0;height:8px;z-index:60;background:rgba(34,48,79,.08)}
+.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--coral),var(--yellow),var(--teal));transform-origin:0 50%;transform:scaleX(0);transition:transform .5s cubic-bezier(.7,0,.2,1)}
+.topbar{position:fixed;top:20px;left:20px;right:20px;z-index:55;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
+.lesson-chip{background:#fff;border:3px solid var(--ink);border-radius:999px;padding:7px 16px;font-weight:800;font-size:14px;box-shadow:4px 4px 0 var(--ink-soft);transform:rotate(-1.5deg)}
+.stamp{width:62px;height:62px;border:3px dashed var(--coral);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:"Unbounded";font-weight:700;font-size:14px;background:#fff;transform:rotate(6deg);box-shadow:4px 4px 0 rgba(255,107,107,.25);transition:transform .3s}
+.stamp.pop{animation:stampPop .4s}
+@keyframes stampPop{50%{transform:rotate(6deg) scale(1.18)}}
+
+/* ── сцена и слайды ─────────────────────────── */
+#stage{position:fixed;inset:0;z-index:10}
+.slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  padding:86px 24px 108px;overflow:auto;
+  opacity:0;transform:translateX(70px) scale(.98);pointer-events:none;
+  transition:opacity .55s cubic-bezier(.7,0,.2,1),transform .55s cubic-bezier(.7,0,.2,1)}
+.slide.left{transform:translateX(-70px) scale(.98)}
+.slide.active{opacity:1;transform:none;pointer-events:auto}
+.in{width:min(1160px,100%);margin:auto}
+.slide.active .rv{animation:rise .65s cubic-bezier(.3,.9,.3,1) both;animation-delay:calc(var(--i,0)*95ms + 120ms)}
+@keyframes rise{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+
+/* типографика */
+.kick{display:inline-block;font-family:"Caveat";font-weight:700;font-size:clamp(20px,2.4vw,27px);color:var(--coral);transform:rotate(-1deg);margin-bottom:6px}
+h1{font-family:"Unbounded";font-weight:900;font-size:clamp(34px,6.2vw,74px);line-height:1.04;letter-spacing:-.5px}
+h2{font-family:"Unbounded";font-weight:800;font-size:clamp(24px,3.6vw,44px);line-height:1.12;margin-bottom:14px}
+h3{font-family:"Unbounded";font-weight:700;font-size:clamp(17px,2vw,22px)}
+.lede{font-size:clamp(16px,1.6vw,20px);max-width:34em;font-weight:500}
+.small{font-size:14px;opacity:.75}
+.note{background:var(--yellow-l);border:3px solid var(--ink);border-radius:12px;padding:14px 18px;font-weight:600;box-shadow:6px 6px 0 rgba(34,48,79,.14);transform:rotate(-1deg);max-width:56em}
+.note.coral{background:var(--coral-l)} .note.teal{background:var(--teal-l)} .note.blue{background:var(--blue-l)}
+.hand{font-family:"Caveat";font-weight:700;font-size:22px}
+
+/* карточки и стикеры */
+.card{background:#fff;border:3px solid var(--ink);border-radius:18px;padding:20px;box-shadow:7px 7px 0 rgba(34,48,79,.13)}
+.sticker{display:inline-block;border:3px solid var(--ink);border-radius:999px;padding:8px 16px;font-weight:800;font-size:15px;box-shadow:4px 4px 0 rgba(34,48,79,.85)}
+.s-y{background:var(--yellow);transform:rotate(-2deg)}
+.s-c{background:var(--coral);color:#fff;transform:rotate(1.5deg)}
+.s-t{background:var(--teal);color:#fff;transform:rotate(-1deg)}
+.s-b{background:var(--blue);color:#fff;transform:rotate(2deg)}
+.s-l{background:var(--lilac);color:#fff;transform:rotate(-1.5deg)}
+
+/* кнопки-фишки */
+.chip{border:3px solid var(--ink);background:#fff;border-radius:999px;padding:11px 18px;font-weight:700;font-size:15px;cursor:pointer;box-shadow:4px 4px 0 rgba(34,48,79,.8);transition:transform .15s,box-shadow .15s,background .2s}
+.chip:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 rgba(34,48,79,.8)}
+.chip:active{transform:translate(1px,1px);box-shadow:2px 2px 0 rgba(34,48,79,.8)}
+.chip.sel{background:var(--yellow);transform:translate(-2px,-2px)}
+.chip.ok,.m-item.ok{background:var(--green-l);border-color:var(--green);box-shadow:4px 4px 0 rgba(47,158,81,.4);pointer-events:none}
+.chip.no,.m-item.no{animation:shake .45s}
+.chip.used{opacity:.35;pointer-events:none;text-decoration:line-through}
+@keyframes shake{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+
+/* сопоставление */
+.match{display:grid;grid-template-columns:1fr 1fr;gap:16px 28px;margin-top:18px}
+.m-side{display:flex;flex-direction:column;gap:12px}
+.m-item{border:3px solid var(--ink);background:#fff;border-radius:14px;padding:13px 16px;font-weight:600;font-size:15px;text-align:left;cursor:pointer;box-shadow:4px 4px 0 rgba(34,48,79,.75);transition:transform .15s,background .2s}
+.m-item:hover{transform:translate(-2px,-2px)}
+.m-item.sel{background:var(--yellow);transform:translate(-2px,-2px)}
+.m-item.ok::before{content:"✓ ";color:var(--green);font-weight:900}
+.match-done{display:none;grid-column:1/-1}
+.match.finished .match-done{display:block;animation:rise .5s both}
+
+/* сортировка по полочкам */
+.pool{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0 20px}
+.buckets{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.bucket{border:3px dashed var(--ink);border-radius:18px;padding:14px;min-height:150px;background:rgba(255,255,255,.6);cursor:pointer;transition:transform .15s,background .2s}
+.bucket:hover{background:#fff;transform:translateY(-3px)}
+.bucket.b-s h3{color:#0f7bd0}.bucket.b-t h3{color:#0e9488}.bucket.b-o h3{color:#d0463f}
+.bucket .bin{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.bucket .tag{background:#fff;border:2px solid var(--ink);border-radius:10px;padding:7px 11px;font-size:13px;font-weight:600;animation:rise .4s both;box-shadow:3px 3px 0 rgba(34,48,79,.15)}
+.bucket.no{animation:shake .45s}
+.sort-done{display:none;margin-top:18px}
+.sort.finished .sort-done{display:block;animation:rise .5s both}
+
+/* полярки */
+.polaroid{background:#fff;border:3px solid var(--ink);padding:10px 10px 12px;box-shadow:9px 9px 0 rgba(34,48,79,.16)}
+.polaroid .ph{overflow:hidden;border:2px solid var(--ink)}
+.polaroid img{display:block;width:100%;height:100%;object-fit:cover}
+.kb img{animation:kenburns 15s ease-in-out infinite alternate}
+@keyframes kenburns{from{transform:scale(1) translate(0,0)}to{transform:scale(1.14) translate(-3%,3%)}}
+.polaroid figcaption{font-family:"Caveat";font-weight:700;font-size:20px;text-align:center;padding-top:8px}
+
+/* тест */
+.opts{display:flex;flex-direction:column;gap:12px;max-width:760px;margin-top:16px}
+.opt{border:3px solid var(--ink);background:#fff;border-radius:14px;padding:14px 18px;font-weight:600;font-size:16px;text-align:left;cursor:pointer;box-shadow:4px 4px 0 rgba(34,48,79,.7);transition:transform .15s;display:flex;align-items:center;gap:12px}
+.opt:hover{transform:translate(-2px,-2px)}
+.opt .k{flex:0 0 auto;width:32px;height:32px;border:3px solid var(--ink);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:"Unbounded";font-weight:700;font-size:13px;background:var(--yellow-l)}
+.opt.good{background:var(--green-l);border-color:var(--green)}
+.opt.good .k{background:var(--green);color:#fff;border-color:var(--green)}
+.opt.bad{background:var(--coral-l);border-color:var(--red);animation:shake .45s}
+.opt.dim{opacity:.45}
+.quiz .why{display:none;margin-top:18px}
+.quiz.answered .why{display:block;animation:rise .5s both}
+
+/* шаги практики */
+.steps{list-style:none;display:flex;flex-direction:column;gap:12px;counter-reset:st}
+.steps li{counter-increment:st;position:relative;padding:12px 14px 12px 58px;border:3px solid var(--ink);border-radius:14px;background:#fff;font-weight:600;cursor:pointer;box-shadow:4px 4px 0 rgba(34,48,79,.7);transition:background .25s}
+.steps li::before{content:counter(st);position:absolute;left:12px;top:50%;translate:0 -50%;width:34px;height:34px;border:3px solid var(--ink);border-radius:50%;background:var(--blue-l);display:flex;align-items:center;justify-content:center;font-family:"Unbounded";font-weight:700;font-size:14px}
+.steps li.done{background:var(--green-l)}
+.steps li.done::before{content:"✓";background:var(--green);color:#fff;border-color:var(--green)}
+
+/* таймер */
+.timer{border:3px solid var(--ink);border-radius:20px;background:#fff;box-shadow:8px 8px 0 rgba(34,48,79,.16);padding:22px;text-align:center}
+.timer .digits{font-family:"Unbounded";font-weight:900;font-size:clamp(46px,5.5vw,66px);letter-spacing:2px;transition:color .3s}
+.timer.warn .digits{color:var(--coral);animation:pulse 1s infinite}
+.timer.over .digits{color:var(--green)}
+@keyframes pulse{50%{transform:scale(1.06)}}
+.timer .tbtns{display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+
+/* таблица Морзе */
+.morse-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:6px;margin-top:12px;max-height:240px;overflow:auto;padding:4px}
+.morse-grid span{border:2px solid var(--ink);border-radius:8px;background:#fff;padding:5px 7px;font-size:13px;font-weight:600;display:flex;justify-content:space-between;gap:6px}
+.morse-grid b{font-family:"Unbounded";font-size:11px;letter-spacing:1px;color:#0f7bd0}
+
+/* цепочка кодирования */
+.chain{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:18px 0}
+.chain .node{border:3px solid var(--ink);background:#fff;border-radius:14px;padding:12px 16px;font-weight:700;box-shadow:4px 4px 0 rgba(34,48,79,.7)}
+.chain .op{font-family:"Caveat";font-weight:700;font-size:21px;color:var(--teal);background:var(--teal-l);border:2px dashed var(--teal);border-radius:999px;padding:4px 14px;transform:rotate(-2deg)}
+.chain .arrow{font-size:24px}
+
+/* схемы */
+.flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:12px;align-items:center;margin:18px 0}
+.flow .f-arrow{font-size:26px;text-align:center}
+.codes{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px}
+.timeline{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:18px 0}
+.timeline .t-arrow{font-size:20px;opacity:.6}
+
+/* светофор */
+.traffic{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px}
+.traffic .chip{font-size:17px;padding:14px 20px}
+
+/* навигация */
+.navbar{position:fixed;bottom:20px;left:50%;translate:-50% 0;z-index:70;display:flex;align-items:center;gap:16px;background:#fff;border:3px solid var(--ink);border-radius:999px;padding:9px 14px;box-shadow:6px 6px 0 rgba(34,48,79,.2)}
+.nav-btn{width:48px;height:48px;border-radius:50%;border:3px solid var(--ink);background:var(--yellow);font-size:22px;font-weight:900;cursor:pointer;box-shadow:3px 3px 0 rgba(34,48,79,.8);transition:transform .15s,background .2s}
+.nav-btn:hover:not(:disabled){transform:translate(-2px,-2px)}
+.nav-btn:active:not(:disabled){transform:translate(1px,1px);box-shadow:1px 1px 0 rgba(34,48,79,.8)}
+.nav-btn:disabled{opacity:.35;cursor:default;background:#fff}
+.counter{font-family:"Unbounded";font-weight:700;font-size:14px;min-width:70px;text-align:center}
+.dots{display:flex;gap:7px}
+.dots i{width:9px;height:9px;background:var(--ink);opacity:.2;transform:rotate(45deg);border-radius:2px;cursor:pointer;transition:.25s}
+.dots i.on{opacity:1;background:var(--coral);transform:rotate(45deg) scale(1.35)}
+.kbd-hint{position:fixed;bottom:26px;right:24px;z-index:65;font-size:13px;font-weight:600;opacity:.55;pointer-events:none}
+
+/* конфетти */
+.burst-p{position:fixed;z-index:120;font-size:22px;pointer-events:none;animation:popfly .85s ease-out forwards}
+@keyframes popfly{0%{transform:translate(0,0) scale(.5);opacity:1}70%{opacity:1}100%{transform:translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(1.15);opacity:0}}
+
+/* раскладки слайдов */
+.grid2{display:grid;grid-template-columns:1.15fr .85fr;gap:34px;align-items:center}
+.grid2.rev{grid-template-columns:.85fr 1.15fr}
+.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:20px}
+.bigcard{border:3px solid var(--ink);border-radius:20px;background:#fff;padding:22px;box-shadow:8px 8px 0 rgba(34,48,79,.13);transition:transform .2s}
+.bigcard:hover{transform:translateY(-5px) rotate(-.6deg)}
+.bigcard .emo{font-size:42px;display:block;margin-bottom:10px}
+.bigcard.ey{background:var(--yellow-l)}.bigcard.eb{background:var(--blue-l)}.bigcard.et{background:var(--teal-l)}
+.twoform{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+.defbox{border:4px solid var(--ink);border-radius:20px;background:var(--yellow-l);padding:20px 26px;font-family:"Unbounded";font-weight:700;font-size:clamp(16px,2vw,22px);box-shadow:8px 8px 0 rgba(34,48,79,.16);margin:16px 0;transform:rotate(-.5deg)}
+ul.fun{list-style:none;display:flex;flex-direction:column;gap:9px;margin-top:10px}
+ul.fun li{padding-left:30px;position:relative;font-weight:500}
+ul.fun li::before{content:"✏️";position:absolute;left:0}
+.blue-list li::before{content:"🔧"}.green-list li::before{content:"🧮"}
+.secret{font-family:"Unbounded";font-weight:700;letter-spacing:3px;font-size:clamp(14px,1.6vw,19px);background:var(--lilac-l);border:3px dashed var(--lilac);border-radius:12px;padding:14px 16px}
+.score-num{font-family:"Unbounded";font-weight:900;font-size:clamp(56px,8vw,96px);line-height:1}
+.stars{font-size:34px;letter-spacing:6px;color:var(--yellow);-webkit-text-stroke:2px var(--ink)}
+.cover{display:grid;grid-template-columns:1.2fr .8fr;gap:40px;align-items:center}
+.cover .stickers{display:flex;gap:14px;flex-wrap:wrap;margin-top:22px}
+.cover-right{position:relative;height:420px}
+.cover-right .polaroid{position:absolute;width:min(300px,80%)}
+.p1{top:0;left:0;transform:rotate(-5deg);z-index:2}
+.p2{top:150px;left:150px;transform:rotate(4deg);z-index:3}
+.p1:hover,.p2:hover{z-index:5}
+.finale h2{font-size:clamp(34px,6vw,70px)}
+
+@media (max-width:900px){
+  .grid2,.grid2.rev,.cover,.cols3,.twoform,.buckets{grid-template-columns:1fr}
+  .match{grid-template-columns:1fr}
+  .flow{grid-template-columns:1fr}.flow .f-arrow{transform:rotate(90deg)}
+  .paper-grid::after{display:none}
+  .dots{display:none}
+  .kbd-hint{display:none}
+  .cover-right{height:auto;display:flex;gap:16px;flex-wrap:wrap}
+  .cover-right .polaroid{position:static;width:min(260px,100%)}
+  .slide{padding:80px 16px 110px}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+:focus-visible{outline:3px dashed var(--coral);outline-offset:3px}
+</style>
+</head>
+<body>
+
+<div class="paper-grid" aria-hidden="true"></div>
+<div class="floaties" aria-hidden="true">
+  <span style="top:8%;left:6%;font-size:56px">🧠</span>
+  <span style="top:16%;right:9%;font-size:48px;animation-duration:17s">💾</span>
+  <span style="bottom:14%;left:10%;font-size:52px;animation-duration:19s">✉️</span>
+  <span style="bottom:20%;right:14%;font-size:46px;animation-duration:13s">⚙️</span>
+  <span style="top:46%;left:2%;font-size:40px;animation-duration:21s">🔤</span>
+  <span style="top:56%;right:3%;font-size:44px;animation-duration:16s">🗝️</span>
+</div>
+
+<div class="progress"><i id="pbar"></i></div>
+<header class="topbar">
+  <div class="lesson-chip">📚 Информатика · 6 класс</div>
+  <div class="stamp" id="stamp">№1</div>
+</header>
+
+<main id="stage">
+
+<!-- ═══ 1. ТИТУЛ ═══ -->
+<section class="slide" data-title="Титул">
+  <div class="in cover">
+    <div>
+      <span class="kick rv" style="--i:0">Урок-исследование · раздел «Информационные процессы»</span>
+      <h1 class="rv" style="--i:1"><span data-scramble>ПРЕОБРАЗОВАНИЕ</span><br><span data-scramble>ИНФОРМАЦИИ</span></h1>
+      <p class="lede rv" style="--i:2" >Как информация меняет форму и содержание — и почему прямо сейчас она преображается у тебя в голове 🤯</p>
+      <div class="stickers rv" style="--i:3">
+        <span class="sticker s-y">🔀 меняем форму</span>
+        <span class="sticker s-t">🧮 меняем смысл</span>
+        <span class="sticker s-b">🕵️ расшифровываем</span>
+      </div>
+      <p class="small rv" style="--i:4;margin-top:20px">Листай стрелками ← → или жми ПРОБЕЛ</p>
+    </div>
+    <div class="cover-right rv" style="--i:2">
+      <figure class="polaroid p1 kb"><div class="ph"><img src="https://picsum.photos/seed/school-computer-class/500/340" alt="Компьютерный класс"></div><figcaption>наш компьютерный класс</figcaption></figure>
+      <figure class="polaroid p2 kb"><div class="ph"><img src="https://picsum.photos/seed/retro-keyboard-code/500/340" alt="Клавиатура"></div><figcaption>главный инструмент ✨</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 2. УДИВИТЕЛЬНЫЙ ФАКТ ═══ -->
+<section class="slide" data-title="Удивительный факт">
+  <div class="in grid2">
+    <div>
+      <span class="kick rv" style="--i:0">🤯 Удивительный факт</span>
+      <h2 class="rv" style="--i:1">Пчёлы передают информацию… танцем! 🐝</h2>
+      <p class="lede rv" style="--i:2">Вернувшись в улей, пчела-разведчица исполняет «виляющий танец»: направление «восьмёрки» показывает дорогу к цветам, а скорость виляния — расстояние до них. Зрительницы считывают танец и летят точно к цели!</p>
+      <p class="lede rv" style="--i:3" style="margin-top:10px">Язык танца расшифровал биолог <b>Карл фон Фриш</b> — и получил за это <b>Нобелевскую премию</b> в 1973 году. 🏅</p>
+      <div class="note coral rv" style="--i:4;margin-top:18px">Выходит, танец — это код, а пчёлы — мастера преобразования информации! Сегодня научимся так же. 😉</div>
+    </div>
+    <div>
+      <figure class="polaroid kb rv" style="--i:2;transform:rotate(2deg)"><div class="ph"><img src="https://picsum.photos/seed/bee-flower-dance/560/400" alt="Пчела на цветке"></div><figcaption>танец = зашифрованная карта 🗺️</figcaption></figure>
+      <div class="card rv" style="--i:4;margin-top:18px;text-align:center;background:var(--blue-l)">
+        <div style="font-family:'Unbounded';font-weight:900;font-size:clamp(26px,3vw,38px)" data-count="11000000">0</div>
+        <div class="hand">бит в секунду — столько данных твои органы чувств прямо сейчас «загружают» в мозг ⚡</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 3. РАЗМИНКА 1 ═══ -->
+<section class="slide" data-title="Разминка 1">
+  <div class="in">
+    <span class="kick rv" style="--i:0">Разминка · вопрос 1 из 3 · сопоставление</span>
+    <h2 class="rv" style="--i:1">Соедини понятие с описанием 🧩</h2>
+    <p class="small rv" style="--i:2">Кликни карточку слева, затем — подходящую справа 👉</p>
+    <div class="match rv" style="--i:3" data-match>
+      <div class="m-side">
+        <button class="m-item" data-key="a">💾 Хранение информации</button>
+        <button class="m-item" data-key="b">📡 Передача информации</button>
+        <button class="m-item" data-key="c">⚙️ Обработка информации</button>
+        <button class="m-item" data-key="d">🗣️ Источник информации</button>
+      </div>
+      <div class="m-side">
+        <button class="m-item" data-key="b">Информация движется от того, кто её отправил, к тому, кто принимает</button>
+        <button class="m-item" data-key="d">Тот, кто создаёт или отправляет информацию</button>
+        <button class="m-item" data-key="a">Информация закрепляется во времени, чтобы пригодиться позже</button>
+        <button class="m-item" data-key="c">Информация меняется: её форма или содержание</button>
+      </div>
+      <div class="match-done note teal">🎉 4 из 4! Ты отлично помнишь прошлые темы — идём дальше!</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 4. РАЗМИНКА 2 ═══ -->
+<section class="slide" data-title="Разминка 2">
+  <div class="in">
+    <span class="kick rv" style="--i:0">Разминка · вопрос 2 из 3 · сортировка</span>
+    <h2 class="rv" style="--i:1">Разложи ситуации по полочкам 🗄️</h2>
+    <p class="small rv" style="--i:2">Выбери карточку с примером, затем щёлкни по нужной полочке</p>
+    <div class="sort rv" style="--i:3" data-sort>
+      <div class="pool">
+        <button class="chip" data-b="s">Записать конспект в тетрадь</button>
+        <button class="chip" data-b="t">Отправить другу голосовое сообщение</button>
+        <button class="chip" data-b="o">Решить пример по математике</button>
+        <button class="chip" data-b="s">Сделать фото на память</button>
+        <button class="chip" data-b="o">Перевести фразу на английский</button>
+        <button class="chip" data-b="t">Слушать подкаст в наушниках</button>
+      </div>
+      <div class="buckets">
+        <div class="bucket b-s" data-b="s"><h3>💾 Хранение</h3><div class="bin"></div></div>
+        <div class="bucket b-t" data-b="t"><h3>📡 Передача</h3><div class="bin"></div></div>
+        <div class="bucket b-o" data-b="o"><h3>⚙️ Обработка</h3><div class="bin"></div></div>
+      </div>
+      <div class="sort-done note teal">🎯 Все полочки заполнены! С ситуациями ты разобрался.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 5. РАЗМИНКА 3 ═══ -->
+<section class="slide" data-title="Разминка 3">
+  <div class="in">
+    <span class="kick rv" style="--i:0">Разминка · вопрос 3 из 3 · сопоставление</span>
+    <h2 class="rv" style="--i:1">Кто есть кто при передаче информации? 🎙️</h2>
+    <p class="small rv" style="--i:2">Соедини ситуацию с ролью в процессе передачи</p>
+    <div class="match rv" style="--i:3" data-match>
+      <div class="m-side">
+        <button class="m-item" data-key="a">🎙️ Диктор читает новости по радио</button>
+        <button class="m-item" data-key="b">📶 Радиоволны несут звук в город</button>
+        <button class="m-item" data-key="c">📻 Радиоприёмник ловит сигнал</button>
+        <button class="m-item" data-key="d">💽 Флешка с любимым фильмом</button>
+      </div>
+      <div class="m-side">
+        <button class="m-item" data-key="c">Приёмник информации</button>
+        <button class="m-item" data-key="a">Источник информации</button>
+        <button class="m-item" data-key="d">Носитель информации</button>
+        <button class="m-item" data-key="b">Канал связи</button>
+      </div>
+      <div class="match-done note teal">🏁 Разминка завершена! А теперь — самое интересное: теория.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 6. ТЕОРИЯ: ТРИ ПРОЦЕССА ═══ -->
+<section class="slide" data-title="Теория · три процесса">
+  <div class="in">
+    <span class="kick rv" style="--i:0">Теория · запиши в тетрадь ✏️</span>
+    <h2 class="rv" style="--i:1">Три кита информационных процессов</h2>
+    <div class="cols3">
+      <div class="bigcard ey rv" style="--i:2"><span class="emo">💾</span><h3>Хранение</h3><p style="margin-top:8px">Информация закрепляется на носителе или в памяти, чтобы пригодиться позже.</p><ul class="fun"><li>конспект в тетради</li><li>фото в альбоме</li><li>файл на флешке</li></ul></div>
+      <div class="bigcard eb rv" style="--i:3"><span class="emo">📡</span><h3>Передача</h3><p style="margin-top:8px">Информация движется от источника к приёмнику по каналу связи.</p><ul class="fun"><li>разговор с другом</li><li>радио и телевидение</li><li>интернет-сообщения</li></ul></div>
+      <div class="bigcard et rv" style="--i:4"><span class="emo">⚙️</span><h3>Обработка (преобразование)</h3><p style="margin-top:8px">Информация меняется: её форма или содержание.</p><ul class="fun"><li>перевод текста</li><li>решение задачи</li><li>сжатие файла</li></ul></div>
+    </div>
+    <div class="note rv" style="--i:5;margin-top:22px">Запомни тройку: <b>хранить 💾, передавать 📡, обрабатывать ⚙️</b> — с этого начинается любая история про информацию.</div>
+  </div>
+</section>
+
+<!-- ═══ 7. ТЕОРИЯ: ЧТО ТАКОЕ ПРЕОБРАЗОВАНИЕ ═══ -->
+<section class="slide" data-title="Теория · преобразование">
+  <div class="in">
+    <span class="kick rv" style="--i:0">Теория · главная мысль урока</span>
+    <h2 class="rv" style="--i:1">Преобразование = обработка информации</h2>
+    <div class="defbox rv" style="--i:2">Преобразование информации — это изменение её <u>формы</u> или <u>содержания</u>.</div>
+    <div class="twoform">
+      <div class="card rv" style="--i:3;background:var(--blue-l)">
+        <h3>🔧 Меняется ФОРМА</h3>
+        <p class="small" style="margin-top:6px">Смысл остаётся прежним, запись — другая</p>
+        <ul class="fun blue-list"><li>перевод с русского на английский</li><li>запись речи буквами</li><li>конспект длинного параграфа</li><li>шифровка и кодирование</li></ul>
+      </div>
+      <div class="card rv" style="--i:4;background:var(--teal-l)">
+        <h3>🧮 Меняется СОДЕРЖАНИЕ</h3>
+        <p class="small" style="margin-top:6px">Из старых данных рождается новое знание</p>
+        <ul class="fun green-list"><li>25 − 7 = <b>18</b></li><li>вывод по результатам наблюдений</li><li>прогноз погоды по данным метеостанций</li><li>разгадка кроссворда</li></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 8. ТЕОРИЯ: КОДИРОВАНИЕ ═══ -->
+<section class="slide" data-title="Теория · кодирование">
+  <div class="in">
+    <span class="kick rv" style="--i:0">Теория · коды вокруг нас</span>
+    <h2 class="rv" style="--i:1">Код — тайный язык информации 🔐</h2>
+    <div class="cols3 rv" style="--i:2" style="margin-top:14px">
+      <div class="card" style="background:var(--yellow-l)"><h3>Кодирование</h3><p style="margin-top:6px">Перевод информации в форму, удобную для хранения и передачи.</p></div>
+      <div class="card" style="background:var(--lilac-l)"><h3>Декодирование</h3><p style="margin-top:6px">Восстановление сообщения из кода обратно.</p></div>
+      <div class="card" style="background:var(--coral-l)"><h3>Код</h3><p style="margin-top:6px">Система знаков, в которую «упакована» информация.</p></div>
+    </div>
+    <div class="chain rv" style="--i:3">
+      <span class="node">💬 «Привет»</span><span class="arrow">→</span>
+      <span class="op">кодируем</span><span class="arrow">→</span>
+      <span class="node">•––• &nbsp;•–• &nbsp;•• &nbsp;•––• &nbsp;• &nbsp;–</span><span class="arrow">→</span>
+      <span class="op">декодируем</span><span class="arrow">→</span>
+      <span class="node">💬 «Привет»</span>
+    </div>
+    <div class="codes rv" style="--i:4">
+      <span class="sticker s-b">•— Азбука Морзе</span>
+      <span class="sticker s-t">⠿ Шрифт Брайля</span>
+      <span class="sticker s-c">🚩 Семафорная азбука</span>
+      <span class="sticker s-y">🎼 Нотная грамота</span>
+      <span class="sticker s-l">01 Двоичный код</span>
+    </div>
+    <div class="note rv" style="--i:5;margin-top:20px">Смайлик 😊 — тоже код! Он означает: «я рад». Мы кодируем эмоции знаками.</div>
+  </div>
+</section>
+
+<!-- ═══ 9. ТЕОРИЯ: СХЕМА ПЕРЕДАЧИ ═══ -->
+<section class="slide" data-title="Теория · передача">
+  <div class="in">
+    <span class="kick rv" style="--i:0">Теория · схема-путешествие</span>
+    <h2 class="rv" style="--i:1">Как информация путешествует ✈️</h2>
+    <div class="flow rv" style="--i:2">
+      <div class="bigcard ey" style="text-align:center"><span class="emo">🗣️</span><h3>Источник</h3><p class="small">тот, кто отправляет</p></div>
+      <div class="f-arrow">➜<br><span class="hand">кодирует</span></div>
+      <div class="bigcard eb" style="text-align:center"><span class="emo">📡</span><h3>Канал связи</h3><p class="small">«дорога» для сигнала</p></div>
+      <div class="f-arrow">➜<br><span class="hand">декодирует</span></div>
+      <div class="bigcard et" style="text-align:center"><span class="emo">👂</span><h3>Приёмник</h3><p class="small">тот, кто принимает</p></div>
+    </div>
+    <div class="cols3 rv" style="--i:3">
+      <div class="card">🧑‍🏫 Учитель → голос → ученики</div>
+      <div class="card">📱 Телефон → радиоволны → 📱 телефон друга</div>
+      <div class="card">✍️ Писатель → книга → 📖 читатель</div>
+    </div>
+    <div class="note coral rv" style="--i:4;margin-top:20px">⚠️ <b>Помехи</b> — всё, что искажает сообщение: шум на улице, опечатка, плохой сигнал связи.</div>
+  </div>
+</section>
+
+<!-- ═══ 10. ТЕОРИЯ: НОСИТЕЛИ ═══ -->
+<section class="slide" data-title="Теория · носители">
+  <div class="in grid2">
+    <div>
+      <span class="kick rv" style="--i:0">Теория · история хранения</span>
+      <h2 class="rv" style="--i:1">Носитель — «дом» для информации 🏠</h2>
+      <p class="lede rv" style="--i:2"><b>Носитель информации</b> — любой предмет или среда, где её можно сохранить.</p>
+      <div class="timeline rv" style="--i:3">
+        <span class="sticker s-y">🪨 камень</span><span class="t-arrow">➜</span>
+        <span class="sticker s-t">🪢 узелки</span><span class="t-arrow">➜</span>
+        <span class="sticker s-b">📜 папирус</span><span class="t-arrow">➜</span>
+        <span class="sticker s-c">📖 книга</span><span class="t-arrow">➜</span>
+        <span class="sticker s-l">💾 дискета</span><span class="t-arrow">➜</span>
+        <span class="sticker s-y">💿 диск</span><span class="t-arrow">➜</span>
+        <span class="sticker s-t">🔌 флешка</span><span class="t-arrow">➜</span>
+        <span class="sticker s-b">☁️ облако</span>
+      </div>
+      <div class="note teal rv" style="--i:4;margin-top:16px">Самый быстрый носитель — память человека, а самый надёжный — несколько копий сразу 😉</div>
+    </div>
+    <figure class="polaroid kb rv" style="--i:3;transform:rotate(2.5deg)"><div class="ph"><img src="https://picsum.photos/seed/retro-floppy-disk/520/380" alt="Дискета"></div><figcaption>дискета — «бабушка» флешки: всего 1,4 МБ 😮</figcaption></figure>
+  </div>
+</section>
+
+<!-- ═══ 11. ТЕОРИЯ: ВХОД-ПРАВИЛО-ВЫХОД ═══ -->
+<section class="slide" data-title="Теория · схема преобразования">
+  <div class="in">
+    <span class="kick rv" style="--i:0">Теория · формула-помощница</span>
+    <h2 class="rv" style="--i:1">Вход → Правило → Выход 🏭</h2>
+    <p class="lede rv" style="--i:2">Любое преобразование информации устроено как маленький завод:</p>
+    <div class="flow rv" style="--i:3">
+      <div class="bigcard ey" style="text-align:center"><h3>ВХОД</h3><p class="small">что было</p></div>
+      <div class="f-arrow">➜</div>
+      <div class="bigcard eb" style="text-align:center"><h3>ПРАВИЛО</h3><p class="small">что сделали</p></div>
+      <div class="f-arrow">➜</div>
+      <div class="bigcard et" style="text-align:center"><h3>ВЫХОД</h3><p class="small">что стало</p></div>
+    </div>
+    <div class="cols3 rv" style="--i:4">
+      <div class="card"><b>«3 · 7»</b> → умножить → <b>«21»</b> 🧮</div>
+      <div class="card"><b>«привет»</b> → прочитать наоборот → <b>«тевирп»</b> 🙃</div>
+      <div class="card"><b>данные термометров</b> → обработать → <b>прогноз погоды</b> 🌤️</div>
+    </div>
+    <div class="note rv" style="--i:5;margin-top:20px">Компьютер — чемпион по преобразованиям: миллиарды операций каждую секунду! 🚀</div>
+  </div>
+</section>
+
+<!-- ═══ 12. ПРАКТИКА ═══ -->
+<section class="slide" data-title="Практика за компьютером">
+  <div class="in">
+    <span class="kick rv" style="--i:0">Практика за компьютером · ⏱ 10 минут</span>
+    <h2 class="rv" style="--i:1">Операция «Дешифровщик» 🕵️</h2>
+    <div class="grid2" style="gap:26px">
+      <div>
+        <ul class="steps rv" style="--i:2">
+          <li>Открой программу «Блокнот» и назови файл своим именем.</li>
+          <li>Закодируй своё имя азбукой Морзе (таблица справа) и запиши код в файл.</li>
+          <li>Поменяйся файлом с соседом и декодируй его имя.</li>
+          <li>Расшифруй секретную фразу урока!</li>
+          <li>⭐ Бонус: закодируй слово «КЛАСС» цифрами (А = 1, Б = 2, В = 3…)</li>
+        </ul>
+        <div class="card rv" style="--i:3;margin-top:16px;background:var(--lilac-l)">
+          <h3>Секретная фраза:</h3>
+          <p class="secret" style="margin-top:8px">--..&nbsp;-.&nbsp;.-&nbsp;-.&nbsp;.-.-&nbsp;.-&nbsp;&nbsp;&nbsp;...&nbsp;..&nbsp;.-..&nbsp;.-</p>
+          <button class="chip" style="margin-top:12px" data-reveal="ЗНАНИЯ — СИЛА 💪">Показать ответ</button>
+        </div>
+        <p class="small rv" style="--i:4;margin-top:10px">Не успеваешь? Бонус можно оставить на перемену 😉</p>
+      </div>
+      <div>
+        <div class="timer rv" style="--i:2" id="timer">
+          <div class="hand" style="font-size:24px">Таймер практики</div>
+          <div class="digits" id="tDigits">10:00</div>
+          <div class="tbtns">
+            <button class="chip" id="tStart">▶ Старт</button>
+            <button class="chip" id="tReset">↺ Сброс</button>
+          </div>
+          <p id="tMsg" class="hand" style="margin-top:10px;font-size:20px"></p>
+        </div>
+        <div class="card rv" style="--i:3;margin-top:16px">
+          <h3>Азбука Морзе 📻</h3>
+          <div class="morse-grid">
+            <span>А<b>•–</b></span><span>Б<b>–•••</b></span><span>В<b>•––</b></span><span>Г<b>––•</b></span>
+            <span>Д<b>–••</b></span><span>Е<b>•</b></span><span>Ж<b>•••–</b></span><span>З<b>––••</b></span>
+            <span>И<b>••</b></span><span>Й<b>•–––</b></span><span>К<b>–•–</b></span><span>Л<b>•–••</b></span>
+            <span>М<b>––</b></span><span>Н<b>–•</b></span><span>О<b>–––</b></span><span>П<b>•––•</b></span>
+            <span>Р<b>•–•</b></span><span>С<b>•••</b></span><span>Т<b>–</b></span><span>У<b>••–</b></span>
+            <span>Ф<b>••–•</b></span><span>Х<b>••••</b></span><span>Ц<b>–•–•</b></span><span>Ч<b>–––•</b></span>
+            <span>Ш<b>––––</b></span><span>Щ<b>––•–</b></span><span>Ъ<b>––•––</b></span><span>Ы<b>–•––</b></span>
+            <span>Ь<b>–••–</b></span><span>Э<b>••–••</b></span><span>Ю<b>••––</b></span><span>Я<b>•–•–</b></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 13–17. ФОРМИРУЮЩЕЕ ОЦЕНИВАНИЕ ═══ -->
+<section class="slide" data-title="Оценивание 1">
+  <div class="in">
+    <span class="kick rv" style="--i:0">Формирующее оценивание · вопрос 1 из 5</span>
+    <h2 class="rv" style="--i:1">Что такое преобразование информации?</h2>
+    <div class="quiz rv" style="--i:2">
+      <div class="opts">
+        <button class="opt"><span class="k">А</span>Удаление ненужных файлов</button>
+        <button class="opt" data-ok><span class="k">Б</span>Изменение формы или содержания информации</button>
+        <button class="opt"><span class="k">В</span>Копирование текста из книги в тетрадь</button>
+        <button class="opt"><span class="k">Г</span>Передача информации по воздуху</button>
+      </div>
+      <div class="why note teal">💡 Преобразовать — значит <b>изменить</b>: либо форму (как информация записана), либо содержание (что в ней внутри).</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-title="Оценивание 2">
+  <div class="in">
+    <span class="kick rv" style="--i:0">Формирующее оценивание · вопрос 2 из 5</span>
+    <h2 class="rv" style="--i:1">Ученик переводит текст с русского на английский. Какой это процесс?</h2>
+    <div class="quiz rv" style="--i:2">
+      <div class="opts">
+        <button class="opt"><span class="k">А</span>Хранение</button>
+        <button class="opt"><span class="k">Б</span>Передача</button>
+        <button class="opt" data-ok><span class="k">В</span>Обработка (преобразование)</button>
+        <button class="opt"><span class="k">Г</span>Удаление</button>
+      </div>
+      <div class="why note teal">💡 Смысл сохранился, а форма изменилась — стал другой язык. Это классическое преобразование формы!</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-title="Оценивание 3">
+  <div class="in">
+    <span class="kick rv" style="--i:0">Формирующее оценивание · вопрос 3 из 5</span>
+    <h2 class="rv" style="--i:1">Верно ли утверждение? «Кодирование — это перевод информации в форму, удобную для хранения и передачи».</h2>
+    <div class="quiz rv" style="--i:2">
+      <div class="opts" style="flex-direction:row;flex-wrap:wrap">
+        <button class="opt" data-ok><span class="k">✓</span>Верно</button>
+        <button class="opt"><span class="k">✗</span>Неверно</button>
+      </div>
+      <div class="why note teal">💡 Верно! Конспект, штрих-код на товаре, азбука Морзе — всё это примеры кодирования.</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-title="Оценивание 4">
+  <div class="in">
+    <span class="kick rv" style="--i:0">Формирующее оценивание · вопрос 4 из 5</span>
+    <h2 class="rv" style="--i:1">В схеме передачи информации радиоволны — это…</h2>
+    <div class="quiz rv" style="--i:2">
+      <div class="opts">
+        <button class="opt"><span class="k">А</span>Источник</button>
+        <button class="opt" data-ok><span class="k">Б</span>Канал связи</button>
+        <button class="opt"><span class="k">В</span>Приёмник</button>
+        <button class="opt"><span class="k">Г</span>Носитель</button>
+      </div>
+      <div class="why note teal">💡 Канал связи — это «дорога», по которой информация путешествует от источника к приёмнику.</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-title="Оценивание 5">
+  <div class="in">
+    <span class="kick rv" style="--i:0">Формирующее оценивание · вопрос 5 из 5</span>
+    <h2 class="rv" style="--i:1">В каком примере меняется СОДЕРЖАНИЕ информации?</h2>
+    <div class="quiz rv" style="--i:2">
+      <div class="opts">
+        <button class="opt"><span class="k">А</span>Переписать текст в тетрадь</button>
+        <button class="opt" data-ok><span class="k">Б</span>Решить пример: 12 + 8 = 20</button>
+        <button class="opt"><span class="k">В</span>Сфотографировать доску</button>
+        <button class="opt"><span class="k">Г</span>Отсканировать рисунок</button>
+      </div>
+      <div class="why note teal">💡 Здесь появилось новое знание — число 20. В остальных примерах менялась только форма записи.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 18. ИТОГИ + РЕФЛЕКСИЯ ═══ -->
+<section class="slide" id="scoreSlide" data-title="Итоги и рефлексия">
+  <div class="in">
+    <span class="kick rv" style="--i:0">Итоги · рефлексия</span>
+    <h2 class="rv" style="--i:1">Твой результат 🏅</h2>
+    <div class="card rv" style="--i:2;display:flex;gap:34px;align-items:center;flex-wrap:wrap">
+      <div style="text-align:center">
+        <div class="score-num"><span id="scoreVal">0</span><span style="font-size:.45em"> / 5</span></div>
+        <div class="stars" id="scoreStars">☆☆☆☆☆</div>
+      </div>
+      <div style="flex:1;min-width:240px">
+        <p class="lede" id="scoreMsg">Ответь на 5 вопросов и вернись сюда — узнаем результат!</p>
+        <button class="chip" id="quizReset" style="margin-top:14px">🔁 Пройти тест ещё раз</button>
+      </div>
+    </div>
+    <div class="rv" style="--i:3;margin-top:30px">
+      <h3>Оцени сегодняшний урок — насколько всё понятно?</h3>
+      <div class="traffic">
+        <button class="chip" data-refl="green">🟢 Всё понял!</button>
+        <button class="chip" data-refl="yellow">🟡 Есть вопросы</button>
+        <button class="chip" data-refl="red">🔴 Было трудно</button>
+      </div>
+      <p class="note teal" id="reflMsg" style="display:none;margin-top:16px"></p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 19. ДОМАШНЕЕ ЗАДАНИЕ ═══ -->
+<section class="slide" data-title="Домашнее задание">
+  <div class="in">
+    <span class="kick rv" style="--i:0">Домашнее задание 🏠 · запиши в дневник</span>
+    <h2 class="rv" style="--i:1">Три уровня — выбирай свой</h2>
+    <div class="cols3">
+      <div class="card rv" style="--i:2;background:var(--blue-l);transform:rotate(-1.2deg)"><span class="sticker s-b" style="margin-bottom:12px">Базовый</span><p style="margin-top:10px">Прочитать § учебника «Преобразование информации» и ответить на вопросы после параграфа.</p></div>
+      <div class="card rv" style="--i:3;background:var(--yellow-l);transform:rotate(1deg)"><span class="sticker s-y" style="margin-bottom:12px">Творческий ⭐</span><p style="margin-top:10px">Придумай <b>свой шифр</b> и закодируй им слово «КЛАСС». На следующем уроке дадим ребятам его расшифровать!</p></div>
+      <div class="card rv" style="--i:4;background:var(--teal-l);transform:rotate(-.8deg)"><span class="sticker s-t" style="margin-bottom:12px">По желанию 🚀</span><p style="margin-top:10px">Подготовь мини-сообщение «Как хранят информацию в интернете» на 1–2 минуты.</p></div>
+    </div>
+    <div class="note rv" style="--i:5;margin-top:24px">Творческое задание — самое интересное: лучшие шифры мы испытаем всем классом! 😉</div>
+  </div>
+</section>
+
+<!-- ═══ 20. ФИНАЛ ═══ -->
+<section class="slide" data-title="Финал">
+  <div class="in finale" style="text-align:center">
+    <span class="kick rv" style="--i:0">Урок завершён</span>
+    <h2 class="rv" style="--i:1">Спасибо за урок! 🎉</h2>
+    <p class="hand rv" style="--i:2;font-size:clamp(24px,3vw,34px)">Теперь ты знаешь: информация живёт, пока преображается ✨</p>
+    <div class="rv" style="--i:3;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:28px">
+      <span class="sticker s-y">🧠 Ты молодец</span>
+      <span class="sticker s-c">🕵️ Дешифровщик 6 уровня</span>
+      <span class="sticker s-t">📚 До новых встреч!</span>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<nav class="navbar">
+  <button class="nav-btn" id="prevBtn" aria-label="Назад">←</button>
+  <div class="dots" id="dots"></div>
+  <div class="counter"><b id="cur">1</b> / <span id="tot">20</span></div>
+  <button class="nav-btn" id="nextBtn" aria-label="Вперёд">→</button>
+</nav>
+<div class="kbd-hint">← → листание · пробел — дальше</div>
+
+<script>
+(function(){
+"use strict";
+const RM = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const slides = Array.from(document.querySelectorAll(".slide"));
+const N = slides.length;
+let cur = 0, score = 0;
+
+/* ── навигация ── */
+const pbar = document.getElementById("pbar"), stamp = document.getElementById("stamp"),
+      curEl = document.getElementById("cur"), totEl = document.getElementById("tot"),
+      prevBtn = document.getElementById("prevBtn"), nextBtn = document.getElementById("nextBtn"),
+      dotsBox = document.getElementById("dots");
+totEl.textContent = N;
+slides.forEach((s,i)=>{
+  const d=document.createElement("i");
+  d.title = s.dataset.title || ("Слайд "+(i+1));
+  d.addEventListener("click",()=>go(i));
+  dotsBox.appendChild(d);
+});
+const dots = Array.from(dotsBox.children);
+
+function go(n){
+  n = Math.max(0, Math.min(N-1, n));
+  if(n === cur && slides[n].classList.contains("active")) return;
+  cur = n;
+  slides.forEach((s,i)=>{
+    s.classList.toggle("active", i===cur);
+    s.classList.toggle("left", i<cur);
+  });
+  dots.forEach((d,i)=>d.classList.toggle("on", i===cur));
+  pbar.style.transform = "scaleX(" + ((cur+1)/N) + ")";
+  curEl.textContent = cur+1;
+  stamp.textContent = "№" + (cur+1);
+  stamp.classList.remove("pop"); void stamp.offsetWidth; stamp.classList.add("pop");
+  prevBtn.disabled = cur===0; nextBtn.disabled = cur===N-1;
+  onEnter(slides[cur]);
+}
+prevBtn.addEventListener("click",()=>go(cur-1));
+nextBtn.addEventListener("click",()=>go(cur+1));
+document.addEventListener("keydown",e=>{
+  if(e.target.tagName==="INPUT") return;
+  if(e.key==="ArrowRight"||e.key===" "||e.key==="PageDown"){e.preventDefault();go(cur+1);}
+  else if(e.key==="ArrowLeft"||e.key==="PageUp"){e.preventDefault();go(cur-1);}
+  else if(e.key==="Home"){go(0);} else if(e.key==="End"){go(N-1);}
+});
+let tx0=null;
+document.addEventListener("touchstart",e=>{tx0=e.touches[0].clientX;},{passive:true});
+document.addEventListener("touchend",e=>{
+  if(tx0===null) return;
+  const dx = e.changedTouches[0].clientX - tx0;
+  if(Math.abs(dx)>60) go(cur + (dx<0?1:-1));
+  tx0=null;
+},{passive:true});
+
+/* ── эффекты на входе в слайд ── */
+function onEnter(slide){
+  slide.querySelectorAll("[data-count]:not([data-done])").forEach(runCounter);
+  slide.querySelectorAll("[data-scramble]:not([data-done])").forEach((el,idx)=>setTimeout(()=>scramble(el),300+idx*350));
+  if(slide.id==="scoreSlide") renderScore();
+  if(slide.dataset.title==="Финал" && !RM){
+    setTimeout(()=>{const r=slide.getBoundingClientRect();burst(r.left+r.width/2, r.top+r.height/3, 20, ["🎉","⭐","✨","🎊","💫"]);},500);
+  }
+}
+function runCounter(el){
+  el.dataset.done="1";
+  const target = parseInt(el.dataset.count,10);
+  if(RM){el.textContent = target.toLocaleString("ru-RU");return;}
+  const t0 = performance.now(), dur = 1900;
+  (function tick(t){
+    const p = Math.min(1,(t-t0)/dur), e = 1-Math.pow(1-p,3);
+    el.textContent = Math.round(target*e).toLocaleString("ru-RU");
+    if(p<1) requestAnimationFrame(tick);
+  })(t0);
+}
+function scramble(el){
+  el.dataset.done="1";
+  const final = el.textContent;
+  if(RM) return;
+  const pool="АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЫЭЮЯ#%&*";
+  let frame=0;
+  const iv=setInterval(()=>{
+    frame++;
+    el.textContent = final.split("").map((ch,i)=>{
+      if(ch===" ") return " ";
+      return frame > i*2+8 ? ch : pool[Math.floor(Math.random()*pool.length)];
+    }).join("");
+    if(frame > final.length*2+10){clearInterval(iv);el.textContent=final;}
+  },42);
+}
+
+/* ── конфетти ── */
+function burst(x,y,n=10,chars=["✨","⭐","💫","🎈"]){
+  if(RM) return;
+  for(let i=0;i<n;i++){
+    const s=document.createElement("span");
+    s.className="burst-p"; s.textContent=chars[Math.floor(Math.random()*chars.length)];
+    s.style.left=x+"px"; s.style.top=y+"px";
+    s.style.setProperty("--dx",(Math.random()*260-130)+"px");
+    s.style.setProperty("--dy",(-60-Math.random()*140)+"px");
+    s.style.setProperty("--rot",(Math.random()*360-180)+"deg");
+    document.body.appendChild(s);
+    s.addEventListener("animationend",()=>s.remove());
+  }
+}
+function centerBurst(el,n,chars){
+  const r=el.getBoundingClientRect();
+  burst(r.left+r.width/2, r.top+r.height/2, n||8, chars);
+}
+
+/* ── сопоставление ── */
+document.querySelectorAll("[data-match]").forEach(box=>{
+  const sides = box.querySelectorAll(".m-side");
+  // перемешать правую колонку
+  const right = sides[1];
+  Array.from(right.children).sort(()=>Math.random()-.5).forEach(c=>right.appendChild(c));
+  let sel=null, found=0, total=sides[0].children.length;
+  box.querySelectorAll(".m-item").forEach(item=>{
+    item.addEventListener("click",()=>{
+      if(item.classList.contains("ok")) return;
+      if(!sel){sel=item;item.classList.add("sel");return;}
+      if(sel===item){item.classList.remove("sel");sel=null;return;}
+      if(sel.dataset.key===item.dataset.key){
+        sel.classList.remove("sel");
+        sel.classList.add("ok"); item.classList.add("ok");
+        centerBurst(item,6,["✅","✨"]);
+        sel=null; found++;
+        if(found===total){box.classList.add("finished");centerBurst(box.querySelector(".match-done"),14,["🎉","⭐","✨","💫"]);}
+      }else{
+        const a=sel; item.classList.add("no"); a.classList.add("no");
+        a.classList.remove("sel"); sel=null;
+        setTimeout(()=>{a.classList.remove("no");item.classList.remove("no");},480);
+      }
+    });
+  });
+});
+
+/* ── сортировка по полочкам ── */
+document.querySelectorAll("[data-sort]").forEach(box=>{
+  let sel=null, done=0;
+  const total=box.querySelectorAll(".pool .chip").length;
+  const chips = Array.from(box.querySelectorAll(".pool .chip"));
+  chips.sort(()=>Math.random()-.5).forEach(c=>c.parentNode.appendChild(c));
+  box.querySelectorAll(".pool .chip").forEach(chip=>{
+    chip.addEventListener("click",()=>{
+      if(chip.classList.contains("used")) return;
+      box.querySelectorAll(".pool .chip").forEach(c=>c.classList.remove("sel"));
+      sel=chip; chip.classList.add("sel");
+    });
+  });
+  box.querySelectorAll(".bucket").forEach(b=>{
+    b.addEventListener("click",()=>{
+      if(!sel) return;
+      if(sel.dataset.b===b.dataset.b){
+        const tag=document.createElement("span");
+        tag.className="tag"; tag.textContent="✓ "+sel.textContent;
+        b.querySelector(".bin").appendChild(tag);
+        sel.classList.remove("sel"); sel.classList.add("used");
+        centerBurst(b,5,["✅","✨"]);
+        sel=null; done++;
+        if(done===total){box.classList.add("finished");centerBurst(box.querySelector(".sort-done"),12,["🎯","🎉","⭐"]);}
+      }else{
+        b.classList.add("no"); const c=sel; c.classList.add("no");
+        setTimeout(()=>{b.classList.remove("no");c.classList.remove("no");},480);
+      }
+    });
+  });
+});
+
+/* ── шаги практики ── */
+document.querySelectorAll(".steps li").forEach(li=>li.addEventListener("click",()=>{
+  li.classList.toggle("done");
+  if(li.classList.contains("done")) centerBurst(li,4,["✅","✨"]);
+}));
+
+/* ── показать ответ секретной фразы ── */
+document.querySelectorAll("[data-reveal]").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    btn.textContent="Ответ: "+btn.dataset.reveal;
+    btn.classList.add("ok"); btn.style.pointerEvents="none";
+    centerBurst(btn,8,["💡","⭐"]);
+  });
+});
+
+/* ── таймер 10 минут ── */
+(function(){
+  const box=document.getElementById("timer"); if(!box) return;
+  const digits=document.getElementById("tDigits"), start=document.getElementById("tStart"),
+        reset=document.getElementById("tReset"), msg=document.getElementById("tMsg");
+  let left=600, iv=null;
+  function fmt(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");}
+  function draw(){digits.textContent=fmt(left);box.classList.toggle("warn",left<=10&&left>0);}
+  function beep(){
+    try{const ctx=new (window.AudioContext||window.webkitAudioContext)();
+    for(let i=0;i<3;i++){const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);o.frequency.value=880;
+      const t=ctx.currentTime+i*.4;
+      g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.22,t+.02);
+      g.gain.exponentialRampToValueAtTime(.0001,t+.3);o.start(t);o.stop(t+.32);}
+    }catch(e){}
+  }
+  start.addEventListener("click",()=>{
+    if(iv){clearInterval(iv);iv=null;start.textContent="▶ Старт";return;}
+    if(left<=0) return;
+    start.textContent="⏸ Пауза";
+    iv=setInterval(()=>{
+      left--; draw();
+      if(left<=0){clearInterval(iv);iv=null;box.classList.add("over");
+        start.textContent="▶ Старт"; msg.textContent="⏰ Время вышло! Проверяем результаты 🔍";
+        centerBurst(box,12,["⏰","⭐","🎉"]); beep();}
+    },1000);
+  });
+  reset.addEventListener("click",()=>{
+    clearInterval(iv);iv=null;left=600;msg.textContent="";
+    box.classList.remove("over","warn");start.textContent="▶ Старт";draw();
+  });
+  draw();
+})();
+
+/* ── тесты ── */
+document.querySelectorAll(".quiz").forEach(q=>{
+  q.querySelectorAll(".opt").forEach(opt=>{
+    opt.addEventListener("click",()=>{
+      if(q.classList.contains("answered")) return;
+      q.classList.add("answered");
+      const opts=q.querySelectorAll(".opt");
+      opts.forEach(o=>{ if(o!==opt && o.hasAttribute("data-ok")) o.classList.add("good"); else if(o!==opt) o.classList.add("dim"); });
+      if(opt.hasAttribute("data-ok")){
+        opt.classList.add("good"); score++;
+        centerBurst(opt,8,["✅","⭐","✨"]);
+      }else{
+        opt.classList.add("bad");
+      }
+    });
+  });
+});
+function renderScore(){
+  document.getElementById("scoreVal").textContent=score;
+  document.getElementById("scoreStars").textContent="★".repeat(score)+"☆".repeat(5-score);
+  const m=document.getElementById("scoreMsg");
+  m.textContent = score===5 ? "🏆 5 из 5! Ты — настоящий дешифровщик!" :
+    score===4 ? "🎯 4 из 5 — отлично! Совсем чуть-чуть до идеала." :
+    score===3 ? "👍 3 из 5 — хорошо! Повтори тему «Кодирование» и попробуй ещё раз." :
+    score===2 ? "💪 2 из 5 — вернись к слайдам теории, у тебя всё получится!" :
+    "🌱 Пока " + score + " из 5. Перечитай конспект и нажми «Пройти тест ещё раз»!";
+}
+document.getElementById("quizReset").addEventListener("click",()=>{
+  score=0;
+  document.querySelectorAll(".quiz").forEach(q=>{
+    q.classList.remove("answered");
+    q.querySelectorAll(".opt").forEach(o=>o.classList.remove("good","bad","dim"));
+  });
+  renderScore();
+  centerBurst(document.getElementById("quizReset"),6,["🔁","✨"]);
+});
+
+/* ── светофор рефлексии ── */
+const reflTexts={
+  green:"Супер! Мысленно ставлю тебе пятёрку 😄🟢",
+  yellow:"Отлично, что заметил! Задай вопрос на следующем уроке — разберём вместе 🤝🟡",
+  red:"Спасибо за честность! Подойди после урока — объясню лично, всё получится 🙂🔴"
+};
+document.querySelectorAll("[data-refl]").forEach(b=>{
+  b.addEventListener("click",()=>{
+    const m=document.getElementById("reflMsg");
+    m.style.display="block"; m.textContent=reflTexts[b.dataset.refl];
+    centerBurst(b,8,["💬","✨"]);
+  });
+});
+
+/* старт */
+go(0);
+})();
+</script>
+</body>
+</html>
