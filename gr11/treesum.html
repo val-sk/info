@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Обход дерева: рекурсия → стек → очередь — Python</title>
+<style>
+  :root{
+    --bg:#f4f7f6; --surface:#ffffff; --ink:#1b2a24; --muted:#5c6b64;
+    --accent:#0f8a5f; --soft:#e3f3ec; --border:#dfe8e3;
+    --blue:#2563eb; --blue-soft:#e8effd; --amber:#d97706; --amber-soft:#fdf1e0;
+    --red:#d92f2f; --red-soft:#fdecec;
+    --code-bg:#f5f9f7; --code-border:#dce8e1;
+    --mono:"JetBrains Mono","Fira Code",Consolas,"Courier New",monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+    background:var(--bg); color:var(--ink);
+    background-image:radial-gradient(circle at 15% -10%, #e2f1ea 0%, transparent 45%);
+  }
+  .deck{height:100vh; display:flex; flex-direction:column}
+  header{display:flex;align-items:center;justify-content:space-between;
+    padding:12px 22px;background:var(--surface);border-bottom:1px solid var(--border)}
+  .brand{font-weight:700;font-size:15px}
+  .brand span{color:var(--accent)}
+  .hint{font-size:12px;color:var(--muted)}
+  #progress{height:3px;background:var(--accent);width:6%;transition:width .3s}
+
+  .stage{flex:1;position:relative;overflow:hidden}
+  .slide{position:absolute;inset:0;overflow-y:auto;padding:34px 20px 60px;
+    opacity:0;visibility:hidden;transform:translateX(36px);
+    transition:opacity .3s,transform .3s,visibility .3s}
+  .slide.active{opacity:1;visibility:visible;transform:none}
+  .inner{max-width:940px;margin:0 auto}
+  .kicker{text-transform:uppercase;letter-spacing:.12em;font-size:12px;
+    color:var(--accent);font-weight:700;margin-bottom:8px}
+  h1{font-size:36px;line-height:1.15;margin-bottom:14px}
+  h2{font-size:26px;margin-bottom:12px}
+  .sub{color:var(--muted);font-size:16.5px;line-height:1.55;margin-bottom:16px}
+  p{line-height:1.6;margin-bottom:11px}
+  code{font-family:var(--mono);font-size:.92em;background:var(--code-bg);
+    border:1px solid var(--code-border);padding:2px 6px;border-radius:6px}
+  .tag{display:inline-block;background:var(--soft);color:var(--accent);
+    padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;margin:0 6px 14px 0}
+
+  pre{background:var(--code-bg);border:1px solid var(--code-border);border-radius:12px;
+    padding:15px 18px;overflow-x:auto;margin:13px 0 18px;box-shadow:0 1px 3px rgba(23,40,31,.05)}
+  pre code{background:none;border:none;padding:0;font-size:14px;line-height:1.65;
+    display:block;white-space:pre;color:var(--ink)}
+  .tok-k{color:#0e6db3;font-weight:600}
+  .tok-b{color:#7c3aed}
+  .tok-s{color:#b45309}
+  .tok-n{color:#c026d3}
+  .tok-c{color:#7d8f85;font-style:italic}
+  .console{background:#10231a;color:#c9f2d8;border-radius:12px;padding:14px 18px;
+    font-family:var(--mono);font-size:14px;line-height:1.7;margin:13px 0}
+  .console .ps{color:#6ee7a0}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:14px 0}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    padding:18px;box-shadow:0 1px 3px rgba(23,40,31,.05)}
+  .card h3{font-size:16px;margin-bottom:6px}
+  .card p{font-size:14px;color:var(--muted);margin:0;line-height:1.5}
+  .card .ord{font-family:var(--mono);font-size:13px;color:var(--accent);margin-top:8px;font-weight:700}
+  .num{display:inline-flex;width:28px;height:28px;border-radius:50%;background:var(--soft);
+    color:var(--accent);font-weight:700;align-items:center;justify-content:center;
+    margin-bottom:10px;font-size:14px}
+  ul.plain{margin:8px 0 12px 20px}
+  ul.plain li{line-height:1.6;margin-bottom:5px}
+  .callout{background:var(--soft);border-left:3px solid var(--accent);border-radius:10px;
+    padding:11px 15px;font-size:14.5px;line-height:1.55;margin:12px 0}
+
+  .treeline{background:var(--code-bg);border:1px solid var(--code-border);border-radius:12px;
+    padding:16px 18px;font-family:var(--mono);font-size:15.5px;margin:14px 0;overflow-x:auto;white-space:nowrap}
+  .c-root{color:var(--accent);font-weight:700}
+  .c-left{color:var(--blue);font-weight:700}
+  .c-right{color:var(--amber);font-weight:700}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin:8px 0 14px;font-size:13.5px;color:var(--muted)}
+  .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+  svg.tree{max-width:300px;width:100%}
+  .edge{stroke:#9fb8aa;stroke-width:2}
+  .node circle{fill:#fff;stroke:var(--accent);stroke-width:2.5}
+  .node text{font-family:var(--mono);font-size:16px;font-weight:700;fill:var(--ink);
+    text-anchor:middle;dominant-baseline:central}
+  .badge circle{fill:var(--accent)}
+  .badge text{fill:#fff;font-size:10px;font-weight:700;text-anchor:middle;dominant-baseline:central}
+  .tree-wrap{display:flex;justify-content:center}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14.5px;background:var(--surface)}
+  th,td{border:1px solid var(--border);padding:10px 12px;text-align:left;vertical-align:top;line-height:1.5}
+  th{background:var(--soft)}
+
+  /* ---------- анимации ---------- */
+  .anim-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:22px;align-items:start;margin-top:6px}
+  .anim-ctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}
+  .abtn{border:1.5px solid var(--border);background:#fff;border-radius:9px;padding:7px 13px;
+    font-size:13.5px;cursor:pointer;font-family:inherit;color:var(--ink)}
+  .abtn:hover{border-color:var(--accent)}
+  .abtn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .astep{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-left:4px}
+  .lg{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);margin-right:14px}
+  .lg i{width:12px;height:12px;border-radius:3px;display:inline-block}
+  .vizbox{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px}
+  .frame{display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);background:#fff;
+    margin:5px 0;font-family:var(--mono);font-size:14px}
+  .factive{border-color:var(--accent);background:var(--soft);font-weight:700}
+  .ftag{font-size:11px;color:var(--muted);font-family:"Segoe UI",sans-serif}
+  .factive .ftag{color:var(--accent)}
+  .stitem{padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);background:#fff;
+    margin:5px 0;font-family:var(--mono);font-size:15px;text-align:center;font-weight:700}
+  .stitem.top{border-color:var(--accent);background:var(--soft)}
+  .empty{border:1.5px dashed var(--border);border-radius:10px;padding:22px;text-align:center;
+    color:var(--muted);font-size:13.5px}
+  .acaption{font-size:12.5px;color:var(--muted);margin-top:8px;text-align:center}
+  .codecap{display:inline-block;background:var(--code-bg);border:1px solid var(--code-border);
+    border-radius:8px;padding:6px 12px;font-family:var(--mono);font-size:13px;margin-top:10px}
+  .curbox{display:inline-flex;min-width:54px;height:46px;padding:0 12px;border-radius:10px;
+    border:2px solid var(--accent);background:var(--soft);color:var(--accent);
+    align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:18px}
+  .curbox.done{border-color:#9fb8aa;background:#f0f4f2;color:#5c6b64}
+  .qrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;min-height:50px}
+  .qitem{width:46px;height:46px;border:1.5px solid var(--border);border-radius:10px;
+    display:flex;align-items:center;justify-content:center;font-family:var(--mono);
+    font-weight:700;background:#fff;font-size:16px}
+  .qitem.first{border-color:var(--accent);background:var(--soft)}
+  .qlabels{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-top:8px}
+  .chip{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;
+    padding:0 8px;border-radius:8px;background:var(--soft);color:var(--accent);
+    font-family:var(--mono);font-weight:700;font-size:14px;margin:3px 4px 3px 0}
+  .muted-chip{color:var(--muted);background:#eef2f0;font-weight:400;font-family:inherit;font-size:13px}
+  .stat{margin:10px 0}
+  .stat b{font-family:var(--mono);font-size:26px;color:var(--accent)}
+  .anote{background:#fbfdfc;border-left:3px solid var(--accent);border-radius:8px;
+    padding:10px 14px;font-size:14px;color:var(--muted);line-height:1.5;min-height:56px}
+
+  /* ---------- тест ---------- */
+  .q-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    padding:18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(23,40,31,.05)}
+  .q-text{font-weight:600;margin-bottom:10px;line-height:1.45}
+  .q-opt{display:block;width:100%;text-align:left;padding:10px 14px;margin:6px 0;
+    border:1.5px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;
+    font-size:14.5px;font-family:inherit;color:var(--ink);transition:border-color .15s,background .15s}
+  .q-opt:hover:not(:disabled){border-color:var(--accent);background:var(--soft)}
+  .q-opt.correct{border-color:var(--accent);background:var(--soft);font-weight:600}
+  .q-opt.wrong{border-color:var(--red);background:var(--red-soft)}
+  .q-opt:disabled{cursor:default}
+  .q-opt:disabled:not(.correct):not(.wrong){opacity:.55}
+  .q-why{margin-top:10px;padding:10px 14px;background:#fbfdfb;border-left:3px solid var(--accent);
+    border-radius:8px;font-size:14px;color:var(--muted);line-height:1.5}
+  .hidden{display:none}
+  .score-pill{display:inline-block;background:var(--soft);color:var(--accent);font-weight:700;
+    padding:8px 16px;border-radius:999px;margin:8px 0 14px}
+  .tl{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+  .tl button{padding:12px 16px;border-radius:12px;border:1.5px solid var(--border);
+    background:#fff;cursor:pointer;font-size:14.5px;font-family:inherit;color:var(--ink)}
+  .tl button.active{border-color:var(--accent);background:var(--soft);font-weight:600}
+  .advice{padding:12px 16px;border-radius:10px;background:var(--soft);font-size:14.5px;line-height:1.5;min-height:20px}
+  .btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px 20px;
+    font-size:15px;font-family:inherit;cursor:pointer;font-weight:600}
+  .btn:hover{filter:brightness(1.08)}
+  .btn.ghost{background:var(--surface);color:var(--ink);border:1.5px solid var(--border)}
+
+  footer{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:12px 22px;background:var(--surface);border-top:1px solid var(--border)}
+  #counter{font-family:var(--mono);font-size:14px;color:var(--muted)}
+  footer .btn{min-width:110px}
+  footer .btn:disabled{opacity:.4;cursor:default}
+
+  @media (max-width:820px){
+    .grid2,.grid3,.anim-grid{grid-template-columns:1fr}
+    h1{font-size:28px} h2{font-size:21px}
+  }
+</style>
+</head>
+<body>
+<div class="deck">
+  <header>
+    <div class="brand">🌳 Обход дерева · <span>Python</span></div>
+    <div class="hint">Листай: ← → · Пробел — шаг анимации</div>
+  </header>
+  <div id="progress"></div>
+
+  <main class="stage">
+
+    <!-- 00 титул -->
+    <section class="slide active">
+      <div class="inner">
+        <span class="tag">Python · без классов и словарей · только списки</span>
+        <h1>Обход дерева:<br>рекурсия → стек → очередь</h1>
+        <p class="sub">Одна простая задача — три способа её решить. Меняются всего пара строк,
+        а порядок обхода становится совсем другим.</p>
+        <p>
+          <span class="tag">Рекурсия</span>
+          <span class="tag">Стек · вглубь</span>
+          <span class="tag">Очередь · вширь</span>
+        </p>
+        <button class="btn" onclick="show(1)">Начать →</button>
+        <p style="margin-top:18px;font-size:13.5px;color:var(--muted)">
+        Листай: ←→ или кнопки внизу. Пробел — шаг анимации.</p>
+      </div>
+    </section>
+
+    <!-- 01 задача -->
+    <section class="slide">
+      <div class="inner">
+        <div class="kicker">01 · задача</div>
+        <h2>Сложить все числа в дереве</h2>
+        <div class="grid2">
+          <div>
+            <p class="sub">Есть дерево: у каждого узла — число и дети. Нужно побывать в каждом узле
+            и сложить все числа.</p>
+            <ul class="plain">
+              <li><code>1</code> — корень, с него начинаем;</li>
+              <li><code>2</code> и <code>3</code> — его дети;</li>
+              <li><code>4</code>, <code>5</code>, <code>6</code>, <code>7</code> — листья, детей у них нет;</li>
+              <li>ответ, конечно, <strong>28</strong> — но нас интересует маршрут: как обойти все узлы и ни один не пропустить.</li>
+            </ul>
+            <button class="btn ghost" id="chkBtn">Проверить ответ</button>
+            <div class="callout hidden" id="chkAns">1 + 2 + 3 + 4 + 5 + 6 + 7 = <strong>28</strong>.
+            Программа должна сама дойти до каждого узла — этим и займёмся.</div>
+          </div>
+          <div class="tree-wrap">
+            <svg class="tree" viewBox="0 0 420 230" aria-label="Дерево из примера">
+              <line class="edge" x1="210" y1="38" x2="115" y2="112"/>
+              <line class="edge" x1="210" y1="38" x2="305" y2="112"/>
+              <line class="edge" x1="115" y1="112" x2="62" y2="186"/>
+              <line class="edge" x1="115" y1="112" x2="168" y2="186"/>
+              <line class="edge" x1="305" y1="112" x2="252" y2="186"/>
+              <line class="edge" x1="305" y1="112" x2="358" y2="186"/>
+              <g class="node"><circle cx="210" cy="38" r="22"/><text x="210" y="38">1</text></g>
+              <g class="node"><circle cx="115" cy="112" r="22"/><text x="115" y="112">2</text></g>
+              <g class="node"><circle cx="305" cy="112" r="22"/><text x="305" y="112">3</text></g>
+              <g class="node"><circle cx="62" cy="186" r="22"/><text x="62" y="186">4</text></g>
+              <g class="node"><circle cx="168" cy="186" r="22"/><text x="168" y="186">5</text></g>
+              <g class="node"><circle cx="252" cy="186" r="22"/><text x="252" y="186">6</text></g>
+              <g class="node"><circle cx="358" cy="186" r="22"/><text x="358" y="186">7</text></g>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 02 структура данных -->
+    <section class="slide">
+      <div class="inner">
+        <div class="kicker">02 · структура данных</div>
+        <h2>Храним дерево обычным списком</h2>
+        <p class="sub">Узел — это список: первым идёт число, дальше — дети. Ребёнок — такой же список.
+        И всё, никаких классов и словарей.</p>
+        <div class="treeline">tree = [<span class="c-root">1</span>, <span class="c-left">[2, [4], [5]]</span>, <span class="c-right">[3, [6], [7]]</span>]</div>
+        <div class="legend">
+          <span><i style="background:var(--accent)"></i>число корня</span>
+          <span><i style="background:var(--blue)"></i>левое поддерево</span>
+          <span><i style="background:var(--amber)"></i>правое поддерево</span>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <h3>Правило для любого узла</h3>
+            <p><code>node[0]</code> — число этого узла<br>
+            <code>node[1:]</code> — список детей (каждый — тоже дерево)<br>
+            Лист — список из одного числа: <code>node[1:]</code> пустой.</p>
+          </div>
+          <div>
+<pre><code>tree[0]        # 1 — число корня
+tree[1]        # [2, [4], [5]] — левый ребёнок
+tree[1][0]     # 2
+tree[1][1]     # [4] — лист
+[4][1:]        # [] — детей нет</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 два маршрута -->
+    <section class="slide">
+      <div class="inner">
+        <div class="kicker">03 · два маршрута</div>
+        <h2>Обойти = посетить каждый узел ровно один раз</h2>
+        <p class="sub">Порядок можно выбрать. Классических маршрута два:</p>
+        <div class="grid2">
+          <div class="card"><h3>Вглубь (DFS)</h3>
+            <p>Ныряем по левой ветке до листа, откатываемся, ныряем снова.</p>
+            <div class="ord">Порядок: 1 · 2 · 4 · 5 · 3 · 6 · 7</div></div>
+          <div class="card"><h3>Вширь (BFS)</h3>
+            <p>Сначала весь уровень, потом следующий — как волны.</p>
+            <div class="ord">Порядок: 1 · 2 · 3 · 4 · 5 · 6 · 7</div></div>
+        </div>
+        <div class="grid2">
+          <div class="tree-wrap">
+            <svg class="tree" viewBox="0 0 420 230" aria-label="Обход вглубь">
+              <line class="edge" x1="210" y1="38" x2="115" y2="112"/>
+              <line class="edge" x1="210" y1="38" x2="305" y2="112"/>
+              <line class="edge" x1="115" y1="112" x2="62" y2="186"/>
+              <line class="edge" x1="115" y1="112" x2="168" y2="186"/>
+              <line class="edge" x1="305" y1="112" x2="252" y2="186"/>
+              <line class="edge" x1="305" y1="112" x2="358" y2="186"/>
+              <g class="node"><circle cx="210" cy="38" r="22"/><text x="210" y="38">1</text></g>
+              <g class="node"><circle cx="115" cy="112" r="22"/><text x="115" y="112">2</text></g>
+              <g class="node"><circle cx="305" cy="112" r="22"/><text x="305" y="112">3</text></g>
+              <g class="node"><circle cx="62" cy="186" r="22"/><text x="62" y="186">4</text></g>
+              <g class="node"><circle cx="168" cy="186" r="22"/><text x="168" y="186">5</text></g>
+              <g class="node"><circle cx="252" cy="186" r="22"/><text x="252" y="186">6</text></g>
+              <g class="node"><circle cx="358" cy="186" r="22"/><text x="358" y="186">7</text></g>
+              <g class="badge"><circle cx="231" cy="18" r="10"/><text x="231" y="18">1</text></g>
+              <g class="badge"><circle cx="136" cy="92" r="10"/><text x="136" y="92">2</text></g>
+              <g class="badge"><circle cx="326" cy="92" r="10"/><text x="326" y="92">5</text></g>
+              <g class="badge"><circle cx="83" cy="166" r="10"/><text x="83" y="166">3</text></g>
+              <g class="badge"><circle cx="189" cy="166" r="10"/><text x="189" y="166">4</text></g>
+              <g class="badge"><circle cx="273" cy="166" r="10"/><text x="273" y="166">6</text></g>
+              <g class="badge"><circle cx="379" cy="166" r="10"/><text x="379" y="166">7</text></g>
+            </svg>
+          </div>
+          <div class="tree-wrap">
+            <svg class="tree" viewBox="0 0 420 230" aria-label="Обход вширь">
+              <line class="edge" x1="210" y1="38" x2="115" y2="112"/>
+              <line class="edge" x1="210" y1="38" x2="305" y2="112"/>
+              <line class="edge" x1="115" y1="112" x2="62" y2="186"/>
+              <line class="edge" x1="115" y1="112" x2="168" y2="186"/>
+              <line class="edge" x1="305" y1="112" x2="252" y2="186"/>
+              <line class="edge" x1="305" y1="112" x2="358" y2="186"/>
+              <g class="node"><circle cx="210" cy="38" r="22"/><text x="210" y="38">1</text></g>
+              <g class="node"><circle cx="115" cy="112" r="22"/><text x="115" y="112">2</text></g>
+              <g class="node"><circle cx="305" cy="112" r="22"/><text x="305" y="112">3</text></g>
+              <g class="node"><circle cx="62" cy="186" r="22"/><text x="62" y="186">4</text></g>
+              <g class="node"><circle cx="168" cy="186" r="22"/><text x="168" y="186">5</text></g>
+              <g class="node"><circle cx="252" cy="186" r="22"/><text x="252" y="186">6</text></g>
+              <g class="node"><circle cx="358" cy="186" r="22"/><text x="358" y="186">7</text></g>
+              <g class="badge"><circle cx="231" cy="18" r="10"/><text x="231" y="18">1</text></g>
+              <g class="badge"><circle cx="136" cy="92" r="10"/><text x="136" y="92">2</text></g>
+              <g class="badge"><circle cx="326" cy="92" r="10"/><text x="326" y="92">3</text></g>
+              <g class="badge"><circle cx="83" cy="166" r="10"/><text x="83" y="166">4</text></g>
+              <g class="badge"><circle cx="189" cy="166" r="10"/><text x="189" y="166">5</text></g>
+              <g class="badge"><circle cx="273" cy="166" r="10"/><text x="273" y="166">6</text></g>
+              <g class="badge"><circle cx="379" cy="166" r="10"/><text x="379" y="166">7</text></g>
+            </svg>
+          </div>
+        </div>
+        <p class="sub" style="font-size:13.5px">Маленькая цифра у узла — номер шага, на котором его посетили.
+        Слева — маршрут «вглубь», справа — «вширь». Рекурсия и стек дадут первый маршрут, очередь — второй.</p>
+      </div>
+    </section>
+
+    <!-- 04 рекурсия -->
+    <section class="slide">
+      <div class="inner">
+        <div class="kicker">04 · решение 1 — рекурсия</div>
+        <h2>«Моё число + суммы детей»</h2>
+<pre><code>def sum_rec(node):
+    total = node[0]              # число этого узла
+    for child in node[1:]:       # каждый ребёнок — тоже дерево
+        total += sum_rec(child)  # рекурсия: спрашиваем ребёнка
+    return total
+
+print(sum_rec(tree))   # 28</code></pre>
+        <ul class="plain">
+          <li>Функция вызывает саму себя для каждого ребёнка — это и есть рекурсия.</li>
+          <li><strong>Где остановка?</strong> У листа <code>node[1:]</code> пуст → цикл не сделает ни шага → функция просто вернёт своё число.</li>
+          <li>Незавершённые вызовы Python складывает в стопку — <strong>стек вызовов</strong>. Ребёнок вернул сумму — родитель продолжает с того места, где остановился.</li>
+        </ul>
+        <div class="callout">Явного стека в коде нет — он спрятан внутри Python.</div>
+        <p class="sub" style="font-size:14px">На следующем слайде посмотрим на этот скрытый стек по шагам →</p>
+      </div>
+    </section>
+
+    <!-- 05 рекурсия по шагам -->
+    <section class="slide" data-anim="rec">
+      <div class="inner">
+        <div class="kicker">05 · рекурсия по шагам</div>
+        <h2>Смотрим на стек вызовов</h2>
+        <div>
+          <span class="lg"><i style="background:var(--soft);border:1.5px solid var(--accent)"></i>активный вызов</span>
+          <span class="lg"><i style="background:#fff;border:1.5px solid var(--border)"></i>выполняется сейчас (ждёт ребёнка)</span>
+          <span class="lg"><i style="background:#eef2f0"></i>уже вернулся — исчез из стека</span>
+        </div>
+        <div class="anim-ctl">
+          <button class="abtn" data-anim="rec" data-act="reset" title="Сброс">⟲</button>
+          <button class="abtn" data-anim="rec" data-act="back">◀ Шаг</button>
+          <button class="abtn" data-anim="rec" data-act="fwd">Шаг ▶</button>
+          <button class="abtn" data-anim="rec" data-act="auto" id="recAuto">▶▶ авто</button>
+          <span class="astep" id="recStep">шаг 0 / 14</span>
+        </div>
+        <div class="anim-grid">
+          <div class="vizbox">
+            <div class="acaption" style="margin:0 0 8px">Стек вызовов</div>
+            <div id="recStack" style="min-height:190px"></div>
+            <div class="acaption">↑ вершина — выполняется сейчас · внизу — кто ждёт</div>
+            <div><span class="codecap">total += sum_rec(child)</span></div>
+          </div>
+          <div>
+            <div class="stat">Порядок:<br><span id="recOrder"></span></div>
+            <div class="stat">Сумма посещённых узлов: <b id="recSum">0</b></div>
+            <div class="anote" id="recNote"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 06 явный стек -->
+    <section class="slide">
+      <div class="inner">
+        <div class="kicker">06 · решение 2 — явный стек</div>
+        <h2>Тот же обход, но стек своими руками</h2>
+        <p><strong>Стек — стопка тарелок 🍽</strong> Кладём и берём только с верхушки. В Python это обычный список:</p>
+<pre><code>stack.append(x)   # положить наверх (в конец)
+stack.pop()       # снять сверху (с конца)</code></pre>
+<pre><code>def sum_stack(tree):
+    total = 0
+    stack = [tree]          # начинаем с корня
+    while stack:            # пока есть что брать
+        node = stack.pop()  # берём с конца
+        total += node[0]
+        for child in reversed(node[1:]):
+            stack.append(child)   # кладём детей
+    return total
+
+print(sum_stack(tree))   # 28</code></pre>
+        <ul class="plain">
+          <li><strong>Словами:</strong> положи корень → пока стек не пуст: достань узел, прибавь его число, положи его детей.</li>
+          <li><code>reversed(node[1:])</code> — кладём детей справа налево, чтобы левый оказался на верхушке и достался первым.</li>
+          <li>Получается обход вглубь — тот же порядок, что у рекурсии: <strong>1, 2, 4, 5, 3, 6, 7</strong>.</li>
+        </ul>
+        <div class="callout"><code>while</code> + список = рекурсия без рекурсии. Мы сами ведём стопку «что делать дальше».</div>
+      </div>
+    </section>
+
+    <!-- 07 стек по шагам -->
+    <section class="slide" data-anim="stk">
+      <div class="inner">
+        <div class="kicker">07 · стек по шагам</div>
+        <h2>pop() — берём с конца</h2>
+        <div>
+          <span class="lg"><i style="background:#fff;border:1.5px solid var(--border)"></i>лежит в стеке</span>
+          <span class="lg"><i style="background:var(--soft);border:1.5px solid var(--accent)"></i>берём сейчас</span>
+          <span class="lg"><i style="background:#eef2f0"></i>посчитан</span>
+        </div>
+        <div class="anim-ctl">
+          <button class="abtn" data-anim="stk" data-act="reset" title="Сброс">⟲</button>
+          <button class="abtn" data-anim="stk" data-act="back">◀ Шаг</button>
+          <button class="abtn" data-anim="stk" data-act="fwd">Шаг ▶</button>
+          <button class="abtn" data-anim="stk" data-act="auto" id="stkAuto">▶▶ авто</button>
+          <span class="astep" id="stkStep">шаг 0 / 7</span>
+        </div>
+        <div class="anim-grid">
+          <div class="vizbox">
+            <div class="acaption" style="margin:0 0 8px">Стек (список)</div>
+            <div id="stkBox" style="min-height:190px"></div>
+            <div class="acaption">вершина · pop() и append() — наверху · дно — внизу</div>
+            <div><span class="codecap">node = stack.pop()</span></div>
+          </div>
+          <div>
+            <div class="stat">Берём сейчас:<br><span id="stkCur"></span></div>
+            <div class="stat">Порядок:<br><span id="stkOrder"></span></div>
+            <div class="stat">Сумма: <b id="stkSum">0</b></div>
+            <div class="anote" id="stkNote"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 08 очередь -->
+    <section class="slide">
+      <div class="inner">
+        <div class="kicker">08 · решение 3 — очередь</div>
+        <h2>Меняем одну строку — и идём вширь</h2>
+        <p><strong>Очередь — как в кассу 🧾</strong> Новые встают в конец, обслуживаем с начала:</p>
+<pre><code>queue.append(x)   # встать в конец
+queue.pop(0)      # взять первого (с начала)</code></pre>
+<pre><code>def sum_queue(tree):
+    total = 0
+    queue = [tree]
+    while queue:
+        node = queue.pop(0)   # берём с начала!
+        total += node[0]
+        for child in node[1:]:
+            queue.append(child)   # дети — в конец
+    return total
+
+print(sum_queue(tree))   # 28</code></pre>
+        <ul class="plain">
+          <li>Отличие от стека — <code>pop(0)</code> вместо <code>pop()</code>. Дети кладутся в обычном порядке, <code>reversed</code> не нужен.</li>
+          <li>Ребёнок не может «обогнать» тех, кто уже стоит в очереди → сначала досчитаем весь уровень, потом спустимся ниже.</li>
+          <li>Это обход вширь (BFS): <strong>1, 2, 3, 4, 5, 6, 7</strong>.</li>
+        </ul>
+        <div class="callout"><code>pop(0)</code> сдвигает весь список — для учёбы идеально; для огромных очередей в бою берут <code>collections.deque</code>.</div>
+      </div>
+    </section>
+
+    <!-- 09 очередь по шагам -->
+    <section class="slide" data-anim="que">
+      <div class="inner">
+        <div class="kicker">09 · очередь по шагам</div>
+        <h2>pop(0) — берём с начала</h2>
+        <div>
+          <span class="lg"><i style="background:#fff;border:1.5px solid var(--border)"></i>стоит в очереди</span>
+          <span class="lg"><i style="background:var(--soft);border:1.5px solid var(--accent)"></i>берём сейчас</span>
+          <span class="lg"><i style="background:#eef2f0"></i>посчитан</span>
+        </div>
+        <div class="anim-ctl">
+          <button class="abtn" data-anim="que" data-act="reset" title="Сброс">⟲</button>
+          <button class="abtn" data-anim="que" data-act="back">◀ Шаг</button>
+          <button class="abtn" data-anim="que" data-act="fwd">Шаг ▶</button>
+          <button class="abtn" data-anim="que" data-act="auto" id="queAuto">▶▶ авто</button>
+          <span class="astep" id="queStep">шаг 0 / 7</span>
+        </div>
+        <div class="anim-grid">
+          <div class="vizbox">
+            <div class="acaption" style="margin:0 0 8px">Очередь (список)</div>
+            <div id="queBox" style="min-height:120px"></div>
+            <div class="qlabels"><span>начало · pop(0)</span><span>конец · append()</span></div>
+            <div><span class="codecap">node = queue.pop(0)</span></div>
+          </div>
+          <div>
+            <div class="stat">Берём сейчас:<br><span id="queCur"></span></div>
+            <div class="stat">Порядок:<br><span id="queOrder"></span></div>
+            <div class="stat">Сумма: <b id="queSum">0</b></div>
+            <div class="anote" id="queNote"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10 сравнение -->
+    <section class="slide">
+      <div class="inner">
+        <div class="kicker">10 · сравнение</div>
+        <h2>Три решения одной задачи</h2>
+        <table>
+          <thead><tr><th></th><th>Рекурсия</th><th>Стек</th><th>Очередь</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Где хранится «что дальше»</strong></td>
+              <td>стек вызовов (ведёт Python)</td>
+              <td>список, берём с конца — <code>pop()</code></td>
+              <td>список, берём с начала — <code>pop(0)</code></td></tr>
+            <tr><td><strong>Порядок посещения</strong></td>
+              <td>1 2 4 5 3 6 7</td><td>1 2 4 5 3 6 7</td><td>1 2 3 4 5 6 7</td></tr>
+            <tr><td><strong>Как идёт</strong></td>
+              <td>вглубь (DFS)</td><td>вглубь (DFS)</td><td>вширь (BFS)</td></tr>
+            <tr><td><strong>Результат</strong></td><td>28</td><td>28</td><td>28</td></tr>
+          </tbody>
+        </table>
+        <p>Для суммы порядок не важен — все узлы всё равно посещены. Но для задач вроде «найти кратчайший путь»
+        или «напечатать по уровням» очередь незаменима. А рекурсия и явный стек — близнецы: просто во втором случае
+        стопку «что делать дальше» мы ведём сами.</p>
+      </div>
+    </section>
+
+    <!-- 11 всё вместе -->
+    <section class="slide">
+      <div class="inner">
+        <div class="kicker">11 · всё вместе</div>
+        <h2>Весь код на одном экране</h2>
+        <div class="treeline">tree = [<span class="c-root">1</span>, <span class="c-left">[2, [4], [5]]</span>, <span class="c-right">[3, [6], [7]]</span>]</div>
+        <div class="grid3">
+          <div class="card"><h3>Рекурсия</h3>
+<pre><code>def sum_rec(node):
+    total = node[0]
+    for child in node[1:]:
+        total += sum_rec(child)
+    return total
+
+print(sum_rec(tree))  # 28</code></pre></div>
+          <div class="card"><h3>Стек</h3>
+<pre><code>def sum_stack(tree):
+    total = 0
+    stack = [tree]
+    while stack:
+        node = stack.pop()
+        total += node[0]
+        for child in reversed(node[1:]):
+            stack.append(child)
+    return total
+
+print(sum_stack(tree))  # 28</code></pre></div>
+          <div class="card"><h3>Очередь</h3>
+<pre><code>def sum_queue(tree):
+    total = 0
+    queue = [tree]
+    while queue:
+        node = queue.pop(0)
+        total += node[0]
+        for child in node[1:]:
+            queue.append(child)
+    return total
+
+print(sum_queue(tree))  # 28</code></pre></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12 итоги -->
+    <section class="slide">
+      <div class="inner">
+        <div class="kicker">12 · итоги</div>
+        <h2>Что запомнить</h2>
+        <div class="grid3">
+          <div class="card"><h3>🌳 Дерево</h3>
+            <p>Просто список: <code>[число, ребёнок, ребёнок…]</code>. Лист — <code>[число]</code>. Никаких классов и словарей.</p></div>
+          <div class="card"><h3>🪆 Рекурсия</h3>
+            <p>Сумма = моё число + суммы детей. Стек вызовов ведёт Python за нас.</p></div>
+          <div class="card"><h3>🍽 Стек</h3>
+            <p><code>pop()</code> с конца → обход вглубь. Та же рекурсия, только вручную.</p></div>
+          <div class="card"><h3>🧾 Очередь</h3>
+            <p><code>pop(0)</code> с начала → обход вширь, строго по уровням.</p></div>
+          <div class="card"><h3>💪 Попробуй сам</h3>
+            <p>Посчитай количество листьев: прибавляй 1 вместо числа, и только если <code>len(node) == 1</code>. Работает во всех трёх версиях!</p></div>
+        </div>
+        <p class="sub" style="margin-top:16px">Конец. Клавиша Home — в начало, анимации сохраняют своё состояние при возврате.</p>
+      </div>
+    </section>
+
+    <!-- 13 полный код -->
+    <section class="slide">
+      <div class="inner">
+        <div class="kicker">После объяснения</div>
+        <h2>Полный код на Питоне</h2>
+        <p class="sub">Вся программа одним файлом — можно сохранить и запустить.</p>
+<pre><code># Обход дерева: сумма всех чисел
+# Дерево = список: [число, ребёнок, ребёнок, ...]
+tree = [1, [2, [4], [5]], [3, [6], [7]]]
+
+
+# 1. Рекурсия — стек вызовов ведёт Python
+def sum_rec(node):
+    total = node[0]
+    for child in node[1:]:
+        total += sum_rec(child)
+    return total
+
+
+# 2. Явный стек — обход вглубь (DFS)
+def sum_stack(tree):
+    total = 0
+    stack = [tree]
+    while stack:
+        node = stack.pop()          # берём с конца
+        total += node[0]
+        for child in reversed(node[1:]):
+            stack.append(child)
+    return total
+
+
+# 3. Очередь — обход вширь (BFS)
+def sum_queue(tree):
+    total = 0
+    queue = [tree]
+    while queue:
+        node = queue.pop(0)         # берём с начала
+        total += node[0]
+        for child in node[1:]:
+            queue.append(child)
+    return total
+
+
+print(sum_rec(tree))    # 28
+print(sum_stack(tree))  # 28
+print(sum_queue(tree))  # 28</code></pre>
+        <div class="console"><span class="ps">$ python treesum.py</span><br>28<br>28<br>28</div>
+      </div>
+    </section>
+
+    <!-- 14 тест -->
+    <section class="slide">
+      <div class="inner">
+        <div class="kicker">Формирующее самооценивание</div>
+        <h2>Тест: проверь себя</h2>
+        <p class="sub">1) Выбери ответ. 2) Прочитай объяснение — оно важнее балла. 3) На последнем слайде честно оцени себя.</p>
+        <span class="score-pill" id="liveScore">Отвечено: 0 из 5</span>
+        <div id="quiz"></div>
+        <button class="btn ghost" id="resetQuiz">↺ Пройти тест заново</button>
+      </div>
+    </section>
+
+    <!-- 15 самооценка -->
+    <section class="slide">
+      <div class="inner">
+        <div class="kicker">Рефлексия</div>
+        <h2>Самооценка: как я разобрался(ась)?</h2>
+        <p><strong>Твой результат:</strong> <span class="score-pill" id="finalScore">0 из 5</span></p>
+        <p id="finalNote" class="sub" style="margin-bottom:10px"></p>
+        <table>
+          <thead><tr><th>Результат</th><th>Что это значит</th><th>Что делать дальше</th></tr></thead>
+          <tbody>
+            <tr><td><strong>5 из 5</strong></td><td>Тема освоена уверенно</td>
+              <td>Усложни: задание со слайда 12 — посчитать листья всеми тремя способами</td></tr>
+            <tr><td><strong>3–4</strong></td><td>Идея ясна, детали плавают</td>
+              <td>Прокрути анимации 05, 07, 09 по шагам и проговори, почему порядок именно такой</td></tr>
+            <tr><td><strong>0–2</strong></td><td>Пока не сложилось — это нормально</td>
+              <td>Начни со слайда 02, нарисуй дерево на бумаге, потом вернись к анимациям</td></tr>
+          </tbody>
+        </table>
+        <p><strong>Светофор: оцени своё понимание честно</strong></p>
+        <div class="tl">
+          <button data-level="green">🟢 Могу объяснить другому и сам(а) напишу все три версии</button>
+          <button data-level="yellow">🟡 Идею понял(а), но путаю стек и очередь</button>
+          <button data-level="red">🔴 Пока сложно, нужно разобрать ещё раз</button>
+        </div>
+        <div class="advice" id="advice">Выбери один из вариантов выше — получишь рекомендацию.</div>
+        <p style="margin-top:26px;color:var(--muted)">Спасибо! ← → для возврата к любому слайду</p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <button class="btn ghost" id="prev">‹ Назад</button>
+    <span id="counter">1 / 16</span>
+    <button class="btn" id="next">Далее ›</button>
+  </footer>
+</div>
+
+<script>
+/* ================= навигация ================= */
+const slides = document.querySelectorAll('.slide');
+const counter = document.getElementById('counter');
+const progress = document.getElementById('progress');
+const btnPrev = document.getElementById('prev');
+const btnNext = document.getElementById('next');
+let cur = 0;
+
+function stopAllAuto(){ Object.keys(anims).forEach(stopAuto); }
+
+function show(i){
+  cur = Math.max(0, Math.min(slides.length - 1, i));
+  slides.forEach((s, k) => s.classList.toggle('active', k === cur));
+  slides[cur].scrollTop = 0;
+  counter.textContent = (cur + 1) + ' / ' + slides.length;
+  progress.style.width = ((cur + 1) / slides.length * 100) + '%';
+  btnPrev.disabled = cur === 0;
+  btnNext.disabled = cur === slides.length - 1;
+  stopAllAuto();
+}
+btnPrev.onclick = () => show(cur - 1);
+btnNext.onclick = () => show(cur + 1);
+document.addEventListener('keydown', e => {
+  if (e.key === ' '){
+    const key = slides[cur].dataset.anim;
+    if (key){ e.preventDefault(); stepAnim(key, 1); }
+    return;
+  }
+  if (e.key === 'ArrowRight' || e.key === 'PageDown') show(cur + 1);
+  if (e.key === 'ArrowLeft'  || e.key === 'PageUp')   show(cur - 1);
+  if (e.key === 'Home') show(0);
+  if (e.key === 'End')  show(slides.length - 1);
+});
+
+/* слайд 01: проверить ответ */
+document.getElementById('chkBtn').onclick = () =>
+  document.getElementById('chkAns').classList.toggle('hidden');
+
+/* ================= подсветка кода ================= */
+const KW = new Set(['def','return','if','else','elif','for','in','while','None','True','False','and','or','not','import','from','as','break','continue','pass','lambda']);
+const BI = new Set(['print','len','range','reversed']);
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function hlLine(line){
+  const ci = line.indexOf('#');
+  const code = ci >= 0 ? line.slice(0, ci) : line;
+  const com  = ci >= 0 ? line.slice(ci) : '';
+  let out = '';
+  const re = /("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|(\b\d+(?:\.\d+)?\b)|([A-Za-z_][A-Za-z0-9_]*)|([\s\S])/g;
+  let m;
+  while ((m = re.exec(code)) !== null){
+    if (m[1]) out += '<span class="tok-s">' + esc(m[1]) + '</span>';
+    else if (m[2]) out += '<span class="tok-n">' + esc(m[2]) + '</span>';
+    else if (m[3]){
+      if (KW.has(m[3])) out += '<span class="tok-k">' + m[3] + '</span>';
+      else if (BI.has(m[3])) out += '<span class="tok-b">' + m[3] + '</span>';
+      else out += m[3];
+    }
+    else out += esc(m[4]);
+  }
+  if (com) out += '<span class="tok-c">' + esc(com) + '</span>';
+  return out;
+}
+document.querySelectorAll('pre code').forEach(el => {
+  el.innerHTML = el.textContent.replace(/\n$/, '').split('\n').map(hlLine).join('\n');
+});
+
+/* ================= анимации ================= */
+const anims = {};
+
+const REC = [
+ {st:[],order:'',sum:0,note:'Начинаем: вызываем sum_rec(1) — корень дерева.'},
+ {st:[{v:1,s:'a'}],order:'1',sum:1,note:'sum_rec(1): total = 1 — число корня.'},
+ {st:[{v:1,s:'w'},{v:2,s:'a'}],order:'1 2',sum:3,note:'Ребёнок [2, …] → вызываем sum_rec(2): total = 2.'},
+ {st:[{v:1,s:'w'},{v:2,s:'w'},{v:4,s:'a'}],order:'1 2 4',sum:7,note:'Ребёнок [4] → вызываем sum_rec(4): total = 4.'},
+ {st:[{v:1,s:'w'},{v:2,s:'a'}],order:'1 2 4',sum:7,note:'[4] — лист: детей нет, цикл пустой → вернул 4.'},
+ {st:[{v:1,s:'w'},{v:2,s:'w'},{v:5,s:'a'}],order:'1 2 4 5',sum:12,note:'Ребёнок [5] → вызываем sum_rec(5): total = 5.'},
+ {st:[{v:1,s:'w'},{v:2,s:'a'}],order:'1 2 4 5',sum:12,note:'[5] — лист → вернул 5. Узел 2 досчитал: 2 + 4 + 5 = 11.'},
+ {st:[{v:1,s:'a'}],order:'1 2 4 5',sum:12,note:'2 вернул 11 → у узла 1: 1 + 11 = 12. Идём к ребёнку [3, …].'},
+ {st:[{v:1,s:'w'},{v:3,s:'a'}],order:'1 2 4 5 3',sum:15,note:'Ребёнок [3, …] → вызываем sum_rec(3): total = 3.'},
+ {st:[{v:1,s:'w'},{v:3,s:'w'},{v:6,s:'a'}],order:'1 2 4 5 3 6',sum:21,note:'Ребёнок [6] → вызываем sum_rec(6): total = 6.'},
+ {st:[{v:1,s:'w'},{v:3,s:'a'}],order:'1 2 4 5 3 6',sum:21,note:'[6] — лист → вернул 6.'},
+ {st:[{v:1,s:'w'},{v:3,s:'w'},{v:7,s:'a'}],order:'1 2 4 5 3 6 7',sum:28,note:'Ребёнок [7] → вызываем sum_rec(7): total = 7.'},
+ {st:[{v:1,s:'w'},{v:3,s:'a'}],order:'1 2 4 5 3 6 7',sum:28,note:'[7] — лист → вернул 7. Узел 3 досчитал: 3 + 6 + 7 = 16.'},
+ {st:[{v:1,s:'a'}],order:'1 2 4 5 3 6 7',sum:28,note:'3 вернул 16 → у узла 1: 1 + 11 + 16 = 28.'},
+ {st:[],order:'1 2 4 5 3 6 7',sum:28,note:'1 вернул 28 — готово! Стек вызовов пуст.'}
+];
+
+const STK = [
+ {st:[1],cur:null,order:'',sum:0,note:'stack = [tree] — корень в стеке.'},
+ {st:[3,2],cur:1,order:'1',sum:1,note:'pop() → 1, total += 1. Дети в стек: сначала 3, потом 2.'},
+ {st:[3,5,4],cur:2,order:'1 2',sum:3,note:'pop() → 2, total += 2. Дети: сначала 5, потом 4 — левый на верхушке.'},
+ {st:[3,5],cur:4,order:'1 2 4',sum:7,note:'pop() → 4, total += 4. Детей нет — класть нечего.'},
+ {st:[3],cur:5,order:'1 2 4 5',sum:12,note:'pop() → 5, total += 5. Детей нет.'},
+ {st:[7,6],cur:3,order:'1 2 4 5 3',sum:15,note:'pop() → 3, total += 3. Дети: сначала 7, потом 6.'},
+ {st:[7],cur:6,order:'1 2 4 5 3 6',sum:21,note:'pop() → 6, total += 6. Детей нет.'},
+ {st:[],cur:7,order:'1 2 4 5 3 6 7',sum:28,note:'pop() → 7, total += 7. Стек пуст — готово!'}
+];
+
+const QUE = [
+ {q:[1],cur:null,order:'',sum:0,note:'queue = [tree] — корень в очереди.'},
+ {q:[2,3],cur:1,order:'1',sum:1,note:'pop(0) → 1, total += 1. Дети в конец очереди: 2, 3.'},
+ {q:[3,4,5],cur:2,order:'1 2',sum:3,note:'pop(0) → 2, total += 2. Дети в конец: 4, 5.'},
+ {q:[4,5,6,7],cur:3,order:'1 2 3',sum:6,note:'pop(0) → 3, total += 3. Дети в конец: 6, 7.'},
+ {q:[5,6,7],cur:4,order:'1 2 3 4',sum:10,note:'pop(0) → 4, total += 4. Детей нет.'},
+ {q:[6,7],cur:5,order:'1 2 3 4 5',sum:15,note:'pop(0) → 5, total += 5. Детей нет.'},
+ {q:[7],cur:6,order:'1 2 3 4 5 6',sum:21,note:'pop(0) → 6, total += 6. Детей нет.'},
+ {q:[],cur:7,order:'1 2 3 4 5 6 7',sum:28,note:'pop(0) → 7, total += 7. Очередь пуста — готово!'}
+];
+
+const chips = s => s === '' ? '<span class="chip muted-chip">пока никого</span>'
+  : s.split(' ').map(x => '<span class="chip">' + x + '</span>').join('');
+
+function drawRec(f, i, last){
+  const box = document.getElementById('recStack');
+  if (f.st.length === 0){
+    box.innerHTML = '<div class="empty">стек вызовов пуст</div>';
+  } else {
+    let html = '';
+    for (let k = f.st.length - 1; k >= 0; k--){
+      const fr = f.st[k];
+      html += '<div class="frame' + (fr.s === 'a' ? ' factive' : '') + '">' +
+        '<span>sum_rec(' + fr.v + ')</span>' +
+        '<span class="ftag">' + (fr.s === 'a' ? 'выполняется сейчас' : 'ждёт ребёнка') + '</span></div>';
+    }
+    box.innerHTML = html;
+  }
+  document.getElementById('recOrder').innerHTML = chips(f.order);
+  document.getElementById('recSum').textContent = f.sum;
+  document.getElementById('recNote').textContent = f.note;
+  document.getElementById('recStep').textContent = 'шаг ' + i + ' / ' + last;
+}
+
+function drawStk(f, i, last){
+  const box = document.getElementById('stkBox');
+  if (f.st.length === 0){
+    box.innerHTML = '<div class="empty">стек пуст</div>';
+  } else {
+    let html = '';
+    for (let k = f.st.length - 1; k >= 0; k--){
+      html += '<div class="stitem' + (k === f.st.length - 1 ? ' top' : '') + '">[ ' + f.st[k] + ', … ]</div>';
+    }
+    box.innerHTML = html;
+  }
+  document.getElementById('stkCur').innerHTML = f.cur === null
+    ? '<span class="curbox done">—</span>'
+    : '<span class="curbox">' + f.cur + ' ✓</span>';
+  document.getElementById('stkOrder').innerHTML = chips(f.order);
+  document.getElementById('stkSum').textContent = f.sum;
+  document.getElementById('stkNote').textContent = f.note;
+  document.getElementById('stkStep').textContent = 'шаг ' + i + ' / ' + last;
+}
+
+function drawQue(f, i, last){
+  const box = document.getElementById('queBox');
+  if (f.q.length === 0){
+    box.innerHTML = '<div class="empty">очередь пуста</div>';
+  } else {
+    box.innerHTML = '<div class="qrow">' + f.q.map((v, k) =>
+      '<div class="qitem' + (k === 0 ? ' first' : '') + '">' + v + '</div>').join('') + '</div>';
+  }
+  document.getElementById('queCur').innerHTML = f.cur === null
+    ? '<span class="curbox done">—</span>'
+    : '<span class="curbox">' + f.cur + ' ✓</span>';
+  document.getElementById('queOrder').innerHTML = chips(f.order);
+  document.getElementById('queSum').textContent = f.sum;
+  document.getElementById('queNote').textContent = f.note;
+  document.getElementById('queStep').textContent = 'шаг ' + i + ' / ' + last;
+}
+
+function registerAnim(key, frames, render){
+  anims[key] = {frames, idx:0, timer:null, render};
+  render(frames[0], 0, frames.length - 1);
+}
+
+function stepAnim(key, dir){
+  const a = anims[key];
+  const ni = Math.max(0, Math.min(a.frames.length - 1, a.idx + dir));
+  if (ni === a.idx){ if (dir > 0) stopAuto(key); return; }
+  a.idx = ni;
+  a.render(a.frames[ni], ni, a.frames.length - 1);
+  if (ni === a.frames.length - 1) stopAuto(key);
+}
+
+function stopAuto(key){
+  const a = anims[key];
+  if (a.timer){ clearInterval(a.timer); a.timer = null; }
+  const b = document.getElementById(key + 'Auto');
+  if (b){ b.classList.remove('on'); b.textContent = '▶▶ авто'; }
+}
+
+function startAuto(key){
+  const a = anims[key];
+  if (a.idx >= a.frames.length - 1){ a.idx = 0; a.render(a.frames[0], 0, a.frames.length - 1); }
+  const b = document.getElementById(key + 'Auto');
+  b.classList.add('on'); b.textContent = '⏸ стоп';
+  a.timer = setInterval(() => stepAnim(key, 1), 1100);
+}
+
+document.querySelectorAll('.anim-ctl button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const key = btn.dataset.anim, act = btn.dataset.act;
+    if (act === 'reset'){ stopAuto(key); anims[key].idx = 0;
+      anims[key].render(anims[key].frames[0], 0, anims[key].frames.length - 1); }
+    if (act === 'back') stepAnim(key, -1);
+    if (act === 'fwd')  stepAnim(key, 1);
+    if (act === 'auto') anims[key].timer ? stopAuto(key) : startAuto(key);
+  });
+});
+
+registerAnim('rec', REC, drawRec);
+registerAnim('stk', STK, drawStk);
+registerAnim('que', QUE, drawQue);
+show(0);
+
+/* ================= тест ================= */
+const QUIZ = [
+ { q:'1. Как в этой реализации хранится узел дерева?',
+   opts:['Экземпляр класса Node','Список: сначала число, потом дети','Словарь с ключами «значение» и «дети»','Строка из цифр'], a:1,
+   why:'Узел — список: первым идёт число, дальше — дети; лист — список из одного числа. Никаких классов и словарей.' },
+ { q:'2. Какой порядок посещения узлов дают рекурсия и явный стек?',
+   opts:['1 2 3 4 5 6 7','1 2 4 5 3 6 7','4 5 2 6 7 3 1','1 3 2 7 6 5 4'], a:1,
+   why:'Оба варианта — обход вглубь (DFS): ныряем по левой ветке до листа, откатываемся, ныряем снова.' },
+ { q:'3. Какая одна строка превращает «стек» в «очередь»?',
+   opts:['stack.append(x)','node = queue.pop(0) вместо node = stack.pop()','for child in node[1:]','total += node[0]'], a:1,
+   why:'pop(0) берёт с начала, а не с конца — и обход из «вглубь» превращается в «вширь» (BFS), строго по уровням.' },
+ { q:'4. Зачем в версии со стеком написано reversed(node[1:])?',
+   opts:['Чтобы не посещать узлы дважды','Чтобы ускорить pop()','Чтобы левый ребёнок оказался на верхушке стека и был извлечён первым','Это защита от зацикливания'], a:2,
+   why:'Стек берёт с конца. Кладём детей справа налево — тогда левый окажется на верхушке и достанется первым, как в рекурсии.' },
+ { q:'5. Чему равна сумма во всех трёх способах и почему?',
+   opts:['Всегда 28: порядок не важен, каждый узел посещён ровно один раз','28 при DFS и 16 при BFS','Зависит от маршрута','7 — по числу листьев'], a:0,
+   why:'Для суммы порядок не важен — все узлы всё равно посещены. Маршрут важен для других задач, например поиска кратчайшего пути.' }
+];
+
+const quizBox = document.getElementById('quiz');
+const liveScore = document.getElementById('liveScore');
+const finalScore = document.getElementById('finalScore');
+const finalNote = document.getElementById('finalNote');
+let score = 0, answered = 0;
+
+function renderQuiz(){
+  quizBox.innerHTML = '';
+  score = 0; answered = 0;
+  QUIZ.forEach((item, qi) => {
+    const card = document.createElement('div');
+    card.className = 'q-card';
+    card.innerHTML = '<div class="q-text">' + item.q + '</div>';
+    const opts = document.createElement('div');
+    item.opts.forEach((opt, oi) => {
+      const b = document.createElement('button');
+      b.className = 'q-opt';
+      b.textContent = opt;
+      b.onclick = () => answer(qi, oi, card, b);
+      opts.appendChild(b);
+    });
+    card.appendChild(opts);
+    const why = document.createElement('div');
+    why.className = 'q-why hidden';
+    card.appendChild(why);
+    quizBox.appendChild(card);
+  });
+  updateScores();
+}
+
+function answer(qi, oi, card, btn){
+  if (card.dataset.done) return;
+  card.dataset.done = '1';
+  answered++;
+  const item = QUIZ[qi];
+  const btns = card.querySelectorAll('.q-opt');
+  btns.forEach(b => b.disabled = true);
+  btns[item.a].classList.add('correct');
+  const ok = oi === item.a;
+  if (ok) score++; else btn.classList.add('wrong');
+  const why = card.querySelector('.q-why');
+  why.innerHTML = '<strong>' + (ok ? '✅ Верно!' : '❌ Не совсем.') + '</strong> ' + item.why;
+  why.classList.remove('hidden');
+  updateScores();
+}
+
+function updateScores(){
+  liveScore.textContent = 'Отвечено: ' + answered + ' из 5 · Верно: ' + score;
+  finalScore.textContent = score + ' из 5';
+  if (answered < QUIZ.length){
+    finalNote.textContent = 'Ты ответил(а) на ' + answered + ' из 5 вопросов — вернись к тесту на прошлом слайде.';
+  } else if (score === 5){
+    finalNote.textContent = '🏆 Отлично! Тема освоена уверенно.';
+  } else if (score >= 3){
+    finalNote.textContent = '👍 Хорошо! Идея ясна — осталось закрыть пробелы по критериям ниже.';
+  } else {
+    finalNote.textContent = '🌱 Нормально: тема новая. Вернись к анимациям и попробуй ещё раз.';
+  }
+}
+document.getElementById('resetQuiz').onclick = () => { renderQuiz(); show(13); };
+renderQuiz();
+
+/* ================= светофор рефлексии ================= */
+const ADVICE = {
+  green:  '🟢 Отлично! Следующий шаг — задание со слайда 12: посчитай количество листьев всеми тремя способами (прибавляй 1, только если len(node) == 1).',
+  yellow: '🟡 Хороший честный сигнал. Прокрути анимации 05, 07 и 09 по шагам и вслух объясни, почему стек даёт 1 2 4 5 3 6 7, а очередь — 1 2 3 4 5 6 7.',
+  red:    '🔴 Это не провал, а точка старта. Вернись к слайду 02, нарисуй дерево на бумаге и пройди маршрут рукой — сначала «вглубь», потом «вширь».'
+};
+document.querySelectorAll('.tl button').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('.tl button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById('advice').textContent = ADVICE[b.dataset.level];
+  };
+});
+</script>
+</body>
+</html>

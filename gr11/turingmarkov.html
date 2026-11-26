@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Зачем нужно определение алгоритма?</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            user-select: none;
+        }
+
+        .slide-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            position: relative;
+        }
+
+        .slide {
+            display: none;
+            max-width: 900px;
+            width: 100%;
+            text-align: center;
+            animation: fadeIn 0.6s ease-in-out;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-size: 3em;
+            color: #e94560;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        h2 {
+            font-size: 2.2em;
+            color: #16213e;
+            background: #e0e0e0;
+            display: inline-block;
+            padding: 10px 30px;
+            border-radius: 50px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        p, li {
+            font-size: 1.3em;
+            line-height: 1.6;
+            margin: 15px 0;
+        }
+
+        ul {
+            text-align: left;
+            display: inline-block;
+            max-width: 800px;
+        }
+
+        li {
+            margin-bottom: 12px;
+        }
+
+        .highlight {
+            color: #e94560;
+            font-weight: bold;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1.1em;
+            background-color: #e94560;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        button:hover {
+            background-color: #c0354c;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .slide-number {
+            position: absolute;
+            bottom: 30px;
+            right: 40px;
+            font-size: 1.1em;
+            color: #888;
+            font-weight: bold;
+        }
+
+        .subtitle {
+            font-size: 1.5em;
+            color: #a0a0a0;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2em; }
+            h2 { font-size: 1.5em; padding: 8px 20px; }
+            p, li { font-size: 1.1em; }
+            .slide-container { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="slide-container">
+        <!-- Слайд 1: Титульный -->
+        <div class="slide active">
+            <h1>Зачем нужно определение алгоритма?</h1>
+            <p class="subtitle">Элементы теории алгоритмов</p>
+        </div>
+
+        <!-- Слайд 2: Что такое алгоритм -->
+        <div class="slide">
+            <h2>Что такое алгоритм?</h2>
+            <ul>
+                <li><span class="highlight">Алгоритм</span> — точный набор инструкций для исполнителя, приводящий к решению задачи за конечное время.</li>
+                <li>Термин ввёл <span class="highlight">Г. В. Лейбниц</span> (XVII век), от имени <span class="highlight">аль-Хорезми</span> (IX век).</li>
+                <li>Древнейший пример — <span class="highlight">алгоритм Евклида</span> для НОД.</li>
+            </ul>
+        </div>
+
+        <!-- Слайд 3: Свойства алгоритма -->
+        <div class="slide">
+            <h2>Свойства алгоритма</h2>
+            <ul>
+                <li>Получает на вход <span class="highlight">дискретный объект</span>.</li>
+                <li>Обрабатывает его <span class="highlight">по шагам</span>, строя промежуточные объекты.</li>
+                <li>Может закончиться или зациклиться.</li>
+                <li>Если заканчивается — результат это последний построенный объект.</li>
+                <li>Если зацикливается или аварийно завершается — результат <span class="highlight">не определён</span>.</li>
+            </ul>
+        </div>
+
+        <!-- Слайд 4: Алгоритм и исполнитель -->
+        <div class="slide">
+            <h2>Алгоритм и исполнитель</h2>
+            <ul>
+                <li>Алгоритм рассчитан на <span class="highlight">конкретного исполнителя</span> с понятными ему командами.</li>
+                <li>Задание для исполнителя — <span class="highlight">программа</span> на формальном языке.</li>
+                <li>Алгоритм = программа для некоторого исполнителя.</li>
+            </ul>
+        </div>
+
+        <!-- Слайд 5: Уточнение понятия -->
+        <div class="slide">
+            <h2>Уточнение понятия</h2>
+            <ul>
+                <li>Любые объекты можно закодировать как <span class="highlight">символьные строки</span>.</li>
+                <li>Любой алгоритм сводится к преобразованию одной строки в другую.</li>
+                <li>Достаточно рассматривать алгоритмы, работающие с <span class="highlight">двоичными последовательностями</span>.</li>
+            </ul>
+        </div>
+
+        <!-- Слайд 6: Проблема разрешимости -->
+        <div class="slide">
+            <h2>Проблема разрешимости</h2>
+            <ul>
+                <li>Долгое время считалось, что для любой задачи можно найти алгоритм.</li>
+                <li>В <span class="highlight">1931 году</span> К. Гёдель доказал <span class="highlight">теорему о неполноте</span>: в любой сложной формальной системе есть утверждение, которое нельзя ни доказать, ни опровергнуть.</li>
+                <li>Возникло предположение о <span class="highlight">алгоритмической неразрешимости</span> некоторых задач.</li>
+            </ul>
+        </div>
+
+        <!-- Слайд 7: Теория алгоритмов -->
+        <div class="slide">
+            <h2>Теория алгоритмов</h2>
+            <ul>
+                <li>Для строгих доказательств потребовалось <span class="highlight">математическое определение алгоритма</span>.</li>
+                <li>Теория алгоритмов изучает:
+                    <ul style="margin-top: 10px; font-size: 0.9em;">
+                        <li>алгоритмическую неразрешимость;</li>
+                        <li>сложность алгоритмов;</li>
+                        <li>оценку качества алгоритмов.</li>
+                    </ul>
+                </li>
+                <li>Вклад: <span class="highlight">Тьюринг, Пост, Чёрч, Клини, Марков</span>.</li>
+            </ul>
+        </div>
+
+        <!-- Слайд 8: Универсальный исполнитель -->
+        <div class="slide">
+            <h2>Универсальный исполнитель</h2>
+            <ul>
+                <li>Понятие алгоритма «привязано» к исполнителю и языку программирования.</li>
+                <li>Это не позволяет определить алгоритм как математический объект.</li>
+                <li><span class="highlight">Универсальный исполнитель</span> — может моделировать работу любого другого исполнителя.</li>
+                <li>Для любого алгоритма существует эквивалентный алгоритм для универсального исполнителя.</li>
+            </ul>
+        </div>
+
+        <!-- Слайд 9: Модель универсального исполнителя -->
+        <div class="slide">
+            <h2>Модель универсального исполнителя</h2>
+            <ul>
+                <li>Система команд должна быть <span class="highlight">как можно проще</span>.</li>
+                <li>Модель должна содержать:
+                    <ul style="margin-top: 10px; font-size: 0.9em;">
+                        <li><span class="highlight">«процессор»</span> — система команд и способ их выполнения;</li>
+                        <li><span class="highlight">«память»</span> — способ хранения данных;</li>
+                        <li>язык программирования;</li>
+                        <li>способ ввода данных;</li>
+                        <li>способ вывода результата.</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Слайд 10: Эквивалентность -->
+        <div class="slide">
+            <h2>Эквивалентность моделей</h2>
+            <ul>
+                <li>В середине XX века предложено несколько моделей универсальных исполнителей.</li>
+                <li>Доказано, что все они <span class="highlight">эквивалентны</span> друг другу.</li>
+                <li>Алгоритм для одного универсального исполнителя можно запрограммировать для всех остальных.</li>
+                <li>Это позволяет доказывать разрешимость или неразрешимость задач.</li>
+            </ul>
+        </div>
+
+        <!-- Слайд 11: Связь с определением -->
+        <div class="slide">
+            <h2>Связь с определением алгоритма</h2>
+            <ul>
+                <li>Универсальный исполнитель решает проблему строгого определения алгоритма.</li>
+                <li><span class="highlight">Любой алгоритм может быть представлен как программа для универсального исполнителя.</span></li>
+                <li>Это <span class="highlight">основная идея теории алгоритмов</span>.</li>
+            </ul>
+        </div>
+
+        <div class="slide-number" id="slideNumber">1 / 11</div>
+    </div>
+
+    <div class="controls">
+        <button onclick="prevSlide()">← Назад</button>
+        <button onclick="nextSlide()">Вперёд →</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const slideNumber = document.getElementById('slideNumber');
+
+        function showSlide(n) {
+            slides.forEach(slide => slide.classList.remove('active'));
+            currentSlide = (n + slides.length) % slides.length;
+            slides[currentSlide].classList.add('active');
+            slideNumber.textContent = `${currentSlide + 1} / ${slides.length}`;
+        }
+
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+
+        function prevSlide() {
+            showSlide(currentSlide - 1);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                prevSlide();
+            }
+        });
+
+        showSlide(0);
+    </script>
+</body>
+</html>

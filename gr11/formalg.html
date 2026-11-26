@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Формализация понятия алгоритма | 11 класс</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .presentation {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            width: 90%;
+            max-width: 1200px;
+            height: 85vh;
+            margin: 2vh auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            display: none;
+            animation: fadeIn 0.5s;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        h2 {
+            color: #764ba2;
+            font-size: 2em;
+            margin-bottom: 25px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            color: #667eea;
+            font-size: 1.5em;
+            margin: 20px 0 15px 0;
+        }
+
+        .content {
+            font-size: 1.2em;
+            line-height: 1.8;
+            color: #333;
+        }
+
+        ul {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+
+        li {
+            margin-bottom: 15px;
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, #ffeaa7 0%, #ffeaa7 100%);
+            background-repeat: no-repeat;
+            background-size: 100% 40%;
+            background-position: 0 90%;
+            padding: 0 5px;
+            font-weight: bold;
+        }
+
+        .code-block {
+            background: #f5f5f5;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            border-radius: 5px;
+        }
+
+        .nav-buttons {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            background: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: rgba(255,255,255,0.3);
+            z-index: 1000;
+        }
+
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #ffeaa7, #fdcb6e);
+            transition: width 0.3s;
+        }
+
+        .slide-counter {
+            position: fixed;
+            top: 20px;
+            right: 30px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: #667eea;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+
+        .tm-visual {
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .tape {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .cell {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            background: white;
+            transition: all 0.3s;
+        }
+
+        .cell.active {
+            background: #ffeaa7;
+            transform: scale(1.1);
+        }
+
+        .head {
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-bottom: 20px solid #764ba2;
+            margin: 10px auto;
+        }
+
+        .nam-visual {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .rule {
+            background: white;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #667eea;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2em;
+        }
+
+        .rule.final {
+            border-left-color: #e74c3c;
+        }
+
+        .quiz-option {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .quiz-option:hover {
+            background: #e8e8e8;
+            border-color: #667eea;
+        }
+
+        .quiz-option.correct {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+
+        .quiz-option.incorrect {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .feedback.show {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        .feedback.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .feedback.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            border: 2px solid #667eea;
+            padding: 12px;
+            text-align: center;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        .emoji {
+            font-size: 1.5em;
+        }
+
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 20px 0;
+        }
+
+        .column {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .task-box {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border: 2px solid #667eea;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .solution-box {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .solution-box.show {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        .show-solution-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s;
+        }
+
+        .show-solution-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .step {
+            background: white;
+            padding: 10px 15px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            font-family: 'Courier New', monospace;
+        }
+
+        .answer-highlight {
+            background: #ffeaa7;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #764ba2;
+            margin-top: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .slide {
+                width: 95%;
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            h2 {
+                font-size: 1.5em;
+            }
+
+            .content {
+                font-size: 1em;
+            }
+
+            .two-columns {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar">
+        <div class="progress" id="progress"></div>
+    </div>
+    <div class="slide-counter" id="counter">1 / 18</div>
+
+    <div class="presentation">
+        <!-- Слайд 1: Титульный -->
+        <div class="slide active">
+            <h1>🎓 Формализация понятия алгоритма</h1>
+            <div class="content" style="text-align: center; margin-top: 50px;">
+                <p style="font-size: 1.5em; margin-bottom: 30px;">Информатика | 11 класс (профиль)</p>
+                <div class="code-block" style="text-align: left;">
+                    <strong>План занятия:</strong><br>
+                    • Машина Тьюринга — универсальная модель вычислений<br>
+                    • Тезис Чёрча—Тьюринга<br>
+                    • Нормальные алгорифмы Маркова<br>
+                    • Практические задания
+                </div>
+                <p style="margin-top: 30px; font-style: italic; color: #667eea;">
+                    "Что такое алгоритм на самом деле?"
+                </p>
+            </div>
+        </div>
+
+        <!-- Слайд 2: Зачем нужна формализация -->
+        <div class="slide">
+            <h2> Зачем формализовать алгоритм?</h2>
+            <div class="content">
+                <p><span class="highlight">Проблема:</span> Мы интуитивно понимаем, что такое алгоритм (рецепт, инструкция), но математика требует <strong>строгого определения</strong>.</p>
+                
+                <h3>Исторический контекст:</h3>
+                <ul>
+                    <li><strong>1900 г.</strong> — Давид Гильберт задает вопрос: существует ли универсальный метод решения любых математических задач?</li>
+                    <li><strong>1936 г.</strong> — Алан Тьюринг, Алонзо Чёрч и Андрей Марков независимо предлагают математические модели алгоритма</li>
+                    <li><strong>Результат:</strong> Доказано, что некоторые задачи <span class="highlight">принципиально неразрешимы</span></li>
+                </ul>
+
+                <div class="code-block">
+                    💡 <strong>Важно:</strong> Чтобы доказать, что алгоритма НЕ существует, нужно сначала точно определить, ЧТО такое алгоритм!
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 3: Машина Тьюринга - идея -->
+        <div class="slide">
+            <h2>🤖 Машина Тьюринга (1936)</h2>
+            <div class="content">
+                <h3>Идея Алана Тьюринга:</h3>
+                <p>Представим человека, который решает задачу на <span class="highlight">бесконечном листе бумаги в клетку</span>:</p>
+                
+                <ul>
+                    <li>👀 Смотрит на одну клетку</li>
+                    <li>✏️ Может стереть или написать символ</li>
+                    <li>➡️ Сдвигает бумагу влево или вправо</li>
+                    <li>🧠 Переходит к следующему действию (зависит от того, что видит, и его "настроя")</li>
+                </ul>
+
+                <div class="tm-visual">
+                    <div class="head"></div>
+                    <div class="tape">
+                        <div class="cell">1</div>
+                        <div class="cell">0</div>
+                        <div class="cell active">1</div>
+                        <div class="cell">1</div>
+                        <div class="cell">0</div>
+                    </div>
+                    <p style="margin-top: 10px; color: #667eea; font-weight: bold;">↑ Головка читает/пишет и двигается</p>
+                </div>
+
+                <div class="code-block">
+                    🎯 <strong>Вывод:</strong> Этого простого набора действий достаточно для решения ЛЮБЫХ вычислимых задач!
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 4: Формальное определение МТ -->
+        <div class="slide">
+            <h2>📐 Машина Тьюринга: формально</h2>
+            <div class="content">
+                <p>Машина Тьюринга состоит из:</p>
+                
+                <table>
+                    <tr>
+                        <th>Компонент</th>
+                        <th>Описание</th>
+                        <th>Аналогия</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Лента</strong></td>
+                        <td>Бесконечная, разделена на ячейки</td>
+                        <td>Бесконечный лист бумаги</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Головка</strong></td>
+                        <td>Читает/пишет символ, двигается L/R</td>
+                        <td>Карандаш и глаза</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Состояния</strong></td>
+                        <td>Конечное множество Q = {q₀, q₁, ...}</td>
+                        <td>"Настрой" или "режим работы"</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Алфавит</strong></td>
+                        <td>Символы: входные + пустота (⊔)</td>
+                        <td>Буквы и пробелы</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Программа</strong></td>
+                        <td>Таблица переходов: (состояние, символ) → (новое состояние, новый символ, направление)</td>
+                        <td>Инструкция</td>
+                    </tr>
+                </table>
+
+                <div class="code-block">
+                    📝 <strong>Пример правила:</strong><br>
+                    Если состояние q₀ и символ "1" → записать "0", перейти в q₁, сдвинуться вправо (R)
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 5: Тезис Чёрча-Тьюринга -->
+        <div class="slide">
+            <h2>💭 Тезис Чёрча—Тьюринга</h2>
+            <div class="content">
+                <div class="code-block" style="font-size: 1.3em; text-align: center; background: #ffeaa7;">
+                    <strong>Всё, что может быть вычислено человеком по четким инструкциям,<br>может быть вычислено Машиной Тьюринга</strong>
+                </div>
+
+                <h3>Важные моменты:</h3>
+                <ul>
+                    <li>🔬 Это <span class="highlight">тезис (гипотеза)</span>, а не теорема — его нельзя доказать математически</li>
+                    <li>✅ За 90 лет ни одна вычислительная модель не опровергла его</li>
+                    <li>🚫 Если задачу нельзя решить на МТ — её нельзя решить <strong>ни на каком компьютере</strong> (ни современном, ни будущем)</li>
+                </ul>
+
+                <div class="two-columns">
+                    <div class="column">
+                        <h3>✅ Что МОЖНО вычислить:</h3>
+                        <ul>
+                            <li>Арифметические операции</li>
+                            <li>Сортировку данных</li>
+                            <li>Поиск в базах данных</li>
+                            <li>Игры (шахматы, го)</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>❌ Что НЕЛЬЗЯ вычислить:</h3>
+                        <ul>
+                            <li>Проблема остановки (остановится ли программа?)</li>
+                            <li>Некоторые логические парадоксы</li>
+                            <li>Задачи с бесконечным перебором</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 6: НАМ - идея -->
+        <div class="slide">
+            <h2>📝 Нормальные алгорифмы Маркова (1947)</h2>
+            <div class="content">
+                <h3>Идея Андрея Маркова:</h3>
+                <p>Любое вычисление — это просто <span class="highlight">переписывание текста</span> (замена одних букв на другие).</p>
+
+                <div class="two-columns">
+                    <div class="column">
+                        <h3> Устройство НАМ:</h3>
+                        <ul>
+                            <li>Алфавит (набор символов)</li>
+                            <li>Входная строка</li>
+                            <li>Таблица правил подстановки</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>📋 Два типа правил:</h3>
+                        <ul>
+                            <li><strong>Простые:</strong> α → β (заменить и продолжить)</li>
+                            <li><strong>Заключительные:</strong> α →· β (заменить и СТОП)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="nam-visual">
+                    <h3>Пример алгорифма (удаление пробелов):</h3>
+                    <div class="rule">пробел → (пусто)</div>
+                    <p style="margin-top: 10px;">Вход: "а б в" → Выход: "абв"</p>
+                </div>
+
+                <div class="code-block">
+                    💡 <strong>Отличие от МТ:</strong> Марков работает со строками целиком, Тьюринг — с отдельными ячейками ленты
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 7: Принцип работы НАМ -->
+        <div class="slide">
+            <h2>️ Как работает нормальный алгорифм</h2>
+            <div class="content">
+                <h3>Алгоритм применения НАМ:</h3>
+                <ol style="font-size: 1.1em;">
+                    <li>Просматриваем таблицу правил <span class="highlight">строго сверху вниз</span></li>
+                    <li>Ищем <span class="highlight">самое левое</span> вхождение левой части правила в строку</li>
+                    <li>Если найдено — применяем правило:
+                        <ul>
+                            <li>Заключительное (→·) → <strong>СТОП</strong></li>
+                            <li>Простое (→) → возвращаемся к пункту 1</li>
+                        </ul>
+                    </li>
+                    <li>Если ни одно правило не применимо → <strong>СТОП</strong></li>
+                </ol>
+
+                <div class="nam-visual">
+                    <h3>Пример: Инверсия битов (0↔1)</h3>
+                    <div class="rule">0 → x</div>
+                    <div class="rule">1 → y</div>
+                    <div class="rule">x → 1</div>
+                    <div class="rule">y → 0</div>
+                    
+                    <p style="margin-top: 15px;"><strong>Трассировка для "10":</strong></p>
+                    <p>10 → (пр.2) → y0 → (пр.1) → yx → (пр.3) → y1 → (пр.4) → 01 ✓</p>
+                </div>
+
+                <div class="code-block">
+                    ⚠️ <strong>Важно:</strong> После каждого простого правила возвращаемся к НАЧАЛУ таблицы!
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 8: Эквивалентность моделей -->
+        <div class="slide">
+            <h2>🔄 Эквивалентность вычислительных моделей</h2>
+            <div class="content">
+                <p>Удивительный факт: совершенно разные подходы приводят к одному результату!</p>
+
+                <table>
+                    <tr>
+                        <th>Модель</th>
+                        <th>Автор</th>
+                        <th>Подход</th>
+                    </tr>
+                    <tr>
+                        <td>Машина Тьюринга</td>
+                        <td>А. Тьюринг (1936)</td>
+                        <td>Механический (лента + головка)</td>
+                    </tr>
+                    <tr>
+                        <td>λ-исчисление</td>
+                        <td>А. Чёрч (1936)</td>
+                        <td>Алгебраический (функции)</td>
+                    </tr>
+                    <tr>
+                        <td>Нормальные алгорифмы</td>
+                        <td>А. Марков (1947)</td>
+                        <td>Лингвистический (переписывание строк)</td>
+                    </tr>
+                    <tr>
+                        <td>Рекурсивные функции</td>
+                        <td>К. Гёдель (1934)</td>
+                        <td>Математический (рекурсия)</td>
+                    </tr>
+                </table>
+
+                <div class="code-block" style="background: #d4edda; border-color: #28a745;">
+                     <strong>Вывод:</strong> Все эти модели описывают ОДИН И ТОТ ЖЕ класс вычислимых функций!<br>
+                    Это мощнейшее подтверждение Тезиса Чёрча—Тьюринга.
+                </div>
+
+                <p style="margin-top: 20px;">
+                    <span class="emoji">🔬</span> Любой алгоритм Маркова можно переписать как Машину Тьюринга, и наоборот.
+                </p>
+            </div>
+        </div>
+
+        <!-- Слайд 9: Практика - введение -->
+        <div class="slide">
+            <h2> Практическая часть</h2>
+            <div class="content" style="text-align: center;">
+                <p style="font-size: 1.5em; margin: 30px 0;">Давайте почувствуем себя "вычислительными машинами"!</p>
+                
+                <div class="two-columns">
+                    <div class="column">
+                        <h3>📝 Задание 1</h3>
+                        <p>Проектирование Машины Тьюринга</p>
+                        <p style="font-size: 2em; margin-top: 20px;">🤖</p>
+                    </div>
+                    <div class="column">
+                        <h3> Задание 2</h3>
+                        <p>Проектирование Нормального алгорифма</p>
+                        <p style="font-size: 2em; margin-top: 20px;">📋</p>
+                    </div>
+                </div>
+
+                <div class="code-block" style="margin-top: 30px;">
+                    💡 <strong>Совет:</strong> Работайте в парах, обсуждайте решения, не бойтесь ошибаться!
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 10: Задание 1 - МТ -->
+        <div class="slide">
+            <h2>🤖 Задание 1: Машина Тьюринга</h2>
+            <div class="content">
+                <h3>Задача:</h3>
+                <p>Сконструируйте МТ, которая <span class="highlight">складывает два числа в унарной системе</span>.</p>
+
+                <div class="code-block">
+                    <strong>Вход:</strong> 111+11 (означает 3 + 2)<br>
+                    <strong>Выход:</strong> 11111 (означает 5)<br>
+                    <strong>Алфавит:</strong> {1, +, ⊔} (⊔ — пустота)
+                </div>
+
+                <h3>Подсказка:</h3>
+                <ol>
+                    <li>Двигайтесь вправо, пока не найдете "+" </li>
+                    <li>Замените "+" на "1" (соедините числа)</li>
+                    <li>Продолжайте вправо до пустоты (⊔)</li>
+                    <li>Сделайте шаг влево и сотрите последнюю "1"</li>
+                    <li>Остановитесь</li>
+                </ol>
+
+                <div class="tm-visual">
+                    <div class="head"></div>
+                    <div class="tape">
+                        <div class="cell">1</div>
+                        <div class="cell">1</div>
+                        <div class="cell">1</div>
+                        <div class="cell active">+</div>
+                        <div class="cell">1</div>
+                        <div class="cell">1</div>
+                        <div class="cell">⊔</div>
+                    </div>
+                </div>
+
+                <p style="margin-top: 20px; font-style: italic; color: #667eea;">
+                    ⏱ Время на решение: 5 минут
+                </p>
+            </div>
+        </div>
+
+        <!-- Слайд 11: Решение задания 1 -->
+        <div class="slide">
+            <h2>✅ Решение задания 1</h2>
+            <div class="content">
+                <h3>Таблица переходов МТ:</h3>
+                <table>
+                    <tr>
+                        <th>Состояние</th>
+                        <th>Символ</th>
+                        <th>→ Новое состояние</th>
+                        <th>→ Записать</th>
+                        <th>→ Движение</th>
+                    </tr>
+                    <tr>
+                        <td>q₀</td>
+                        <td>1</td>
+                        <td>q₀</td>
+                        <td>1</td>
+                        <td>R</td>
+                    </tr>
+                    <tr>
+                        <td>q₀</td>
+                        <td>+</td>
+                        <td>q₁</td>
+                        <td>1</td>
+                        <td>R</td>
+                    </tr>
+                    <tr>
+                        <td>q₁</td>
+                        <td>1</td>
+                        <td>q₁</td>
+                        <td>1</td>
+                        <td>R</td>
+                    </tr>
+                    <tr>
+                        <td>q₁</td>
+                        <td>⊔</td>
+                        <td>q₂</td>
+                        <td>⊔</td>
+                        <td>L</td>
+                    </tr>
+                    <tr>
+                        <td>q₂</td>
+                        <td>1</td>
+                        <td>q_stop</td>
+                        <td>⊔</td>
+                        <td>—</td>
+                    </tr>
+                </table>
+
+                <h3>Трассировка для "111+11":</h3>
+                <div class="code-block">
+                    111+11 → (q₀,R) → 111+11 → ... → 111+11 (q₀ видит +)<br>
+                    → (q₁,R,записать 1) → 111111 → (q₁,R) → ... → 111111⊔<br>
+                    → (q₂,L) → 111111 → (q_stop,стереть) → <strong>11111</strong> ✓
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 12: Задание 2 - НАМ -->
+        <div class="slide">
+            <h2> Задание 2: Нормальный алгорифм</h2>
+            <div class="content">
+                <h3>Задача:</h3>
+                <p>Напишите НАМ, который <span class="highlight">инвертирует двоичный код</span> (0→1, 1→0).</p>
+
+                <div class="code-block">
+                    <strong>Вход:</strong> 10110<br>
+                    <strong>Выход:</strong> 01001<br>
+                    <strong>Алфавит:</strong> {0, 1, x, y} (x, y — вспомогательные)
+                </div>
+
+                <h3>⚠️ Главная сложность:</h3>
+                <p>Если просто заменить 0→1, а потом 1→0, то новые единицы снова станут нулями!</p>
+
+                <div class="code-block">
+                    ❌ <strong>Неправильно:</strong><br>
+                    0 → 1<br>
+                    1 → 0<br>
+                    Результат для "10": 10 → 00 → 11 (ошибка!)
+                </div>
+
+                <h3>💡 Подсказка:</h3>
+                <p>Используйте вспомогательные символы как "буфер"</p>
+
+                <p style="margin-top: 20px; font-style: italic; color: #667eea;">
+                    ⏱ Время на решение: 5 минут
+                </p>
+            </div>
+        </div>
+
+        <!-- Слайд 13: Решение задания 2 -->
+        <div class="slide">
+            <h2>✅ Решение задания 2</h2>
+            <div class="content">
+                <h3>Правильные правила НАМ:</h3>
+                <div class="nam-visual">
+                    <div class="rule">0 → x</div>
+                    <div class="rule">1 → y</div>
+                    <div class="rule">x → 1</div>
+                    <div class="rule">y → 0</div>
+                </div>
+
+                <h3>Трассировка для "10":</h3>
+                <div class="code-block">
+                    10 → (пр.2, самое левое) → y0<br>
+                    → (возврат к началу, пр.1) → yx<br>
+                    → (пр.3) → y1<br>
+                    → (пр.4) → 01 ✓
+                </div>
+
+                <h3>Почему это работает?</h3>
+                <ul>
+                    <li><strong>Фаза 1:</strong> Все 0→x, все 1→y (используем временные символы)</li>
+                    <li><strong>Фаза 2:</strong> Все x→1, все y→0 (завершаем преобразование)</li>
+                </ul>
+
+                <div class="code-block">
+                    💡 <strong>Ключевой принцип:</strong> После каждого простого правила возвращаемся к началу таблицы!
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 14: Блиц-опрос -->
+        <div class="slide">
+            <h2>🎯 Блиц-опрос: Проверь себя!</h2>
+            <div class="content">
+                <h3>Верно или Неверно?</h3>
+                
+                <div class="quiz-option" onclick="checkAnswer(this, false)">
+                    1. Тезис Чёрча—Тьюринга — это строго доказанная математическая теорема.
+                </div>
+
+                <div class="quiz-option" onclick="checkAnswer(this, true)">
+                    2. Если для задачи не существует Машины Тьюринга, значит, её нельзя решить ни на одном современном суперкомпьютере.
+                </div>
+
+                <div class="quiz-option" onclick="checkAnswer(this, false)">
+                    3. Нормальные алгорифмы Маркова мощнее Машин Тьюринга (могут решить больше задач).
+                </div>
+
+                <div class="quiz-option" onclick="checkAnswer(this, false)">
+                    4. Проблема остановки (остановится ли программа?) может быть решена другой, более сложной Машиной Тьюринга.
+                </div>
+
+                <div class="feedback" id="quiz-feedback"></div>
+            </div>
+        </div>
+
+        <!-- Слайд 15: Задача 1 - МТ с числом 2025 -->
+        <div class="slide">
+            <h2> Задача 1: Машина Тьюринга и число 2025</h2>
+            <div class="content">
+                <div class="task-box">
+                    <h3> Условие:</h3>
+                    <p>На ленте в соседних ячейках записано двоичное представление числа <strong>2025</strong> без ведущих нулей. Ячейки справа и слева от последовательности заполнены пустыми символами «λ». В начальный момент времени головка расположена в ближайшей справа к последовательности ячейке.</p>
+                    
+                    <h3>Программа работы исполнителя:</h3>
+                    <table>
+                        <tr>
+                            <th></th>
+                            <th>λ</th>
+                            <th>0</th>
+                            <th>1</th>
+                        </tr>
+                        <tr>
+                            <td><strong>q₀</strong></td>
+                            <td>λ, L, q₁</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td><strong>q₁</strong></td>
+                            <td>1, L, q₂</td>
+                            <td>0, L, q₁</td>
+                            <td>1, L, q₁</td>
+                        </tr>
+                        <tr>
+                            <td><strong>q₂</strong></td>
+                            <td>λ, S, q₂</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </table>
+                    
+                    <p><strong>Задание:</strong> Определите результат выполнения программы. В ответе запишите получившееся число в десятичной системе счисления.</p>
+                </div>
+
+                <button class="show-solution-btn" onclick="toggleSolution('solution1')"> Показать решение</button>
+
+                <div class="solution-box" id="solution1">
+                    <h3>🔍 Решение:</h3>
+                    
+                    <p><strong>Шаг 1:</strong> Переводим 2025 в двоичную систему:</p>
+                    <div class="step">2025 = 1024 + 512 + 256 + 128 + 64 + 32 + 8 + 1 = 11111101001₂</div>
+                    
+                    <p><strong>Шаг 2:</strong> Анализируем программу:</p>
+                    <ul>
+                        <li><strong>q₀, λ → λ, L, q₁:</strong> Головка сдвигается влево на последний бит (1), переходит в q₁</li>
+                        <li><strong>q₁, 0 → 0, L, q₁:</strong> Если видит 0 — оставляет 0, сдвигается влево</li>
+                        <li><strong>q₁, 1 → 1, L, q₁:</strong> Если видит 1 — оставляет 1, сдвигается влево</li>
+                        <li><strong>q₁, λ → 1, L, q₂:</strong> Если видит λ (слева от числа) — записывает 1, переходит в q₂</li>
+                        <li><strong>q₂, λ → λ, S, q₂:</strong> Стоп</li>
+                    </ul>
+                    
+                    <p><strong>Шаг 3:</strong> Программа проходит по всем битам справа налево, не изменяя их, и когда выходит за левый край — добавляет 1 слева.</p>
+                    
+                    <div class="step">Исходная лента: 11111101001</div>
+                    <div class="step">После выполнения: 111111101001 (добавили 1 слева)</div>
+                    
+                    <p><strong>Шаг 4:</strong> Переводим результат в десятичную систему:</p>
+                    <div class="step">111111101001₂ = 2¹¹ + 2¹⁰ + 2⁹ + 2⁸ + 2⁷ + 2⁶ + 2⁵ + 2³ + 2⁰</div>
+                    <div class="step">= 2048 + 1024 + 512 + 256 + 128 + 64 + 32 + 8 + 1 = 4073</div>
+                    
+                    <div class="answer-highlight">
+                        ✅ Ответ: 4073
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 16: Задача 2 - инверсия 1000 символов -->
+        <div class="slide">
+            <h2>🧩 Задача 2: Инверсия последовательности</h2>
+            <div class="content">
+                <div class="task-box">
+                    <h3> Условие:</h3>
+                    <p>На ленте в соседних ячейках записана последовательность из <strong>1000 символов</strong>, включающая только нули и единицы. Ячейки справа и слева от последовательности заполнены пустыми символами «λ». В начальный момент времени головка расположена в ближайшей ячейке справа от последовательности.</p>
+                    
+                    <h3>Программа работы исполнителя:</h3>
+                    <table>
+                        <tr>
+                            <th></th>
+                            <th>λ</th>
+                            <th>1</th>
+                            <th>0</th>
+                        </tr>
+                        <tr>
+                            <td><strong>q₀</strong></td>
+                            <td>λ L q₁</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td><strong>q₁</strong></td>
+                            <td>λ S q₁</td>
+                            <td>0 L q₁</td>
+                            <td>1 L q₁</td>
+                        </tr>
+                    </table>
+                    
+                    <p>После выполнения программы единиц на ленте стало <strong>вдвое больше</strong>, чем нулей. Сколько единиц содержалось в исходной последовательности?</p>
+                </div>
+
+                <button class="show-solution-btn" onclick="toggleSolution('solution2')"> Показать решение</button>
+
+                <div class="solution-box" id="solution2">
+                    <h3>🔍 Решение:</h3>
+                    
+                    <p><strong>Шаг 1:</strong> Анализируем программу:</p>
+                    <ul>
+                        <li><strong>q₀, λ → λ, L, q₁:</strong> Головка сдвигается влево на последний символ последовательности</li>
+                        <li><strong>q₁, 0 → 1, L, q₁:</strong> Заменяет 0 на 1, сдвигается влево</li>
+                        <li><strong>q₁, 1 → 0, L, q₁:</strong> Заменяет 1 на 0, сдвигается влево</li>
+                        <li><strong>q₁, λ → λ, S, q₁:</strong> Стоп (когда выходит за левый край)</li>
+                    </ul>
+                    
+                    <p><strong>Вывод:</strong> Программа <span class="highlight">инвертирует все биты</span> (0→1, 1→0), проходя справа налево.</p>
+                    
+                    <p><strong>Шаг 2:</strong> Составляем уравнение:</p>
+                    <div class="step">Пусть в исходной последовательности было x единиц и (1000 - x) нулей.</div>
+                    <div class="step">После инверсии: единиц стало (1000 - x), нулей стало x.</div>
+                    <div class="step">Условие: единиц вдвое больше, чем нулей → (1000 - x) = 2x</div>
+                    
+                    <p><strong>Шаг 3:</strong> Решаем уравнение:</p>
+                    <div class="step">1000 - x = 2x</div>
+                    <div class="step">1000 = 3x</div>
+                    <div class="step">x = 333.33...</div>
+                    
+                    <p><strong>⚠️ Примечание:</strong> Получается нецелое число. Вероятно, в условии опечатка и должно быть <strong>999 символов</strong> вместо 1000.</p>
+                    
+                    <div class="step">Если 999 символов: 999 - x = 2x → 3x = 999 → x = 333</div>
+                    
+                    <div class="answer-highlight">
+                        ✅ Ответ: 333 (при условии 999 символов)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 17: Задача 3 - повтор задачи 1 для закрепления -->
+        <div class="slide">
+            <h2>🧩 Задача 3: Закрепление — число 2025</h2>
+            <div class="content">
+                <div class="task-box">
+                    <h3>📌 Условие (аналогично задаче 1):</h3>
+                    <p>На ленте в соседних ячейках записано двоичное представление числа <strong>2025</strong> без ведущих нулей. Ячейки справа и слева от последовательности заполнены пустыми символами «λ». В начальный момент времени головка расположена в ближайшей справа к последовательности ячейке.</p>
+                    
+                    <h3>Программа работы исполнителя:</h3>
+                    <table>
+                        <tr>
+                            <th></th>
+                            <th>λ</th>
+                            <th>0</th>
+                            <th>1</th>
+                        </tr>
+                        <tr>
+                            <td><strong>q₀</strong></td>
+                            <td>λ, L, q₁</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td><strong>q₁</strong></td>
+                            <td>1, L, q₂</td>
+                            <td>0, L, q₁</td>
+                            <td>1, L, q₁</td>
+                        </tr>
+                        <tr>
+                            <td><strong>q₂</strong></td>
+                            <td>λ, S, q₂</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </table>
+                    
+                    <p><strong>Задание:</strong> Определите результат выполнения программы. В ответе запишите получившееся число в десятичной системе счисления.</p>
+                </div>
+
+                <button class="show-solution-btn" onclick="toggleSolution('solution3')">👁 Показать решение</button>
+
+                <div class="solution-box" id="solution3">
+                    <h3>🔍 Решение (подробная трассировка):</h3>
+                    
+                    <p><strong>Исходная лента:</strong> λ 1 1 1 1 1 1 0 1 0 0 1 λ</p>
+                    <p>Головка начинает на правом λ.</p>
+                    
+                    <div class="step">Такт 1: q₀, λ → λ, L, q₁ (головка на последней 1)</div>
+                    <div class="step">Такт 2: q₁, 1 → 1, L, q₁ (головка на 0)</div>
+                    <div class="step">Такт 3: q₁, 0 → 0, L, q₁ (головка на 0)</div>
+                    <div class="step">Такт 4: q₁, 0 → 0, L, q₁ (головка на 1)</div>
+                    <div class="step">Такт 5: q₁, 1 → 1, L, q₁ (головка на 0)</div>
+                    <div class="step">Такт 6: q₁, 0 → 0, L, q₁ (головка на 1)</div>
+                    <div class="step">Такт 7: q₁, 1 → 1, L, q₁ (головка на 1)</div>
+                    <div class="step">Такт 8: q₁, 1 → 1, L, q₁ (головка на 1)</div>
+                    <div class="step">Такт 9: q₁, 1 → 1, L, q₁ (головка на 1)</div>
+                    <div class="step">Такт 10: q₁, 1 → 1, L, q₁ (головка на 1)</div>
+                    <div class="step">Такт 11: q₁, 1 → 1, L, q₁ (головка на 1)</div>
+                    <div class="step">Такт 12: q₁, λ → 1, L, q₂ (записали 1 слева, головка на левом λ)</div>
+                    <div class="step">Такт 13: q₂, λ → λ, S, q₂ (СТОП)</div>
+                    
+                    <p><strong>Результат:</strong> λ <strong>1</strong> 1 1 1 1 1 0 1 0 0 1 λ</p>
+                    <p>Добавилась единица слева от исходного числа.</p>
+                    
+                    <div class="step">111111101001₂ = 4073₁₀</div>
+                    
+                    <div class="answer-highlight">
+                        ✅ Ответ: 4073
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 18: Заключение -->
+        <div class="slide">
+            <h2>🎓 Итоги занятия</h2>
+            <div class="content">
+                <h3>Что мы узнали:</h3>
+                <ul>
+                    <li>✅ Алгоритм — это не просто "инструкция", а строгая математическая сущность</li>
+                    <li>✅ Машина Тьюринга и НАМ Маркова описывают границы того, что <span class="highlight">в принципе вычислимо</span></li>
+                    <li>✅ Все вычислительные модели эквивалентны по своей мощности</li>
+                    <li>✅ Существуют задачи, которые принципиально нельзя решить ни на каком компьютере</li>
+                </ul>
+
+                <div class="code-block" style="background: #ffeaa7; text-align: center; font-size: 1.3em;">
+                    🌟 <strong>Главная мысль:</strong><br>
+                    Формализация алгоритма подарила нам не только компьютеры,<br>но и понимание пределов познания!
+                </div>
+
+                <div style="text-align: center; margin-top: 40px;">
+                    <p style="font-size: 1.5em; color: #667eea; font-weight: bold;">Спасибо за внимание!</p>
+                    <p style="margin-top: 20px;">Вопросы? 💬</p>
+                </div>
+
+                <div style="margin-top: 30px; padding: 20px; background: #f9f9f9; border-radius: 10px;">
+                    <h3>📚 Для любознательных:</h3>
+                    <ul>
+                        <li>А. Тьюринг "Системы логического исчисления"</li>
+                        <li>А. Марков "Теория алгорифмов"</li>
+                        <li>Проблема остановки и теорема Гёделя о неполноте</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-buttons">
+        <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">← Назад</button>
+        <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">Далее →</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            updateControls();
+        }
+
+        function changeSlide(direction) {
+            showSlide(currentSlide + direction);
+        }
+
+        function updateControls() {
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+            document.getElementById('counter').textContent = `${currentSlide + 1} / ${totalSlides}`;
+            document.getElementById('progress').style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+        }
+
+        // Навигация клавиатурой
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+        });
+
+        // Проверка ответов в блиц-опросе
+        function checkAnswer(element, isCorrect) {
+            const feedback = document.getElementById('quiz-feedback');
+            
+            if (isCorrect) {
+                element.classList.add('correct');
+                feedback.className = 'feedback show success';
+                feedback.textContent = '✅ Правильно!';
+            } else {
+                element.classList.add('incorrect');
+                feedback.className = 'feedback show error';
+                feedback.textContent = '❌ Неправильно. Попробуйте еще раз!';
+            }
+        }
+
+        // Показ/скрытие решения задач
+        function toggleSolution(solutionId) {
+            const solution = document.getElementById(solutionId);
+            solution.classList.toggle('show');
+        }
+
+        // Инициализация
+        updateControls();
+    </script>
+</body>
+</html>

@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест: Элементы теории алгоритмов</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            user-select: none;
+        }
+
+        .quiz-container {
+            max-width: 900px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e94560, #ff6b8a);
+            transition: width 0.4s ease;
+            border-radius: 10px;
+        }
+
+        .progress-text {
+            text-align: center;
+            font-size: 0.95em;
+            color: #a0a0a0;
+            margin-bottom: 20px;
+        }
+
+        .question-icon {
+            font-size: 5em;
+            text-align: center;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 4px 8px rgba(233, 69, 96, 0.3));
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .question-type {
+            display: inline-block;
+            background: rgba(233, 69, 96, 0.2);
+            color: #e94560;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin-bottom: 15px;
+            border: 1px solid rgba(233, 69, 96, 0.4);
+        }
+
+        h2 {
+            font-size: 1.8em;
+            color: #ffffff;
+            margin-bottom: 30px;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option {
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            padding: 18px 25px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1em;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .option:hover:not(.disabled) {
+            background: rgba(233, 69, 96, 0.15);
+            border-color: #e94560;
+            transform: translateX(5px);
+        }
+
+        .option .option-icon {
+            font-size: 1.5em;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .option.correct {
+            background: rgba(76, 175, 80, 0.25);
+            border-color: #4caf50;
+            animation: pulse 0.5s;
+        }
+
+        .option.wrong {
+            background: rgba(244, 67, 54, 0.25);
+            border-color: #f44336;
+            animation: shake 0.5s;
+        }
+
+        .option.disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        .feedback {
+            margin-top: 20px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.1em;
+            display: none;
+        }
+
+        .feedback.show {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .feedback.correct {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4caf50;
+            color: #81c784;
+        }
+
+        .feedback.wrong {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+            color: #ef9a9a;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Сопоставление */
+        .matching-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .matching-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .matching-item {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.05em;
+        }
+
+        .matching-item .item-icon {
+            font-size: 1.8em;
+        }
+
+        .matching-select {
+            min-width: 220px;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .matching-select:focus {
+            outline: none;
+            border-color: #e94560;
+        }
+
+        .matching-select option {
+            background: #16213e;
+            color: #e0e0e0;
+        }
+
+        .matching-row.correct {
+            border-color: #4caf50;
+            background: rgba(76, 175, 80, 0.15);
+        }
+
+        .matching-row.wrong {
+            border-color: #f44336;
+            background: rgba(244, 67, 54, 0.15);
+        }
+
+        .btn {
+            padding: 14px 30px;
+            font-size: 1.1em;
+            background: linear-gradient(135deg, #e94560, #ff6b8a);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(233, 69, 96, 0.5);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-center {
+            display: block;
+            margin: 25px auto 0;
+        }
+
+        .btn-next {
+            display: none;
+            margin: 25px auto 0;
+            padding: 14px 40px;
+            font-size: 1.15em;
+            background: linear-gradient(135deg, #0f3460, #533483);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(83, 52, 131, 0.4);
+            font-weight: bold;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .btn-next:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(83, 52, 131, 0.5);
+        }
+
+        .btn-next:active {
+            transform: translateY(0);
+        }
+
+        .btn-next.show {
+            display: block;
+        }
+
+        /* Результат */
+        .result-screen {
+            text-align: center;
+        }
+
+        .result-icon {
+            font-size: 6em;
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+
+        .result-score {
+            font-size: 3em;
+            color: #e94560;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .result-message {
+            font-size: 1.3em;
+            color: #a0a0a0;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Титульный экран */
+        .title-screen h1 {
+            font-size: 2.5em;
+            color: #e94560;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .title-screen p {
+            font-size: 1.2em;
+            color: #a0a0a0;
+            text-align: center;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .title-icon {
+            font-size: 5em;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .info-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-card .card-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .info-card .card-title {
+            color: #e94560;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .info-card .card-text {
+            color: #a0a0a0;
+            font-size: 0.95em;
+        }
+
+        @media (max-width: 768px) {
+            .quiz-container { padding: 20px; }
+            h2 { font-size: 1.3em; }
+            .question-icon { font-size: 3.5em; }
+            .matching-row { flex-direction: column; align-items: stretch; }
+            .matching-select { min-width: 100%; }
+            .title-screen h1 { font-size: 1.8em; }
+            .result-score { font-size: 2em; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+    </div>
+    <div class="progress-text" id="progressText">Вопрос 0 из 9</div>
+
+    <div id="quizContent">
+        <!-- Контент будет генерироваться JavaScript -->
+    </div>
+</div>
+
+<script>
+    const questions = [
+        {
+            type: 'choice',
+            icon: '🧮',
+            question: 'Кто ввёл термин «алгоритм» в науку?',
+            options: [
+                { text: 'Аль-Хорезми', icon: '📜', correct: false },
+                { text: 'Г. В. Лейбниц', icon: '🎩', correct: true },
+                { text: 'Курт Гёдель', icon: '🔬', correct: false },
+                { text: 'Алан Тьюринг', icon: '💻', correct: false }
+            ],
+            explanation: 'Термин ввёл Лейбниц в XVII веке, а слово образовано от имени аль-Хорезми.'
+        },
+        {
+            type: 'choice',
+            icon: '📐',
+            question: 'Для решения какой задачи предназначен алгоритм Евклида?',
+            options: [
+                { text: 'Вычисление НОД двух чисел', icon: '🎯', correct: true },
+                { text: 'Разложение на простые множители', icon: '🔢', correct: false },
+                { text: 'Решение квадратных уравнений', icon: '📊', correct: false },
+                { text: 'Доказательство теорем', icon: '📝', correct: false }
+            ],
+            explanation: 'Алгоритм Евклида — один из древнейших алгоритмов для нахождения наибольшего общего делителя.'
+        },
+        {
+            type: 'choice',
+            icon: '🔍',
+            question: 'Что происходит, если алгоритм зацикливается или завершается аварийно?',
+            options: [
+                { text: 'Результат равен нулю', icon: '0️⃣', correct: false },
+                { text: 'Результат не определён', icon: '❓', correct: true },
+                { text: 'Алгоритм запускается заново', icon: '🔄', correct: false },
+                { text: 'Результат — последний промежуточный объект', icon: '📦', correct: false }
+            ],
+            explanation: 'При зацикливании или аварийном завершении результат работы алгоритма не определён.'
+        },
+        {
+            type: 'choice',
+            icon: '💾',
+            question: 'С какими последовательностями достаточно рассматривать алгоритмы?',
+            options: [
+                { text: 'С десятичными числами', icon: '🔟', correct: false },
+                { text: 'С символьными строками', icon: '🔤', correct: false },
+                { text: 'С двоичными последовательностями', icon: '0️⃣1️⃣', correct: true },
+                { text: 'С графическими объектами', icon: '🖼️', correct: false }
+            ],
+            explanation: 'Любой текст можно перевести в двоичный код, поэтому достаточно двоичных последовательностей.'
+        },
+        {
+            type: 'choice',
+            icon: '🏛️',
+            question: 'В каком году Курт Гёдель доказал теорему о неполноте?',
+            options: [
+                { text: '1900', icon: '📅', correct: false },
+                { text: '1931', icon: '📅', correct: true },
+                { text: '1950', icon: '📅', correct: false },
+                { text: '1975', icon: '📅', correct: false }
+            ],
+            explanation: 'В 1931 году Гёдель доказал, что в любой сложной формальной системе есть недоказуемые утверждения.'
+        },
+        {
+            type: 'choice',
+            icon: '🤖',
+            question: 'Что такое универсальный исполнитель?',
+            options: [
+                { text: 'Исполнитель с самым большим набором команд', icon: '📚', correct: false },
+                { text: 'Исполнитель, моделирующий работу любого другого', icon: '🎭', correct: true },
+                { text: 'Исполнитель, работающий только с числами', icon: '🔢', correct: false },
+                { text: 'Исполнитель без памяти', icon: '🧠', correct: false }
+            ],
+            explanation: 'Универсальный исполнитель может моделировать работу любого другого исполнителя.'
+        },
+        {
+            type: 'choice',
+            icon: '🧠',
+            question: 'Кто из учёных НЕ внёс значительный вклад в теорию алгоритмов?',
+            options: [
+                { text: 'А. Тьюринг', icon: '🇬🇧', correct: false },
+                { text: 'А. Чёрч', icon: '🇬🇧', correct: false },
+                { text: 'А. А. Марков', icon: '🇷🇺', correct: false },
+                { text: 'И. Ньютон', icon: '🔭', correct: true }
+            ],
+            explanation: 'Ньютон жил в XVII–XVIII веках и не занимался теорией алгоритмов.'
+        },
+        {
+            type: 'matching',
+            icon: '🔗',
+            question: 'Соотнесите учёного и его вклад в науку:',
+            items: [
+                { term: 'Аль-Хорезми', icon: '📜', correct: 'Основатель алгебры' },
+                { term: 'Курт Гёдель', icon: '🔬', correct: 'Теорема о неполноте' },
+                { term: 'Г. В. Лейбниц', icon: '🎩', correct: 'Ввёл термин «алгоритм»' },
+                { term: 'А. Тьюринг', icon: '💻', correct: 'Модель универсального исполнителя' }
+            ],
+            options: ['Основатель алгебры', 'Теорема о неполноте', 'Ввёл термин «алгоритм»', 'Модель универсального исполнителя', 'Закон всемирного тяготения']
+        },
+        {
+            type: 'matching',
+            icon: '⚙️',
+            question: 'Соотнесите компонент универсального исполнителя и его функцию:',
+            items: [
+                { term: 'Процессор', icon: '🖥️', correct: 'Система команд и способ их выполнения' },
+                { term: 'Память', icon: '💾', correct: 'Способ хранения данных' },
+                { term: 'Язык программирования', icon: '📝', correct: 'Способ записи программ' },
+                { term: 'Ввод данных', icon: '⌨️', correct: 'Чтение входного слова' }
+            ],
+            options: ['Система команд и способ их выполнения', 'Способ хранения данных', 'Способ записи программ', 'Чтение входного слова', 'Вывод результата']
+        }
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+    let answered = false;
+
+    const quizContent = document.getElementById('quizContent');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+
+    function showTitleScreen() {
+        progressFill.style.width = '0%';
+        progressText.textContent = 'Готовы начать?';
+        quizContent.innerHTML = `
+            <div class="title-screen">
+                <div class="title-icon">🧠</div>
+                <h1>Тест: Элементы теории алгоритмов</h1>
+                <p>Проверьте свои знания по теме «Зачем нужно определение алгоритма?»</p>
+                
+                <div class="info-cards">
+                    <div class="info-card">
+                        <div class="card-icon">❓</div>
+                        <div class="card-title">9 вопросов</div>
+                        <div class="card-text">С выбором ответа и на сопоставление</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="card-icon">🎯</div>
+                        <div class="card-title">Без времени</div>
+                        <div class="card-text">Отвечайте в своём темпе</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="card-icon">📊</div>
+                        <div class="card-title">Результат</div>
+                        <div class="card-text">Узнайте свой балл в конце</div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-center" onclick="startQuiz()">🚀 Начать тест</button>
+            </div>
+        `;
+    }
+
+    function startQuiz() {
+        currentQuestion = 0;
+        score = 0;
+        showQuestion();
+    }
+
+    function showQuestion() {
+        answered = false;
+        const q = questions[currentQuestion];
+        const progress = ((currentQuestion) / questions.length) * 100;
+        progressFill.style.width = progress + '%';
+        progressText.textContent = `Вопрос ${currentQuestion + 1} из ${questions.length}`;
+
+        if (q.type === 'choice') {
+            renderChoiceQuestion(q);
+        } else if (q.type === 'matching') {
+            renderMatchingQuestion(q);
+        }
+    }
+
+    function renderChoiceQuestion(q) {
+        let optionsHtml = q.options.map((opt, idx) => `
+            <div class="option" data-index="${idx}" onclick="selectOption(${idx})">
+                <span class="option-icon">${opt.icon}</span>
+                <span>${opt.text}</span>
+            </div>
+        `).join('');
+
+        const isLast = currentQuestion === questions.length - 1;
+        const btnLabel = isLast ? '📊 Результаты' : 'Далее →';
+
+        quizContent.innerHTML = `
+            <div class="question-icon">${q.icon}</div>
+            <div style="text-align:center"><span class="question-type">Выберите один ответ</span></div>
+            <h2>${q.question}</h2>
+            <div class="options">${optionsHtml}</div>
+            <div class="feedback" id="feedback"></div>
+            <button class="btn-next" id="btnNext" onclick="nextQuestion()">${btnLabel}</button>
+        `;
+    }
+
+    function selectOption(idx) {
+        if (answered) return;
+        answered = true;
+        
+        const q = questions[currentQuestion];
+        const options = document.querySelectorAll('.option');
+        const feedback = document.getElementById('feedback');
+        const btnNext = document.getElementById('btnNext');
+        const isCorrect = q.options[idx].correct;
+
+        options.forEach((opt, i) => {
+            opt.classList.add('disabled');
+            if (q.options[i].correct) {
+                opt.classList.add('correct');
+            } else if (i === idx && !isCorrect) {
+                opt.classList.add('wrong');
+            }
+        });
+
+        if (isCorrect) {
+            score++;
+            feedback.className = 'feedback show correct';
+            feedback.innerHTML = `✅ Правильно! ${q.explanation}`;
+        } else {
+            feedback.className = 'feedback show wrong';
+            feedback.innerHTML = `❌ Неверно. ${q.explanation}`;
+        }
+
+        btnNext.classList.add('show');
+    }
+
+    function renderMatchingQuestion(q) {
+        const shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+        
+        let rowsHtml = q.items.map((item, idx) => {
+            const optionsHtml = shuffledOptions.map(opt => 
+                `<option value="${opt}">${opt}</option>`
+            ).join('');
+            
+            return `
+                <div class="matching-row" data-correct="${item.correct}">
+                    <div class="matching-item">
+                        <span class="item-icon">${item.icon}</span>
+                        <span>${item.term}</span>
+                    </div>
+                    <select class="matching-select" data-index="${idx}">
+                        <option value="">— выберите —</option>
+                        ${optionsHtml}
+                    </select>
+                </div>
+            `;
+        }).join('');
+
+        const isLast = currentQuestion === questions.length - 1;
+        const btnNextLabel = isLast ? '📊 Результаты' : 'Далее →';
+
+        quizContent.innerHTML = `
+            <div class="question-icon">${q.icon}</div>
+            <div style="text-align:center"><span class="question-type">На сопоставление</span></div>
+            <h2>${q.question}</h2>
+            <div class="matching-container">${rowsHtml}</div>
+            <button class="btn btn-center" id="btnCheck" onclick="checkMatching()">✓ Проверить</button>
+            <div class="feedback" id="feedback"></div>
+            <button class="btn-next" id="btnNext" onclick="nextQuestion()">${btnNextLabel}</button>
+        `;
+    }
+
+    function checkMatching() {
+        if (answered) return;
+        answered = true;
+
+        const q = questions[currentQuestion];
+        const rows = document.querySelectorAll('.matching-row');
+        const feedback = document.getElementById('feedback');
+        const btnCheck = document.getElementById('btnCheck');
+        const btnNext = document.getElementById('btnNext');
+        let correctCount = 0;
+
+        rows.forEach(row => {
+            const select = row.querySelector('.matching-select');
+            const correctAnswer = row.dataset.correct;
+            const userAnswer = select.value;
+
+            if (userAnswer === correctAnswer) {
+                row.classList.add('correct');
+                correctCount++;
+            } else {
+                row.classList.add('wrong');
+            }
+            select.disabled = true;
+        });
+
+        btnCheck.style.display = 'none';
+
+        if (correctCount === q.items.length) {
+            score++;
+            feedback.className = 'feedback show correct';
+            feedback.innerHTML = `✅ Отлично! Все пары сопоставлены верно.`;
+        } else {
+            feedback.className = 'feedback show wrong';
+            feedback.innerHTML = `❌ Верно: ${correctCount} из ${q.items.length}. Правильные ответы отмечены зелёным.`;
+        }
+
+        btnNext.classList.add('show');
+    }
+
+    function nextQuestion() {
+        currentQuestion++;
+        if (currentQuestion < questions.length) {
+            showQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    function showResult() {
+        progressFill.style.width = '100%';
+        progressText.textContent = 'Тест завершён!';
+
+        const percentage = Math.round((score / questions.length) * 100);
+        let icon, message, color;
+
+        if (percentage === 100) {
+            icon = '🏆';
+            message = 'Превосходно! Вы отлично усвоили материал!';
+            color = '#4caf50';
+        } else if (percentage >= 70) {
+            icon = '🎉';
+            message = 'Хороший результат! Вы хорошо знаете тему.';
+            color = '#8bc34a';
+        } else if (percentage >= 50) {
+            icon = '👍';
+            message = 'Неплохо, но есть над чем поработать.';
+            color = '#ff9800';
+        } else {
+            icon = '📚';
+            message = 'Рекомендуем повторить материал и попробовать снова.';
+            color = '#f44336';
+        }
+
+        quizContent.innerHTML = `
+            <div class="result-screen">
+                <div class="result-icon">${icon}</div>
+                <h2>Тест завершён!</h2>
+                <div class="result-score" style="color: ${color}">${score} / ${questions.length}</div>
+                <div class="result-message">${message}</div>
+                <div class="info-cards">
+                    <div class="info-card">
+                        <div class="card-icon">📊</div>
+                        <div class="card-title">${percentage}%</div>
+                        <div class="card-text">правильных ответов</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="card-icon">✅</div>
+                        <div class="card-title">${score}</div>
+                        <div class="card-text">верных ответов</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="card-icon">❌</div>
+                        <div class="card-title">${questions.length - score}</div>
+                        <div class="card-text">ошибок</div>
+                    </div>
+                </div>
+                <button class="btn btn-center" onclick="startQuiz()">🔄 Пройти ещё раз</button>
+            </div>
+        `;
+    }
+
+    // Запуск
+    showTitleScreen();
+</script>
+
+</body>
+</html>

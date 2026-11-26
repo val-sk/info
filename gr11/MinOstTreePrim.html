@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Метод Прима · единый интерактивный файл</title>
+<style>
+:root{
+  --bg:#060b16; --surface:rgba(13,22,40,.74); --surface2:rgba(17,29,51,.9);
+  --line:rgba(148,163,184,.16); --line2:rgba(148,163,184,.28);
+  --ink:#e9f0fa; --muted:#8fa3bf; --dim:#5b6c86;
+  --cyan:#22d3ee; --blue:#60a5fa; --violet:#a78bfa;
+  --green:#34d399; --green2:#6ee7b7; --amber:#fbbf24; --rose:#fb7185;
+  --mono:Consolas,"JetBrains Mono",Menlo,"Courier New",monospace;
+}
+*{box-sizing:border-box;scrollbar-width:thin;scrollbar-color:#22d3ee #0b1526}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:#0b1526}
+::-webkit-scrollbar-thumb{background:linear-gradient(#22d3ee,#8b5cf6);border-radius:8px;border:2px solid #0b1526}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(#67e8f9,#a78bfa)}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);overflow:hidden;
+  font-family:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-size:17px;line-height:1.55}
+#aurora{position:fixed;inset:-25%;z-index:0;pointer-events:none;filter:blur(70px);opacity:.6;
+  background:
+    radial-gradient(620px 440px at 16% 20%,rgba(34,211,238,.30),transparent 62%),
+    radial-gradient(720px 540px at 84% 16%,rgba(167,139,250,.26),transparent 62%),
+    radial-gradient(660px 540px at 72% 84%,rgba(52,211,153,.22),transparent 60%),
+    radial-gradient(540px 440px at 26% 80%,rgba(251,113,133,.14),transparent 60%);
+  animation:auroraDrift 38s ease-in-out infinite alternate}
+@keyframes auroraDrift{from{transform:translate3d(-2%,-1%,0) scale(1)}to{transform:translate3d(2%,2%,0) scale(1.08)}}
+#grid{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.55;
+  background-image:linear-gradient(rgba(96,165,250,.055) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(96,165,250,.055) 1px,transparent 1px);
+  background-size:44px 44px;
+  -webkit-mask-image:radial-gradient(ellipse at 50% 38%,#000 28%,transparent 76%);
+  mask-image:radial-gradient(ellipse at 50% 38%,#000 28%,transparent 76%)}
+#grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E")}
+#glow{position:fixed;left:0;top:0;width:520px;height:520px;border-radius:50%;z-index:2;
+  pointer-events:none;opacity:0;transition:opacity .5s;will-change:transform;
+  background:radial-gradient(circle,rgba(34,211,238,.10),transparent 62%)}
+header.topbar{position:fixed;top:0;left:0;right:0;height:60px;z-index:50;display:flex;align-items:center;
+  gap:14px;padding:0 18px;background:rgba(6,11,22,.78);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;flex:none}
+.brand svg{width:26px;height:26px}
+.topbar .title{font-weight:700;font-size:14.5px;color:var(--muted);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;flex:1;letter-spacing:.02em}
+.counter{font-variant-numeric:tabular-nums;font-weight:800;color:var(--cyan);font-size:13.5px;
+  background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.3);padding:4px 12px;border-radius:999px;flex:none}
+.progress{position:absolute;left:0;bottom:-1px;height:3px;width:100%}
+#progressFill{height:100%;width:0;border-radius:0 3px 3px 0;transition:width .4s;
+  background:linear-gradient(90deg,var(--cyan),var(--violet),var(--green),var(--amber))}
+main#deck{position:fixed;top:60px;bottom:64px;left:0;right:0;overflow-y:auto;z-index:10}
+.slide{display:none;padding:30px 22px 48px}
+.slide.active{display:block;animation:slideIn .5s ease}
+@keyframes slideIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.wrap{max-width:1240px;margin:0 auto}
+.stagger>*{animation:rise .6s both}
+.stagger>*:nth-child(1){animation-delay:.05s}.stagger>*:nth-child(2){animation-delay:.12s}
+.stagger>*:nth-child(3){animation-delay:.19s}.stagger>*:nth-child(4){animation-delay:.26s}
+.stagger>*:nth-child(5){animation-delay:.33s}.stagger>*:nth-child(6){animation-delay:.4s}
+.stagger>*:nth-child(7){animation-delay:.47s}.stagger>*:nth-child(8){animation-delay:.54s}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+footer.navbar{position:fixed;bottom:0;left:0;right:0;height:64px;z-index:50;display:flex;align-items:center;
+  justify-content:space-between;padding:0 18px;background:rgba(6,11,22,.8);backdrop-filter:blur(14px);
+  border-top:1px solid var(--line)}
+.hint{color:var(--dim);font-size:12.5px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 18px;border-radius:12px;
+  border:1px solid var(--line2);background:rgba(17,29,51,.8);color:var(--ink);font:inherit;font-size:14.5px;
+  font-weight:700;cursor:pointer;transition:.18s;letter-spacing:.01em}
+.btn:hover{border-color:rgba(34,211,238,.6);transform:translateY(-1px);box-shadow:0 6px 22px rgba(34,211,238,.18)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:linear-gradient(135deg,#22d3ee,#60a5fa);border-color:transparent;color:#04121f;
+  box-shadow:0 6px 24px rgba(34,211,238,.3)}
+.btn.primary:hover{box-shadow:0 8px 30px rgba(34,211,238,.45)}
+.btn.small{padding:7px 13px;font-size:13px;border-radius:10px}
+.btn.on{border-color:rgba(251,191,36,.7);color:var(--amber);box-shadow:0 0 18px rgba(251,191,36,.2)}
+.btn:disabled{opacity:.32;pointer-events:none}
+.kicker{display:inline-flex;align-items:center;gap:9px;font-size:12px;font-weight:800;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--kc,var(--cyan))}
+.kicker::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--kc,var(--cyan));
+  box-shadow:0 0 12px var(--kc,var(--cyan))}
+h1{font-size:clamp(32px,5vw,54px);line-height:1.1;margin:12px 0 10px;letter-spacing:-.02em;font-weight:800}
+h2{font-size:clamp(24px,3.4vw,36px);line-height:1.18;margin:10px 0 12px;letter-spacing:-.015em;font-weight:800}
+h3{margin:0 0 8px;font-size:18px;font-weight:750}
+.grad{background:linear-gradient(100deg,var(--cyan),var(--green2) 45%,var(--violet));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{color:var(--muted);font-size:17.5px;max-width:900px;margin:0 0 20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px 22px;
+  box-shadow:0 18px 50px rgba(0,0,0,.45);backdrop-filter:blur(10px)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:920px){.grid2,.grid3{grid-template-columns:1fr}}
+.note{background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.28);border-left:4px solid var(--cyan);
+  padding:13px 17px;border-radius:14px;font-size:15.5px;margin-top:16px;color:#cfe9f5}
+.note.green{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.3);border-left-color:var(--green);color:#d3f5e8}
+.note.amber{background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.3);border-left-color:var(--amber);color:#f7e8c4}
+.note.rose{background:rgba(251,113,133,.08);border-color:rgba(251,113,133,.3);border-left-color:var(--rose);color:#fbdde3}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{background:rgba(17,29,51,.75);border:1px solid var(--line2);border-radius:999px;padding:8px 16px;
+  font-size:14px;font-weight:650;color:var(--ink)}
+button.chip{cursor:pointer;transition:.2s;font-family:inherit}
+button.chip:hover{border-color:var(--cyan);color:var(--cyan);transform:translateY(-1px);
+  box-shadow:0 4px 16px rgba(34,211,238,.15)}
+.mono{font-family:var(--mono)}
+.qa{cursor:pointer;transition:transform .16s,border-color .2s,box-shadow .2s}
+.qa:hover{transform:translateY(-3px);border-color:rgba(34,211,238,.5);box-shadow:0 10px 30px rgba(34,211,238,.12)}
+.qa .q{display:flex;gap:12px;align-items:flex-start;font-weight:700}
+.qa .badge{flex:none;width:30px;height:30px;border-radius:50%;background:rgba(34,211,238,.12);
+  border:1px solid rgba(34,211,238,.4);color:var(--cyan);display:flex;align-items:center;justify-content:center;
+  font-weight:800;transition:.25s}
+.qa.open .badge{background:rgba(52,211,153,.15);border-color:rgba(52,211,153,.5);color:var(--green2)}
+.qa .a{max-height:0;overflow:hidden;transition:max-height .38s ease,margin .38s;color:#b9c8dd;font-size:15.5px}
+.qa.open .a{max-height:300px;margin-top:13px}
+.qa .a-inner{border-top:1px dashed var(--line2);padding-top:11px}
+pre.code{background:#040913;color:#dbe7f5;border:1px solid rgba(96,165,250,.22);border-radius:14px;
+  padding:17px 19px;overflow:auto;font-family:var(--mono);font-size:14.5px;line-height:1.62;margin:0;
+  box-shadow:inset 0 0 40px rgba(34,211,238,.04),0 18px 50px rgba(0,0,0,.45)}
+pre.code.out{color:#a7f3d0;border-color:rgba(52,211,153,.3)}
+.tok-k{color:#c4b5fd;font-weight:600}.tok-s{color:#86efac}.tok-c{color:#64748b;font-style:italic}
+.tok-n{color:#fcd34d}.tok-f{color:#7dd3fc}
+.codebar{display:flex;align-items:center;gap:10px;margin:0 0 10px;flex-wrap:wrap}
+.filechip{font-family:var(--mono);font-size:12.5px;background:rgba(96,165,250,.14);color:#93c5fd;
+  border:1px solid rgba(96,165,250,.3);padding:4px 12px;border-radius:8px;font-weight:700}
+svg.graph{width:100%;height:auto;display:block;user-select:none}
+.flow{animation:flow 1.1s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-42}}
+.flow-slow{animation:flowSlow 1.4s linear infinite}
+@keyframes flowSlow{to{stroke-dashoffset:-34}}
+.pill{padding:3px 12px;border-radius:999px;font-size:12.5px;font-weight:800;flex:none;letter-spacing:.03em}
+.pill.green{background:rgba(52,211,153,.14);color:var(--green2);border:1px solid rgba(52,211,153,.4)}
+.pill.amber{background:rgba(251,191,36,.14);color:var(--amber);border:1px solid rgba(251,191,36,.4)}
+.pill.cyan{background:rgba(34,211,238,.14);color:var(--cyan);border:1px solid rgba(34,211,238,.4)}
+.demo{display:grid;grid-template-columns:1.25fr .95fr;gap:18px;align-items:start}
+@media(max-width:1020px){.demo{grid-template-columns:1fr}}
+.demo-low{display:grid;grid-template-columns:1fr 1.15fr;gap:18px;margin-top:18px}
+@media(max-width:1020px){.demo-low{grid-template-columns:1fr}}
+.stats{display:flex;gap:12px;margin-top:14px}
+.stat{flex:1;background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:10px 12px;text-align:center}
+.stat b{display:block;font-size:23px;font-weight:800;color:var(--cyan);font-variant-numeric:tabular-nums}
+.stat.g b{color:var(--green2)}.stat.a b{color:var(--amber)}
+.stat span{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.07em}
+.exp{border-radius:14px;padding:15px 17px;background:var(--surface2);border:1px solid var(--line);min-height:158px}
+.badge2{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.12em;padding:3px 11px;
+  border-radius:999px;margin-bottom:7px}
+.badge2.init{background:rgba(96,165,250,.15);color:var(--blue);border:1px solid rgba(96,165,250,.4)}
+.badge2.take{background:rgba(52,211,153,.15);color:var(--green2);border:1px solid rgba(52,211,153,.4)}
+.badge2.done{background:rgba(52,211,153,.2);color:#a7f3d0;border:1px solid rgba(52,211,153,.55)}
+.exp h4{margin:2px 0 7px;font-size:16.5px}
+.exp p{margin:0;font-size:14.5px;color:#b9c8dd}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px;align-items:center}
+.sel{background:rgba(17,29,51,.9);border:1px solid var(--line2);color:var(--ink);border-radius:10px;
+  padding:7px 10px;font:inherit;font-size:13px;font-weight:650;cursor:pointer}
+.switch{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);font-weight:650;cursor:pointer}
+.switch input{accent-color:var(--cyan);width:16px;height:16px;cursor:pointer}
+.step-list{display:flex;flex-direction:column;gap:6px;margin-top:13px}
+.srow{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:11px;border:1px solid transparent;
+  background:rgba(13,22,40,.5);cursor:pointer;transition:.15s;font-size:14px;font-weight:650}
+.srow:hover{border-color:var(--line2);background:rgba(17,29,51,.8)}
+.srow .n{flex:none;width:24px;height:24px;border-radius:8px;background:rgba(96,165,250,.14);color:var(--blue);
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+.srow .sub{margin-left:auto;color:var(--muted);font-size:12.5px;font-family:var(--mono)}
+.srow.done .n{background:rgba(52,211,153,.18);color:var(--green2)}
+.srow.cur{border-color:rgba(251,191,36,.6);background:rgba(251,191,36,.08);box-shadow:0 0 16px rgba(251,191,36,.12)}
+.srow.cur .n{background:rgba(251,191,36,.2);color:var(--amber)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--muted);margin:6px 0 14px}
+.legend i{display:inline-block;width:22px;height:0;border-top:4px solid;border-radius:2px;margin-right:6px;vertical-align:middle}
+.mx-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.mx-cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:9px;
+  background:rgba(13,22,40,.6);border:1px solid var(--line);font-family:var(--mono);font-size:14px;
+  font-weight:700;color:#c6d4e8;position:relative;transition:.2s}
+.mx-head{background:rgba(96,165,250,.1);color:var(--blue);border-color:rgba(96,165,250,.3);font-weight:800}
+.mx-head.u{background:rgba(52,211,153,.12);color:var(--green2);border-color:rgba(52,211,153,.35)}
+.mx-head .tick{position:absolute;top:2px;right:4px;font-size:9px}
+.mx-corner{background:transparent;border-color:transparent;color:var(--dim);font-size:11px}
+.mx-cell.zero{color:#3d4f69}
+.mx-cell.diag{color:#33465f;background:rgba(10,18,34,.5)}
+.mx-cell.colu{opacity:.42}
+.mx-cell.src{border-color:rgba(34,211,238,.45);background:rgba(34,211,238,.07)}
+.mx-cell.add{background:rgba(52,211,153,.2);border-color:rgba(52,211,153,.6);color:#a7f3d0}
+.mx-cell.up{background:rgba(52,211,153,.28);border-color:var(--green);color:#d1fae5;animation:cellFlash .9s ease}
+@keyframes cellFlash{0%{box-shadow:0 0 0 0 rgba(52,211,153,.7)}100%{box-shadow:0 0 0 12px rgba(52,211,153,0)}}
+.arr-row{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.arr-name{flex:none;width:112px;font-family:var(--mono);font-size:12.5px;color:var(--cyan);font-weight:700;text-align:right}
+.arr-cells{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;flex:1}
+.arr-cell{background:rgba(13,22,40,.6);border:1px solid var(--line);border-radius:9px;padding:5px 4px;text-align:center}
+.arr-cell .v{font-size:10px;color:var(--dim);font-weight:800;display:block}
+.arr-cell .val{font-family:var(--mono);font-size:14px;font-weight:800;color:#c6d4e8}
+.arr-cell.used .val{color:var(--green2)}
+.arr-cell.front .val{color:var(--amber)}
+.arr-cell.chg{border-color:var(--green);background:rgba(52,211,153,.14);animation:cellFlash .9s ease}
+.reveal{cursor:pointer}
+.reveal .rfront{display:flex;align-items:center;gap:10px;font-weight:700}
+.reveal .rhint{margin-left:auto;font-size:12px;color:var(--cyan);font-weight:700;flex:none}
+.reveal.open .rhint{display:none}
+.reveal .rbody{max-height:0;overflow:hidden;transition:max-height .42s ease,margin .3s}
+.reveal.open .rbody{max-height:700px;margin-top:13px}
+.quiz{max-width:800px}
+.qprogress{display:flex;align-items:center;gap:12px;margin-bottom:12px;font-size:13.5px;font-weight:750;color:var(--muted)}
+.qdots{display:flex;gap:6px}
+.qdot{width:28px;height:6px;border-radius:3px;background:rgba(148,163,184,.2)}
+.qdot.done{background:var(--green)}.qdot.miss{background:var(--rose)}.qdot.cur{background:var(--cyan);box-shadow:0 0 10px rgba(34,211,238,.6)}
+.qtext{font-size:20px;font-weight:750;margin:6px 0 15px}
+.qopt{display:block;width:100%;text-align:left;padding:13px 16px;margin:9px 0;border-radius:12px;
+  border:1px solid var(--line2);background:rgba(13,22,40,.6);cursor:pointer;font-size:15.5px;font-family:inherit;
+  color:var(--ink);transition:.16s;line-height:1.4}
+.qopt:hover:not(:disabled){border-color:var(--cyan);background:rgba(34,211,238,.08);transform:translateX(3px)}
+.qopt:disabled{cursor:default}
+.qopt.correct{border-color:var(--green);background:rgba(52,211,153,.14);font-weight:700}
+.qopt.wrong{border-color:var(--rose);background:rgba(251,113,133,.12)}
+.qopt.muted{opacity:.45}
+.fb{border-radius:12px;padding:13px 16px;margin-top:13px;font-size:15px;animation:rise .35s both}
+.fb.ok{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.35)}
+.fb.no{background:rgba(251,113,133,.1);border:1px solid rgba(251,113,133,.35)}
+.fb b.verdict{display:block;margin-bottom:5px}
+.tiplink{display:inline-block;margin-top:9px;background:rgba(17,29,51,.9);border:1px solid var(--line2);
+  border-radius:10px;padding:6px 13px;font-size:13px;font-weight:700;color:var(--cyan);cursor:pointer;font-family:inherit}
+.tiplink:hover{border-color:var(--cyan)}
+.score{font-size:58px;font-weight:800;line-height:1;background:linear-gradient(120deg,var(--cyan),var(--green2));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.selfcheck .chip.done{background:rgba(52,211,153,.14);border-color:var(--green);color:var(--green2)}
+.toc{position:fixed;top:0;left:0;bottom:0;width:350px;max-width:88vw;background:rgba(8,14,27,.97);
+  backdrop-filter:blur(16px);z-index:100;border-right:1px solid var(--line2);
+  transform:translateX(-105%);transition:transform .32s ease;display:flex;flex-direction:column}
+.toc.open{transform:none}
+.toc .toc-head{padding:17px 19px;border-bottom:1px solid var(--line);font-weight:800;display:flex;
+  justify-content:space-between;align-items:center}
+.toc .items{overflow-y:auto;padding:10px}
+.tocitem{display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:none;border:none;
+  padding:10px 12px;border-radius:12px;cursor:pointer;font-family:inherit;font-size:14px;color:var(--ink)}
+.tocitem:hover{background:rgba(34,211,238,.07)}
+.tocitem.cur{background:rgba(34,211,238,.12);color:var(--cyan);font-weight:750}
+.tocitem .num{flex:none;width:27px;height:27px;border-radius:8px;background:rgba(96,165,250,.14);color:var(--blue);
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+.tocitem.cur .num{background:linear-gradient(135deg,var(--cyan),var(--blue));color:#04121f}
+.tocitem small{display:block;color:var(--dim);font-size:10.5px;font-weight:750;letter-spacing:.08em;text-transform:uppercase}
+#backdrop{position:fixed;inset:0;background:rgba(3,6,12,.6);backdrop-filter:blur(3px);z-index:90;opacity:0;
+  pointer-events:none;transition:.3s}
+#backdrop.show{opacity:1;pointer-events:auto}
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);z-index:120;
+  background:rgba(8,14,27,.95);border:1px solid rgba(52,211,153,.5);color:var(--green2);padding:10px 22px;
+  border-radius:12px;font-size:14px;font-weight:700;opacity:0;pointer-events:none;transition:.3s;
+  box-shadow:0 8px 30px rgba(52,211,153,.2)}
+#toast.show{opacity:1;transform:translateX(-50%)}
+.hidden{display:none!important}
+.cmp-table{width:100%;border-collapse:collapse;font-size:14.5px}
+.cmp-table th,.cmp-table td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.cmp-table th{color:var(--cyan);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.cmp-table td:first-child{color:var(--muted);font-weight:700;width:26%}
+@media(max-width:680px){body{font-size:16px}.hint{display:none}.slide{padding:20px 14px 36px}
+  pre.code{font-size:12.5px}.arr-name{width:84px;font-size:11px}.stats{flex-wrap:wrap}.stat{min-width:44%}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="aurora"></div><div id="grid"></div><div id="grain"></div><div id="glow"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <svg viewBox="0 0 26 26" fill="none"><path d="M5 19L13 6L21 17M5 19L21 17M13 6L21 17" stroke="#22d3ee" stroke-width="1.6" opacity=".7"/><circle cx="5" cy="19" r="3" fill="#34d399"/><circle cx="13" cy="6" r="3" fill="#22d3ee"/><circle cx="21" cy="17" r="3" fill="#a78bfa"/></svg>
+  </div>
+  <button class="btn small" id="menuBtn">☰ Оглавление</button>
+  <div class="title">Метод Прима · минимальное остовное дерево · матрица смежности</div>
+  <span class="counter"><span id="curNum">1</span> / <span id="totNum">14</span></span>
+  <div class="progress"><div id="progressFill"></div></div>
+</header>
+
+<div id="backdrop"></div>
+<nav class="toc" id="toc">
+  <div class="toc-head">Содержание урока <button class="btn small" id="tocClose">✕</button></div>
+  <div class="items" id="tocItems"></div>
+</nav>
+
+<main id="deck">
+
+<!-- 0 · ТИТУЛ -->
+<section class="slide active" data-title="Прим: выращиваем МОД" data-section="Старт">
+  <div class="wrap grid2" style="align-items:center">
+    <div>
+      <span class="kicker">Единый интерактивный файл · графы · 10–11 класс</span>
+      <h1>Метод <span class="grad">Прима</span>:<br>выращиваем минимальное остовное дерево</h1>
+      <p class="lead">Одно дерево растёт из стартовой вершины. Каждый шаг — самый дешёвый кабель
+        через границу уже построенной сети. Матрица смежности, три списка и чистый Python — без классов, кортежей и словарей.</p>
+      <div class="chips" style="margin:18px 0 22px">
+        <button class="chip" data-go="1">1 · Разминка</button>
+        <button class="chip" data-go="2">2 · Идея</button>
+        <button class="chip" data-go="4">3 · Демо с матрицей</button>
+        <button class="chip" data-go="6">4 · Код по шагам</button>
+        <button class="chip" data-go="12">5 · Рефлексия</button>
+      </div>
+      <button class="btn primary" data-go="1">Начать урок →</button>
+      <p style="font-size:12.5px;color:var(--dim);margin-top:28px">
+        В. Г. Соловьянюк-Кротова · АНО «Павловская гимназия» · val-sk.github.io/info</p>
+    </div>
+    <div class="card" style="padding:14px">
+      <svg id="heroSvg" class="graph" viewBox="0 0 640 430"></svg>
+      <p style="font-size:13px;color:var(--muted);margin:10px 6px 4px">
+        <span style="color:var(--green2)">●</span> зелёные каналы — готовое МОД весом 18.
+        По ним уже «течёт сигнал». Как оно выросло из вершины A — увидим пошагово.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 1 · РАЗМИНКА -->
+<section class="slide" data-title="Разминка: 6 вопросов" data-section="Повторение">
+  <div class="wrap">
+    <span class="kicker" style="--kc:#60a5fa">Шаг 1 · Разминка</span>
+    <h2>Что помним после Краскала?</h2>
+    <p class="lead">Ответь вслух — затем нажми на карточку и проверь себя.</p>
+    <div class="grid2 stagger">
+      <div class="card qa"><div class="q"><span class="badge">?</span>Что такое минимальное остовное дерево?</div>
+        <div class="a"><div class="a-inner">Подграф со <b>всеми вершинами</b>, без циклов, с <b>n − 1</b> ребром
+          и <b>минимальной суммой весов</b>.</div></div></div>
+      <div class="card qa"><div class="q"><span class="badge">?</span>Как работал Краскал?</div>
+        <div class="a"><div class="a-inner">Сортировал <b>все рёбра</b> по весу и брал лёгкие, если концы в разных
+          компонентах. Рос <b>лес</b>, который сливался в одно дерево.</div></div></div>
+      <div class="card qa"><div class="q"><span class="badge">?</span>Что такое матрица смежности?</div>
+        <div class="a"><div class="a-inner">Таблица <b>n × n</b>: в ячейке [i][j] стоит вес ребра i–j.
+          Для неориентированного графа матрица <b>симметрична</b>.</div></div></div>
+      <div class="card qa"><div class="q"><span class="badge">?</span>Что означает 0 в нашей матрице?</div>
+        <div class="a"><div class="a-inner"><b>Ребра нет</b> (все веса положительные). Отсутствие ребра не путать
+          с ребром нулевого веса — тогда пришлось бы кодировать пропуск иначе.</div></div></div>
+      <div class="card qa"><div class="q"><span class="badge">?</span>Сколько рёбер в МОД графа с 6 вершинами?</div>
+        <div class="a"><div class="a-inner"><b>5</b> = n − 1. Каждое новое ребро подключает ровно одну новую вершину.</div></div></div>
+      <div class="card qa"><div class="q"><span class="badge">?</span>Чем Прим будет отличаться по стратегии?</div>
+        <div class="a"><div class="a-inner">Краскал выбирает <b>ребро</b> из всего графа, Прим — <b>вершину</b>,
+          ближайшую к уже построенному дереву. Растёт <b>одно связное дерево</b>, а не лес.</div></div></div>
+    </div>
+    <div class="note">Сегодня тот же граф про посёлки и оптоволокно — но станция провайдера стоит в посёлке <b>A</b>,
+      и сеть будет расти именно оттуда.</div>
+  </div>
+</section>
+
+<!-- 2 · ИДЕЯ -->
+<section class="slide" data-title="Идея: дерево растёт" data-section="Идея">
+  <div class="wrap">
+    <span class="kicker" style="--kc:#34d399">Шаг 2 · Идея</span>
+    <h2>Дерево растёт из одной вершины</h2>
+    <p class="lead">Прим не перебирает все рёбра мира. Он смотрит только на <b>границу</b> построенной сети
+      и каждый раз тянет наружу самый дешёвый кабель. Для этого каждой вершине вне дерева нужен «паспорт» из трёх списков.</p>
+    <div class="grid3 stagger" style="margin-bottom:18px">
+      <div class="card"><h3><span class="mono" style="color:var(--green2)">used[v]</span> — в дереве?</h3>
+        <span class="pill green">True / False</span>
+        <p style="font-size:14.5px;color:var(--muted);margin:10px 0 0">Вершина уже подключена кабелем?
+          Такие вершины больше не трогаем — иначе появится цикл.</p></div>
+      <div class="card"><h3><span class="mono" style="color:var(--amber)">best[v]</span> — лучший мостик</h3>
+        <span class="pill amber">вес или ∞</span>
+        <p style="font-size:14.5px;color:var(--muted);margin:10px 0 0">Самое дешёвое ребро <b>из дерева в v</b>.
+          Пока пути нет — ∞. Это кандидат, а не окончательный ответ.</p></div>
+      <div class="card"><h3><span class="mono" style="color:var(--cyan)">from_vertex[v]</span> — откуда</h3>
+        <span class="pill cyan">вершина или −1</span>
+        <p style="font-size:14.5px;color:var(--muted);margin:10px 0 0">Из какой вершины дерева приходит лучший мостик.
+          Когда v победит в отборе — именно это ребро войдёт в МОД.</p></div>
+    </div>
+    <div class="grid2">
+      <div class="card" style="padding:14px">
+        <div style="display:flex;align-items:center;gap:10px;margin:2px 6px 8px">
+          <h3 style="margin:0;flex:1">Граница дерева после шага 2</h3><span class="pill amber">жёлтые — кандидаты</span></div>
+        <svg id="ideaSvg" class="graph" viewBox="0 0 640 430"></svg>
+        <p style="font-size:13px;color:var(--muted);margin:8px 6px 2px">Зелёное A–B уже в дереве.
+          Кандидат A–C (5) <b>погас</b>: из B до C всего 1 — best[C] улучшился, from[C] сменился на B.</p>
+      </div>
+      <div>
+        <div class="note green" style="margin-top:0"><b>Почему жадность безопасна:</b> ближайшее к дереву ребро
+          пересекает разрез «дерево / остальной граф». Самое лёгкое ребро любого разреза входит в некоторое МОД —
+          значит, выбор Прима никогда не портит оптимум.</div>
+        <div class="note amber"><b>Ключевой момент урока:</b> best[v] может <b>улучшаться</b> несколько раз,
+          пока v ждёт своей очереди. В нашей демонстрации это случится трижды: 5→1, 6→4, 9→8.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 · АЛГОРИТМ -->
+<section class="slide" data-title="Алгоритм: 5 шагов" data-section="Алгоритм">
+  <div class="wrap">
+    <span class="kicker" style="--kc:#a78bfa">Шаг 3 · Алгоритм</span>
+    <h2>Пять шагов Прима</h2>
+    <div class="grid2 stagger" style="margin-bottom:18px">
+      <div class="card"><h3>1️⃣ Инициализация</h3><span class="mono" style="font-size:13.5px;color:var(--muted)">used = False · best = ∞ · from = −1 · best[start] = 0</span>
+        <p style="font-size:14.5px;color:var(--muted);margin:8px 0 0">Дерево ещё пусто, но стартовая вершина — ближайшая к нему (расстояние 0).</p></div>
+      <div class="card"><h3>2️⃣ Выбор ближайшей</h3>Среди вершин с <span class="mono">used = False</span> найти <b>v</b> с минимальным <span class="mono">best[v]</span>.</div>
+      <div class="card"><h3>3️⃣ Подключение</h3><span class="mono">used[v] = True</span>; если <span class="mono">from[v] ≠ −1</span>,
+        ребро <span class="mono">(from[v], v)</span> входит в дерево, вес добавляется к сумме.</div>
+      <div class="card"><h3>4️⃣ Релаксация</h3>Просмотреть строку <b>v</b> матрицы: для каждого соседа <b>to</b> вне дерева,
+        если <span class="mono">w &lt; best[to]</span>, обновить <span class="mono">best[to]</span> и <span class="mono">from[to] = v</span>.</div>
+      <div class="card"><h3>5️⃣ Повторить n раз</h3>Подключено n вершин, набрано <b>n − 1</b> ребро — МОД готово.
+        Если у ближайшей вершины best = ∞ — граф несвязный, дерева не существует.</div>
+      <div class="card" style="border-color:rgba(251,191,36,.35)"><h3 style="color:var(--amber)">⚡ Сложность</h3>
+        Через матрицу: <b>O(n²)</b> — n отборов минимума циклом + n строк длины n.
+        Выгодно для <b>плотных</b> графов. Краскал с сортировкой — O(E·log E), лучше для разреженных.</div>
+    </div>
+    <div class="card">
+      <h3>Прим и Краскал — две жадности, один ответ</h3>
+      <table class="cmp-table">
+        <tr><th></th><th>Прим</th><th>Краскал</th></tr>
+        <tr><td>Что выбираем</td><td>вершину, ближайшую к дереву</td><td>ребро, самое лёгкое в графе</td></tr>
+        <tr><td>Структура</td><td>одно растущее дерево</td><td>лес компонент, сливающийся в дерево</td></tr>
+        <tr><td>Данные</td><td>матрица + used / best / from</td><td>список рёбер + parent / find / union</td></tr>
+        <tr><td>Проверка цикла</td><td>неявная: used[to] уже в дереве</td><td>явная: find(u) == find(v)</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 4 · ДЕМО -->
+<section class="slide" data-title="Демо: граф + матрица" data-section="Демо">
+  <div class="wrap">
+    <span class="kicker" style="--kc:#fbbf24">Шаг 4 · Интерактивная демонстрация</span>
+    <h2>Прим в действии: граф, матрица и три списка</h2>
+    <div class="legend">
+      <span><i style="border-color:#34d399"></i>ребро в дереве</span>
+      <span><i style="border-color:#fbbf24;border-top-style:dashed"></i>кандидат на границе (best)</span>
+      <span><i style="border-color:#22334d"></i>погасший / неактивный</span>
+      <span><i style="width:14px;height:14px;border-radius:50%;background:#0c2b23;border:2px solid #34d399"></i>вершина в дереве</span>
+      <span><i style="width:14px;height:14px;border-radius:50%;background:#241a05;border:2px solid #fbbf24"></i>ждёт с кандидатом</span>
+    </div>
+    <div class="demo">
+      <div>
+        <div class="card" style="padding:13px"><svg id="demoSvg" class="graph" viewBox="0 0 640 430"></svg></div>
+        <div class="stats">
+          <div class="stat g"><b id="stVerts">0 / 6</b><span>вершин в дереве</span></div>
+          <div class="stat"><b id="stEdges">0 / 5</b><span>рёбер (n−1)</span></div>
+          <div class="stat a"><b id="stWeight">0 км</b><span>вес дерева</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="exp">
+          <span class="badge2 init" id="expBadge">ПОДГОТОВКА</span>
+          <h4 id="expTitle" aria-live="polite"></h4>
+          <p id="expText" aria-live="polite"></p>
+        </div>
+        <div class="controls">
+          <button class="btn small" id="pReset">⟲ Сначала</button>
+          <button class="btn small" id="pPrev">←</button>
+          <button class="btn small primary" id="pNext">Шаг →</button>
+          <button class="btn small" id="pAuto">▶ Авто</button>
+          <select class="sel" id="pSpeed" title="Скорость автопоказа">
+            <option value="0.75">0.75×</option><option value="1" selected>1×</option>
+            <option value="1.5">1.5×</option><option value="2">2×</option>
+          </select>
+          <label class="switch"><input type="checkbox" id="pBadges" checked> best на графе</label>
+        </div>
+        <div class="step-list" id="stepList"></div>
+        <p style="font-size:12px;color:var(--dim);margin:8px 2px 0">Клик по строке — перейти к этому шагу.</p>
+      </div>
+    </div>
+    <div class="demo-low">
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <h3 style="margin:0;flex:1">Матрица смежности</h3><span class="pill cyan">строка v — релаксация</span></div>
+        <div id="matrixBox"></div>
+        <p style="font-size:12px;color:var(--dim);margin:10px 2px 0">
+          <span style="color:var(--green2)">■</span> улучшили best ·
+          <span style="color:var(--green)">■</span> ребро вошло в дерево ·
+          строка выбранной v подсвечена cyan · столбцы уже в дереве приглушены.</p>
+      </div>
+      <div class="card">
+        <h3>Состояние программы: три списка</h3>
+        <div id="arraysBox"></div>
+        <div class="note" style="margin-top:12px;font-size:14px">best[v] — не ответ, а <b>текущий лучший кандидат</b>.
+          Он улучшается, пока v ждёт отбора. from[v] всегда помнит, откуда пришёл кандидат.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 · СРАВНЕНИЕ -->
+<section class="slide" data-title="Прим vs Краскал: порядок" data-section="Сравнение">
+  <div class="wrap">
+    <span class="kicker" style="--kc:#fb7185">Шаг 5 · Сравнение</span>
+    <h2>Два пути к одному дереву</h2>
+    <p class="lead">Рёбра МОД одни и те же, сумма одна — <b>18</b>. Но порядок добавления разный:
+      Прим растит дерево из A, Краскал собирает его из лёгких рёбер всего графа. Числа в кружках — очерёдность.</p>
+    <div class="grid2 stagger">
+      <div class="card" style="padding:14px">
+        <div style="display:flex;align-items:center;gap:10px;margin:2px 6px 10px">
+          <h3 style="margin:0;flex:1;color:var(--green2)">Прим: рост из A</h3><span class="pill green">вес 18</span></div>
+        <svg id="primOrderSvg" class="graph" viewBox="0 0 640 430"></svg>
+        <div class="chips" style="margin:12px 4px 2px">
+          <span class="chip mono">1·A–B(3)</span><span class="chip mono">2·B–C(1)</span><span class="chip mono">3·C–E(2)</span>
+          <span class="chip mono">4·C–D(4)</span><span class="chip mono">5·D–F(8)</span>
+        </div>
+      </div>
+      <div class="card" style="padding:14px">
+        <div style="display:flex;align-items:center;gap:10px;margin:2px 6px 10px">
+          <h3 style="margin:0;flex:1;color:var(--cyan)">Краскал: по весу</h3><span class="pill cyan">вес 18</span></div>
+        <svg id="kruskOrderSvg" class="graph" viewBox="0 0 640 430"></svg>
+        <div class="chips" style="margin:12px 4px 2px">
+          <span class="chip mono">1·B–C(1)</span><span class="chip mono">2·C–E(2)</span><span class="chip mono">3·A–B(3)</span>
+          <span class="chip mono">4·C–D(4)</span><span class="chip mono">5·D–F(8)</span>
+        </div>
+      </div>
+    </div>
+    <div class="note green">Веса различны → МОД единственное, поэтому оба алгоритма обязаны дать одинаковый набор рёбер.
+      При равных весах наборы могут отличаться, но минимальная сумма всегда одна.</div>
+  </div>
+</section>
+
+<!-- 6 · КОД 1 -->
+<section class="slide" data-title="Код 1: матрица смежности" data-section="Код">
+  <div class="wrap">
+    <span class="kicker" style="--kc:#60a5fa">Шаг 6 · Код · 1 из 5</span>
+    <h2>Данные: матрица смежности</h2>
+    <p class="lead">Граф — список списков <b>n × n</b>. В ячейке — вес ребра, <b>0</b> означает «ребра нет»
+      (все веса положительные). Граф неориентированный → матрица симметрична относительно диагонали.</p>
+    <div class="codebar"><span class="filechip">данные графа</span></div>
+<pre class="code"><code class="py">names = ["A", "B", "C", "D", "E", "F"]
+n = 6
+
+# 0 = ребра нет, веса положительные
+#        A  B  C  D  E  F
+matrix = [
+    [    0, 3, 5, 0, 0, 0],  # A
+    [    3, 0, 1, 6, 0, 0],  # B
+    [    5, 1, 0, 4, 2, 0],  # C
+    [    0, 6, 4, 0, 7, 8],  # D
+    [    0, 0, 2, 7, 0, 9],  # E
+    [    0, 0, 0, 8, 9, 0],  # F
+]</code></pre>
+    <div class="card reveal" style="margin-top:16px">
+      <div class="rfront">🔎 Проверь себя: где в матрице ребро C–E?<span class="rhint">нажми</span></div>
+      <div class="rbody">
+<pre class="code"><code class="py">matrix[2][4] == 2   # C -> E
+matrix[4][2] == 2   # E -> C (симметрия!)</code></pre>
+        <p style="font-size:14px;color:var(--muted);margin:10px 0 0">C — индекс 2, E — индекс 4.
+          Вес 2 записан дважды: граф неориентированный.</p>
+      </div>
+    </div>
+    <div class="note">Никаких словарей и кортежей: матрица — обычный список списков, имена — список строк.</div>
+  </div>
+</section>
+
+<!-- 7 · КОД 2 -->
+<section class="slide" data-title="Код 2: три списка состояния" data-section="Код">
+  <div class="wrap">
+    <span class="kicker" style="--kc:#60a5fa">Шаг 6 · Код · 2 из 5</span>
+    <h2>Три списка вместо словарей и классов</h2>
+    <p class="lead">Состояние алгоритма — три параллельных списка длины n. Индекс = номер вершины.
+      <b>INF</b> — «бесконечность», заведомо больше любого веса.</p>
+    <div class="codebar"><span class="filechip">состояние</span></div>
+<pre class="code"><code class="py">INF = 1000000000  # больше любого возможного веса
+
+used = [False] * n        # вершина уже в дереве?
+best = [INF] * n          # вес лучшего ребра из дерева в вершину
+from_vertex = [-1] * n    # откуда приходит лучшее ребро
+
+best[0] = 0  # начинаем построение с вершины A</code></pre>
+    <div class="card reveal" style="margin-top:16px">
+      <div class="rfront">🔎 Что лежит в best сразу после инициализации?<span class="rhint">нажми</span></div>
+      <div class="rbody">
+<pre class="code"><code class="py">best = [0, INF, INF, INF, INF, INF]</code></pre>
+        <p style="font-size:14px;color:var(--muted);margin:10px 0 0">Только A «близка к дереву» (расстояние 0).
+          Остальные пока недостижимы — у них нет ни одного кандидата.</p>
+      </div>
+    </div>
+    <div class="note amber">Списки создаются умножением: <span class="mono">[False] * n</span> — n независимых значений.
+      Для чисел и булевых это безопасно (они неизменяемые).</div>
+  </div>
+</section>
+
+<!-- 8 · КОД 3 -->
+<section class="slide" data-title="Код 3: выбор ближайшей вершины" data-section="Код">
+  <div class="wrap">
+    <span class="kicker" style="--kc:#60a5fa">Шаг 6 · Код · 3 из 5</span>
+    <h2>Выбор ближайшей вершины — обычным циклом</h2>
+    <p class="lead">Никаких <span class="mono">min(..., key=...)</span> и кортежей. Ищем минимум вручную:
+      <b>v = −1</b> — «пока никого не нашли», затем перебираем только неиспользованные вершины.</p>
+    <div class="codebar"><span class="filechip">выбор v (внутри цикла по n)</span></div>
+<pre class="code"><code class="py">v = -1
+for i in range(n):
+    if not used[i]:
+        if v == -1 or best[i] &lt; best[v]:
+            v = i</code></pre>
+    <div class="card reveal" style="margin-top:16px">
+      <div class="rfront">🔎 Кого выберет этот цикл после шага 1?<span class="rhint">нажми</span></div>
+      <div class="rbody">
+<pre class="code"><code class="py"># best = [INF, 3, 5, INF, INF, INF], used[A] = True
+# i=1 (B): v=-1 -> берём B, v=1
+# i=2 (C): best[C]=5 < best[B]=3? Нет -> пропускаем
+# Ответ: v = 1, вершина B</code></pre>
+        <p style="font-size:14px;color:var(--muted);margin:10px 0 0">Первая неиспользованная становится кандидатом
+          благодаря проверке <span class="mono">v == -1</span>, дальше сравниваем веса.</p>
+      </div>
+    </div>
+    <div class="note">Этот блок выполняется <b>n раз</b> — внутри <span class="mono">for count in range(n)</span>.
+      Каждый отбор — O(n), всего O(n²).</div>
+  </div>
+</section>
+
+<!-- 9 · КОД 4 -->
+<section class="slide" data-title="Код 4: подключение и релаксация" data-section="Код">
+  <div class="wrap">
+    <span class="kicker" style="--kc:#60a5fa">Шаг 6 · Код · 4 из 5</span>
+    <h2>Подключаем вершину и обновляем кандидатов</h2>
+    <p class="lead">Сердце Прима. Сначала фиксируем победу v, затем просматриваем строку v матрицы
+      и улучшаем best у соседей, которым новый путь дешевле.</p>
+    <div class="codebar"><span class="filechip">тело цикла (v уже выбрана)</span></div>
+<pre class="code"><code class="py">mst = []
+total = 0
+
+# дальше — тело цикла, v уже выбрана (шаг 3)
+used[v] = True
+
+if from_vertex[v] != -1:
+    mst.append([from_vertex[v], v, best[v]])
+    total = total + best[v]
+
+for to in range(n):
+    w = matrix[v][to]
+    if w != 0 and not used[to] and w &lt; best[to]:
+        best[to] = w
+        from_vertex[to] = v</code></pre>
+    <div class="card reveal" style="margin-top:16px">
+      <div class="rfront">🔎 Что изменится в best после просмотра строки B?<span class="rhint">нажми</span></div>
+      <div class="rbody">
+<pre class="code"><code class="py"># было: best[C]=5 (from A), best[D]=INF
+# строка B: до C = 1, до D = 6
+best[C] = 1          # 5 -> 1, from_vertex[C] = B
+best[D] = 6          # INF -> 6, from_vertex[D] = B</code></pre>
+        <p style="font-size:14px;color:var(--muted);margin:10px 0 0">Три условия фильтра:
+          <b>w ≠ 0</b> (ребро есть) · <b>not used[to]</b> (to ещё вне дерева) · <b>w &lt; best[to]</b> (стало дешевле).</p>
+      </div>
+    </div>
+    <div class="note rose">Зачем <span class="mono">not used[to]</span>? Вершины в дереве уже подключены оптимально.
+      Трогать их — значит «переподключать» готовую часть и рисковать циклом.</div>
+  </div>
+</section>
+
+<!-- 10 · КОД 5 -->
+<section class="slide" data-title="Код 5: вывод результата" data-section="Код">
+  <div class="wrap">
+    <span class="kicker" style="--kc:#60a5fa">Шаг 6 · Код · 5 из 5</span>
+    <h2>Выводим ответ буквами</h2>
+    <p class="lead">В <b>mst</b> лежат рёбра-списки <span class="mono">[from, v, вес]</span> в порядке подключения.
+      Индексы превращаем в имена через <b>names</b>, сумма уже накоплена в <b>total</b>.</p>
+    <div class="codebar"><span class="filechip">вывод</span></div>
+<pre class="code"><code class="py">print("Рёбра минимального остовного дерева (алгоритм Прима):")
+for edge in mst:
+    print(names[edge[0]], "-", names[edge[1]], "вес", edge[2])
+print("Суммарный вес:", total)</code></pre>
+    <div class="note green">Порядок рёбер в выводе — порядок <b>роста дерева</b>: A–B, B–C, C–E, C–D, D–F.
+      У Краскала тот же набор выводился по весу: B–C, C–E, A–B, C–D, D–F.</div>
+  </div>
+</section>
+
+<!-- 11 · ПОЛНАЯ ПРОГРАММА -->
+<section class="slide" data-title="Полная программа prim.py" data-section="Код">
+  <div class="wrap">
+    <span class="kicker" style="--kc:#22d3ee">Шаг 7 · Всё вместе</span>
+    <h2>Полная программа</h2>
+    <div class="codebar">
+      <span class="filechip">prim.py</span>
+      <button class="btn small" id="copyBtn">📋 Скопировать</button>
+      <button class="btn small" id="outBtn">▶ Показать вывод</button>
+    </div>
+<pre class="code" style="max-height:56vh"><code class="py" id="fullCode"># Минимальное остовное дерево — алгоритм Прима
+# Граф задан матрицей смежности (список списков)
+# 0 означает "ребра нет" (все веса положительные)
+# Только списки, циклы, условия и функции
+
+names = ["A", "B", "C", "D", "E", "F"]
+n = 6
+
+#        A  B  C  D  E  F
+matrix = [
+    [    0, 3, 5, 0, 0, 0],  # A
+    [    3, 0, 1, 6, 0, 0],  # B
+    [    5, 1, 0, 4, 2, 0],  # C
+    [    0, 6, 4, 0, 7, 8],  # D
+    [    0, 0, 2, 7, 0, 9],  # E
+    [    0, 0, 0, 8, 9, 0],  # F
+]
+
+INF = 1000000000  # больше любого возможного веса
+
+used = [False] * n        # вершина уже в дереве?
+best = [INF] * n          # вес лучшего ребра из дерева в вершину
+from_vertex = [-1] * n    # откуда приходит лучшее ребро
+
+best[0] = 0  # начинаем построение с вершины A
+
+mst = []
+total = 0
+
+for count in range(n):
+    # 1. Ищем вершину вне дерева с минимальным best
+    v = -1
+    for i in range(n):
+        if not used[i]:
+            if v == -1 or best[i] &lt; best[v]:
+                v = i
+
+    # достижимых вершин не осталось — граф несвязный
+    if best[v] == INF:
+        print("Граф несвязный: остовное дерево не существует")
+        break
+
+    used[v] = True
+
+    # 2. Подключаем v к дереву ребром from_vertex[v] - v
+    if from_vertex[v] != -1:
+        mst.append([from_vertex[v], v, best[v]])
+        total = total + best[v]
+
+    # 3. Обновляем лучшие рёбра для соседей v
+    for to in range(n):
+        w = matrix[v][to]
+        if w != 0 and not used[to] and w &lt; best[to]:
+            best[to] = w
+            from_vertex[to] = v
+
+# Вывод результата
+print("Рёбра минимального остовного дерева (алгоритм Прима):")
+for edge in mst:
+    print(names[edge[0]], "-", names[edge[1]], "вес", edge[2])
+print("Суммарный вес:", total)</code></pre>
+    <div id="outWrap" class="hidden" style="margin-top:14px">
+      <div class="codebar"><span class="filechip">вывод программы</span></div>
+<pre class="code out">Рёбра минимального остовного дерева (алгоритм Прима):
+A - B вес 3
+B - C вес 1
+C - E вес 2
+C - D вес 4
+D - F вес 8
+Суммарный вес: 18</pre>
+    </div>
+    <div class="card reveal" style="margin-top:16px">
+      <div class="rfront">🔁 Бонус: собрать матрицу из списка рёбер урока Краскала<span class="rhint">нажми</span></div>
+      <div class="rbody">
+<pre class="code"><code class="py"># вместо литерала матрицы, если есть edges = [[u, v, w], ...]
+matrix = []
+for i in range(n):
+    row = []
+    for j in range(n):
+        row.append(0)
+    matrix.append(row)
+
+for edge in edges:
+    u = edge[0]
+    v = edge[1]
+    w = edge[2]
+    matrix[u][v] = w
+    matrix[v][u] = w  # неориентированный граф — симметрия</code></pre>
+      </div>
+    </div>
+    <div class="note green">Только <b>списки, циклы, условия</b> — ни классов, ни кортежей, ни словарей.
+      Поменяй матрицу и names — получишь МОД своего графа. Поменяй <span class="mono">best[0] = 0</span> на
+      <span class="mono">best[3] = 0</span> — дерево вырастет из D, а сумма останется 18.</div>
+  </div>
+</section>
+
+<!-- 12 · РЕФЛЕКСИЯ -->
+<section class="slide" data-title="Тест: 5 вопросов" data-section="Рефлексия">
+  <div class="wrap">
+    <span class="kicker" style="--kc:#fb7185">Шаг 8 · Рефлексия</span>
+    <h2>Проверь себя: 5 вопросов</h2>
+    <p class="lead">Это <b>формирующее оценивание</b>: баллы не идут в журнал. Каждый ответ сразу подскажет,
+      что понять глубже, а ошибка — куда вернуться.</p>
+    <div class="card quiz">
+      <div id="quizPlay">
+        <div class="qprogress"><span id="qCount">Вопрос 1 из 5</span><div class="qdots" id="qDots"></div></div>
+        <div class="qtext" id="qText"></div>
+        <div id="qOpts"></div>
+        <div class="fb hidden" id="qFb"></div>
+        <div style="margin-top:14px;text-align:right">
+          <button class="btn primary hidden" id="qNext">Дальше →</button>
+        </div>
+      </div>
+      <div id="quizResult" class="hidden"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 13 · ИТОГИ -->
+<section class="slide" data-title="Итоги и домашнее задание" data-section="Финал">
+  <div class="wrap">
+    <span class="kicker" style="--kc:#34d399">Финал</span>
+    <h2>Что уносим с урока</h2>
+    <div class="grid3 stagger" style="margin:16px 0 20px">
+      <div class="card"><h3 style="color:var(--green2)">🌱 Стратегия</h3>Прим растит <b>одно дерево</b> из стартовой вершины,
+        каждый шаг добавляя ближайшую к нему вершину через самый дешёвый мостик.</div>
+      <div class="card"><h3 style="color:var(--amber)">📋 Три списка</h3><span class="mono">used</span> — кто в дереве,
+        <span class="mono">best</span> — лучший кандидат, <span class="mono">from_vertex</span> — откуда он.
+        Кандидаты улучшаются, пока вершина ждёт.</div>
+      <div class="card"><h3 style="color:var(--cyan)">🧮 Матрица</h3>Строка выбранной вершины — релаксация соседей.
+        Сложность <b>O(n²)</b>, удобно для плотных графов. 0 = ребра нет.</div>
+    </div>
+    <p style="font-weight:750;margin:0 0 10px">Отметь, что уже умеешь (нажми):</p>
+    <div class="chips selfcheck" style="margin-bottom:20px">
+      <button class="chip">Объясню идею роста дерева и границу кандидатов</button>
+      <button class="chip">Проведу Прима вручную по матрице</button>
+      <button class="chip">Напишу программу на списках без кортежей и словарей</button>
+    </div>
+    <div class="note amber" style="margin:0"><b>🏠 Домашнее задание:</b><br>
+      1) Задай свой граф (6–8 вершин) матрицей смежности и найди МОД программой.<br>
+      2) Замени <span class="mono">best[0] = 0</span> на <span class="mono">best[3] = 0</span> — старт из D.
+      Сравни сумму и порядок рёбер. Почему сумма та же?<br>
+      3) ⭐ Придумай граф с двумя равными весами: может ли программа дать другой набор рёбер при той же сумме? Проверь.</div>
+    <p style="color:var(--dim);font-size:13.5px;margin-top:24px">Спасибо за урок! · val-sk.github.io/info</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="navbar">
+  <div class="hint">← → / пробел — листать · Esc — закрыть оглавление</div>
+  <div style="display:flex;gap:10px">
+    <button class="btn" id="prevBtn">← Назад</button>
+    <button class="btn primary" id="nextBtn">Далее →</button>
+  </div>
+</footer>
+<div id="toast"></div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const slides=$$(".slide"), deck=$("#deck");
+let cur=0;
+
+/* ================= ДАННЫЕ ГРАФА ================= */
+const NAMES=["A","B","C","D","E","F"], N=6, INF=1e9;
+const NODES=[{x:100,y:95},{x:320,y:60},{x:250,y:215},{x:475,y:175},{x:300,y:365},{x:545,y:330}];
+const EDGES=[[0,1,3],[0,2,5],[1,2,1],[1,3,6],[2,3,4],[2,4,2],[3,4,7],[3,5,8],[4,5,9]];
+const MATRIX=(()=>{const m=[];for(let i=0;i<N;i++)m.push(Array(N).fill(0));
+  for(const e of EDGES){m[e[0]][e[1]]=e[2];m[e[1]][e[0]]=e[2];}return m;})();
+function edgeIndex(u,v){for(let i=0;i<EDGES.length;i++){const e=EDGES[i];
+  if((e[0]===u&&e[1]===v)||(e[0]===v&&e[1]===u))return i;}return -1;}
+
+/* ================= СИМУЛЯЦИЯ ПРИМА (снимки состояний) ================= */
+function buildSnaps(){
+  const used=Array(N).fill(false), best=Array(N).fill(INF), from=Array(N).fill(-1);
+  best[0]=0;
+  const snaps=[{used:[...used],best:[...best],from:[...from],picked:-1,added:null,improved:[],total:0,tree:[]}];
+  let total=0; const tree=[];
+  for(let k=0;k<N;k++){
+    let v=-1;
+    for(let i=0;i<N;i++) if(!used[i]&&(v===-1||best[i]<best[v])) v=i;
+    used[v]=true;
+    let added=null;
+    if(from[v]!==-1){added=[from[v],v,best[v]];tree.push(added);total+=best[v];}
+    const improved=[];
+    for(let to=0;to<N;to++){
+      const w=MATRIX[v][to];
+      if(w!==0&&!used[to]&&w<best[to]){improved.push([to,best[to],w]);best[to]=w;from[to]=v;}
+    }
+    snaps.push({used:[...used],best:[...best],from:[...from],picked:v,added,improved,total,tree:tree.map(e=>[...e])});
+  }
+  return snaps;
+}
+const SNAPS=buildSnaps();
+
+const EXP=[
+ {b:"ПОДГОТОВКА",c:"init",t:"Станция в посёлке A",
+  x:"used — все False, best[A] = 0, у остальных ∞, from — пусто. Дерево ещё не имеет рёбер, но A уже «ближе всех» к нему. Жми «Шаг →»."},
+ {b:"ШАГ 1 · СТАРТ",c:"take",t:"Выбираем A (best = 0)",
+  x:"Это старт — ребра нет. Смотрим строку A матрицы: до B 3 км, до C 5 км. Записываем кандидатов: best[B]=3 (from A), best[C]=5 (from A). На графе зажглись первые жёлтые рёбра."},
+ {b:"БЕРЁМ БЛИЖАЙШУЮ",c:"take",t:"Шаг 2 · B (3): кабель A–B",
+  x:"B ближе всех (3 < 5). Подключаем A–B. Строка B: до C всего 1 — дешевле 5! best[C] улучшается 5→1, from[C]=B (жёлтое A–C погасло). До D 6: best[D]=6."},
+ {b:"БЕРЁМ БЛИЖАЙШУЮ",c:"take",t:"Шаг 3 · C (1): кабель B–C",
+  x:"C — ближайшая (1). Ребро B–C в дереве. Строка C: D улучшается 6→4 (from C), E получает кандидата 2 (from C). Дерево дотянулось до E."},
+ {b:"БЕРЁМ БЛИЖАЙШУЮ",c:"take",t:"Шаг 4 · E (2): кабель C–E",
+  x:"Берём E (2). Строка E: до F 9 → best[F]=9 (from E). До D 7, но 7 > 4 — best[D] не улучшаем. Не каждое ребро строки меняет кандидата!"},
+ {b:"БЕРЁМ БЛИЖАЙШУЮ",c:"take",t:"Шаг 5 · D (4): кабель C–D",
+  x:"Берём D (4). Строка D: до F 8 < 9 → best[F] улучшается 9→8, from[F]=D. Кандидат E–F погас, остался D–F. Вне дерева только F."},
+ {b:"ГОТОВО 🎉",c:"done",t:"Шаг 6 · F (8): кабель D–F. МОД = 18",
+  x:"Все 6 вершин в дереве, 5 рёбер, сумма 18 — тот же ответ, что у Краскала. Но дерево росло из A: A–B, B–C, C–E, C–D, D–F. Три улучшения кандидатов (5→1, 6→4, 9→8) и сделали его минимальным."}
+];
+const STEP_ROWS=[
+ {n:"A",sub:"старт · best 0"},{n:"B",sub:"A–B · 3"},{n:"C",sub:"B–C · 1"},
+ {n:"E",sub:"C–E · 2"},{n:"D",sub:"C–D · 4"},{n:"F",sub:"D–F · 8"}
+];
+
+/* ================= ОТРИСОВКА ГРАФА ================= */
+const GS={
+  dim:{c:"#22334d",w:2.5,o:.9},
+  idle:{c:"#3d5573",w:3,o:1},
+  tree:{c:"#34d399",w:5,o:1,glow:"#34d399",flow:true},
+  just:{c:"#86efac",w:6,o:1,glow:"#6ee7b7",flow:true,halo:true},
+  frontier:{c:"#fbbf24",w:3.5,o:1,dash:"9 8",glow:"#f59e0b",slow:true}
+};
+const WL={
+  dim:["#64748b","rgba(10,20,36,.9)","rgba(148,163,184,.18)"],
+  idle:["#93a4bd","rgba(10,20,36,.9)","rgba(148,163,184,.25)"],
+  tree:["#6ee7b7","rgba(52,211,153,.12)","rgba(52,211,153,.4)"],
+  just:["#bbf7d0","rgba(52,211,153,.2)","rgba(110,231,183,.6)"],
+  frontier:["#fcd34d","rgba(251,191,36,.12)","rgba(251,191,36,.4)"]
+};
+function renderGraph(svg,cfg){
+  let out="";
+  EDGES.forEach((e,i)=>{
+    const a=NODES[e[0]],b=NODES[e[1]],st=cfg.edges[i]||"dim",k=GS[st];
+    const line=(c,w,o,extra="")=>`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${c}" stroke-width="${w}" opacity="${o}" stroke-linecap="round" ${extra}/>`;
+    if(k.halo)out+=line("#a7f3d0",18,.18);
+    if(k.glow)out+=line(k.glow,k.w+8,.14);
+    out+=line(k.c,k.w,k.o,k.dash?`stroke-dasharray="${k.dash}" class="${k.slow?'flow-slow':'flow'}"`:"");
+    if(k.flow)out+=line("#d1fae5",2,.9,`stroke-dasharray="5 16" class="flow"`);
+  });
+  EDGES.forEach((e,i)=>{
+    const a=NODES[e[0]],b=NODES[e[1]],st=cfg.edges[i]||"dim";
+    const dx=b.x-a.x,dy=b.y-a.y,L=Math.hypot(dx,dy);
+    const px=-dy/L,py=dx/L;
+    const mx=(a.x+b.x)/2+px*14,my=(a.y+b.y)/2+py*14;
+    const lb=WL[st];
+    out+=`<rect x="${mx-12}" y="${my-12}" width="24" height="24" rx="7" fill="${lb[1]}" stroke="${lb[2]}"/>`;
+    out+=`<text x="${mx}" y="${my}" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="800" fill="${lb[0]}" font-family="Consolas,monospace">${e[2]}</text>`;
+    if(cfg.orders&&cfg.orders[i]){
+      const ox=(a.x+b.x)/2-px*17,oy=(a.y+b.y)/2-py*17;
+      out+=`<circle cx="${ox}" cy="${oy}" r="11" fill="#0a1424" stroke="#22d3ee" stroke-width="1.5"/>`;
+      out+=`<text x="${ox}" y="${oy}" text-anchor="middle" dominant-baseline="central" font-size="11.5" font-weight="800" fill="#22d3ee">${cfg.orders[i]}</text>`;
+    }
+  });
+  NODES.forEach((v,i)=>{
+    const vc=cfg.verts[i];
+    if(vc.glow)out+=`<circle cx="${v.x}" cy="${v.y}" r="27" fill="none" stroke="${vc.ring}" stroke-width="6" opacity=".22"/>`;
+    out+=`<circle cx="${v.x}" cy="${v.y}" r="22" fill="${vc.fill}" stroke="${vc.ring}" stroke-width="${vc.rw}"/>`;
+    out+=`<text x="${v.x}" y="${v.y}" text-anchor="middle" dominant-baseline="central" font-size="17" font-weight="800" fill="#e9f0fa">${NAMES[i]}</text>`;
+    if(cfg.badges){
+      const bd=cfg.badges[i];
+      out+=`<rect x="${v.x-17}" y="${v.y+28}" width="34" height="19" rx="9" fill="${bd.bg}" stroke="${bd.stroke}"/>`;
+      out+=`<text x="${v.x}" y="${v.y+37.5}" text-anchor="middle" dominant-baseline="central" font-size="11.5" font-weight="800" fill="${bd.fg}" font-family="Consolas,monospace">${bd.text}</text>`;
+    }
+  });
+  svg.innerHTML=out;
+}
+function demoConfig(s,showBadges){
+  const snap=SNAPS[s];
+  const edges=EDGES.map(()=>"dim");
+  snap.tree.forEach(e=>{edges[edgeIndex(e[0],e[1])]="tree";});
+  for(let v=0;v<N;v++) if(!snap.used[v]&&snap.best[v]<INF&&snap.from[v]>=0)
+    edges[edgeIndex(snap.from[v],v)]="frontier";
+  if(snap.added)edges[edgeIndex(snap.added[0],snap.added[1])]="just";
+  const verts=NODES.map((_,i)=>{
+    if(snap.used[i])return{fill:"#0c2b23",ring:i===snap.picked?"#86efac":"#34d399",rw:i===snap.picked?4:2.5,glow:i===snap.picked};
+    if(snap.best[i]<INF)return{fill:"#241a05",ring:"#fbbf24",rw:2.5,glow:false};
+    return{fill:"#0c1729",ring:"#33465f",rw:2,glow:false};
+  });
+  let badges=null;
+  if(showBadges)badges=snap.best.map((b,i)=>{
+    const t=b>=INF?"∞":String(b);
+    if(snap.used[i])return{text:t,fg:"#6ee7b7",bg:"rgba(52,211,153,.14)",stroke:"rgba(52,211,153,.45)"};
+    if(b<INF)return{text:t,fg:"#fcd34d",bg:"rgba(251,191,36,.14)",stroke:"rgba(251,191,36,.45)"};
+    return{text:t,fg:"#5b6c86",bg:"rgba(13,22,40,.8)",stroke:"rgba(148,163,184,.2)"};
+  });
+  return{edges,verts,badges};
+}
+
+/* ================= МАТРИЦА И МАССИВЫ ================= */
+function renderMatrix(s){
+  const snap=SNAPS[s],picked=snap.picked,up=new Set(snap.improved.map(x=>x[0]));
+  let h='<div class="mx-grid"><div class="mx-cell mx-corner">w</div>';
+  for(let j=0;j<N;j++)h+=`<div class="mx-cell mx-head ${snap.used[j]?'u':''}">${NAMES[j]}${snap.used[j]?'<span class="tick">✓</span>':''}</div>`;
+  for(let i=0;i<N;i++){
+    h+=`<div class="mx-cell mx-head ${snap.used[i]?'u':''}">${NAMES[i]}${snap.used[i]?'<span class="tick">✓</span>':''}</div>`;
+    for(let j=0;j<N;j++){
+      const w=MATRIX[i][j];let cls="mx-cell";
+      if(i===j)cls+=" diag";
+      if(w===0)cls+=" zero";
+      if(snap.used[j]&&i!==j)cls+=" colu";
+      if(i===picked)cls+=" src";
+      if(snap.added&&((snap.added[0]===i&&snap.added[1]===j)||(snap.added[1]===i&&snap.added[0]===j)))cls+=" add";
+      if(i===picked&&up.has(j))cls+=" up";
+      h+=`<div class="${cls}">${w}</div>`;
+    }
+  }
+  $("#matrixBox").innerHTML=h+"</div>";
+}
+function renderArrays(s){
+  const snap=SNAPS[s],up=new Set(snap.improved.map(x=>x[0]));
+  const rows=[
+    {name:"used",vals:snap.used.map(u=>u?"✓":"·"),chg:i=>s>=1&&i===snap.picked,cls:i=>snap.used[i]?"used":""},
+    {name:"best",vals:snap.best.map(b=>b>=INF?"∞":String(b)),chg:i=>up.has(i),cls:i=>snap.used[i]?"used":(snap.best[i]<INF?"front":"")},
+    {name:"from_vertex",vals:snap.from.map(f=>f<0?"—":NAMES[f]),chg:i=>up.has(i),cls:i=>snap.used[i]?"used":(snap.from[i]>=0?"front":"")}
+  ];
+  let h="";
+  rows.forEach(r=>{
+    h+=`<div class="arr-row"><div class="arr-name">${r.name}</div><div class="arr-cells">`;
+    for(let i=0;i<N;i++)h+=`<div class="arr-cell ${r.cls(i)} ${r.chg(i)?'chg':''}"><span class="v">${NAMES[i]}</span><span class="val">${r.vals[i]}</span></div>`;
+    h+="</div></div>";
+  });
+  $("#arraysBox").innerHTML=h;
+}
+
+/* ================= ШАГОВЫЙ ПЛЕЕР ================= */
+let pStep=0,pTimer=null;
+const demoSvg=$("#demoSvg"),stepList=$("#stepList"),expBadge=$("#expBadge"),expTitle=$("#expTitle"),
+  expText=$("#expText"),stVerts=$("#stVerts"),stEdges=$("#stEdges"),stWeight=$("#stWeight"),
+  pReset=$("#pReset"),pPrev=$("#pPrev"),pNext=$("#pNext"),pAuto=$("#pAuto"),
+  pSpeed=$("#pSpeed"),pBadges=$("#pBadges");
+function renderDemo(){
+  const s=pStep,snap=SNAPS[s];
+  renderGraph(demoSvg,demoConfig(s,pBadges.checked));
+  renderMatrix(s);renderArrays(s);
+  const info=EXP[s];
+  expBadge.textContent=info.b;expBadge.className="badge2 "+info.c;
+  expTitle.textContent=info.t;expText.textContent=info.x;
+  stVerts.textContent=snap.used.filter(Boolean).length+" / 6";
+  stEdges.textContent=snap.tree.length+" / 5";
+  stWeight.textContent=snap.total+" км";
+  stepList.innerHTML=STEP_ROWS.map((r,i)=>{
+    const st=i+1;let cls="srow";
+    if(st<=s)cls+=" done";
+    if(st===s)cls+=" cur";
+    return `<div class="${cls}" data-s="${st}"><span class="n">${st}</span><span>${r.n}</span><span class="sub">${r.sub}</span></div>`;
+  }).join("");
+  stepList.querySelectorAll(".srow").forEach(r=>r.addEventListener("click",()=>{pStop();setStep(+r.dataset.s);}));
+  pPrev.disabled=s===0;pNext.disabled=s===6;
+}
+function setStep(n){pStep=Math.max(0,Math.min(6,n));renderDemo();}
+function pStop(){if(pTimer){clearInterval(pTimer);pTimer=null;}pAuto.textContent="▶ Авто";pAuto.classList.remove("on");}
+function pStart(){
+  if(pStep>=6)setStep(0);
+  pAuto.textContent="⏸ Стоп";pAuto.classList.add("on");
+  pTimer=setInterval(()=>{setStep(pStep+1);if(pStep>=6)pStop();},2400/parseFloat(pSpeed.value));
+}
+pPrev.addEventListener("click",()=>{pStop();setStep(pStep-1);});
+pNext.addEventListener("click",()=>{pStop();setStep(pStep+1);});
+pReset.addEventListener("click",()=>{pStop();setStep(0);});
+pAuto.addEventListener("click",()=>pTimer?pStop():pStart());
+pSpeed.addEventListener("change",()=>{if(pTimer){pStop();pStart();}});
+pBadges.addEventListener("change",renderDemo);
+
+/* ================= СТАТИЧНЫЕ ГРАФЫ ================= */
+function renderStatics(){
+  const mstIdx=[0,2,4,5,7];
+  const heroE=EDGES.map((_,i)=>mstIdx.includes(i)?"tree":"dim");
+  const heroV=NODES.map(()=>({fill:"#0c2b23",ring:"#34d399",rw:2.5,glow:false}));
+  renderGraph($("#heroSvg"),{edges:heroE,verts:heroV,badges:null});
+  renderGraph($("#ideaSvg"),demoConfig(2,true));
+  const primOrd={0:1,2:2,5:3,4:4,7:5};
+  const krusOrd={2:1,5:2,0:3,4:4,7:5};
+  renderGraph($("#primOrderSvg"),{edges:heroE,verts:heroV,badges:null,orders:primOrd});
+  renderGraph($("#kruskOrderSvg"),{edges:heroE,verts:heroV,badges:null,orders:krusOrd});
+}
+
+/* ================= ПОДСВЕТКА PYTHON ================= */
+function hlPython(src){
+  const esc=src.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  return esc.replace(/(#[^\n]*)|("[^"\n]*")|\b(def|for|in|if|while|return|break|else|elif|not|and|or|True|False|None)\b|\b(print|range|len|append|sort|key)\b|(\b\d+\b)/g,
+    (m,c,s,k,f,n)=>{
+      if(c)return `<span class="tok-c">${c}</span>`;
+      if(s)return `<span class="tok-s">${s}</span>`;
+      if(k)return `<span class="tok-k">${k}</span>`;
+      if(f)return `<span class="tok-f">${f}</span>`;
+      return `<span class="tok-n">${n}</span>`;
+    });
+}
+$$("pre code.py").forEach(c=>{
+  const raw=c.textContent.replace(/^\n+/,"").replace(/\s+$/,"");
+  c.innerHTML=hlPython(raw);
+});
+
+/* ================= КОПИРОВАНИЕ / ВЫВОД / ТОСТ ================= */
+let toastTimer=null;
+function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),1900);}
+function copyText(t){
+  const done=()=>toast("Код скопирован ✓");
+  const fb=()=>{const ta=document.createElement("textarea");ta.value=t;
+    ta.style.cssText="position:fixed;opacity:0";document.body.appendChild(ta);ta.select();
+    try{document.execCommand("copy");done();}catch(e){toast("Выдели код и скопируй вручную");}
+    ta.remove();};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(done,fb);
+  else fb();
+}
+$("#copyBtn").addEventListener("click",()=>copyText($("#fullCode").textContent));
+$("#outBtn").addEventListener("click",()=>{
+  const w=$("#outWrap");w.classList.toggle("hidden");
+  $("#outBtn").textContent=w.classList.contains("hidden")?"▶ Показать вывод":"▼ Скрыть вывод";
+});
+
+/* ================= ТЕСТ ================= */
+const QUIZ=[
+ {q:"С чего начинается алгоритм Прима?",
+  opts:["С сортировки всех рёбер по весу","С одной вершины: best[start] = 0",
+        "С самого лёгкого ребра графа","С удаления всех циклов"],a:1,tip:3,
+  ex:"Прим выращивает одно дерево из стартовой вершины. Ей ставят best = 0, остальным — ∞, и начинается рост."},
+ {q:"Что хранит best[v], пока вершина v ещё вне дерева?",
+  opts:["Вес любого ребра при вершине v","Минимальный вес ребра из построенного дерева в v",
+        "Сумму весов всего пути до v","Количество соседей вершины v"],a:1,tip:2,
+  ex:"best[v] — самый дешёвый «мостик» из дерева в v, а from[v] запоминает, откуда он приходит. Это кандидат, который может улучшаться."},
+ {q:"Почему ребро A–C (вес 5) не вошло в МОД в нашей демонстрации?",
+  opts:["Оно слишком тяжёлое само по себе","Когда B вошла в дерево, best[C] улучшился с 5 до 1",
+        "Вершина C уже была в дереве","Прим не рассматривает рёбра из стартовой вершины"],a:1,tip:4,
+  ex:"На шаге 2 строка B дала до C всего 1 км. Кандидат A–C (5) заменился на B–C (1) — жёлтое ребро погасло, from[C] сменился."},
+ {q:"Зачем при релаксации нужна проверка not used[to]?",
+  opts:["Чтобы не трогать вершины, уже включённые в дерево","Чтобы ускорить сортировку рёбер",
+        "Чтобы матрица оставалась симметричной","Чтобы заранее найти все циклы графа"],a:0,tip:9,
+  ex:"Вершины в дереве уже подключены оптимально. Обновлять их нельзя — иначе можно «переподключить» готовую часть и создать цикл."},
+ {q:"Какова сложность Прима через матрицу смежности без кучи?",
+  opts:["O(n²)","O(E·log E)","O(n + E)","O(n³)"],a:0,tip:3,
+  ex:"n раз ищем минимум циклом по n вершинам и просматриваем строку матрицы длины n → O(n²). Это выгодно для плотных графов."}
+];
+let qi=0,answers=[];
+const qCount=$("#qCount"),qDots=$("#qDots"),qText=$("#qText"),qOpts=$("#qOpts"),
+  qFb=$("#qFb"),qNext=$("#qNext"),quizPlay=$("#quizPlay"),quizResult=$("#quizResult");
+function dotsHTML(){
+  return QUIZ.map((q,i)=>{let c="qdot";
+    if(i<answers.length)c+=answers[i]===q.a?" done":" miss";
+    else if(i===qi)c+=" cur";
+    return `<span class="${c}"></span>`;}).join("");
+}
+function renderQ(){
+  const q=QUIZ[qi];
+  qCount.textContent=`Вопрос ${qi+1} из 5`;
+  qDots.innerHTML=dotsHTML();
+  qText.textContent=q.q;
+  qOpts.innerHTML="";
+  q.opts.forEach((t,i)=>{
+    const b=document.createElement("button");
+    b.className="qopt";b.textContent=t;
+    b.addEventListener("click",()=>answer(i));
+    qOpts.appendChild(b);
+  });
+  qFb.className="fb hidden";qFb.innerHTML="";
+  qNext.classList.add("hidden");
+}
+function answer(i){
+  const q=QUIZ[qi];answers[qi]=i;
+  [...qOpts.children].forEach((b,j)=>{
+    b.disabled=true;
+    if(j===q.a)b.classList.add("correct");
+    else if(j===i)b.classList.add("wrong");
+    else b.classList.add("muted");
+  });
+  const ok=i===q.a;
+  qFb.className="fb "+(ok?"ok":"no");
+  qFb.innerHTML=`<b class="verdict">${ok?"✅ Верно!":"❌ Не совсем."}</b><span>${q.ex}</span>`;
+  if(!ok){
+    const tip=document.createElement("button");
+    tip.className="tiplink";
+    tip.textContent=`📖 Повторить: слайд ${q.tip+1} «${slides[q.tip].dataset.title}»`;
+    tip.addEventListener("click",()=>go(q.tip));
+    qFb.appendChild(document.createElement("br"));qFb.appendChild(tip);
+    const sm=document.createElement("div");
+    sm.style.cssText="font-size:12px;color:var(--dim);margin-top:7px";
+    sm.textContent="Ответы сохранятся — вернись к тесту через оглавление или стрелками.";
+    qFb.appendChild(sm);
+  }
+  qDots.innerHTML=dotsHTML();
+  qNext.textContent=qi===4?"К результатам →":"Дальше →";
+  qNext.classList.remove("hidden");
+}
+qNext.addEventListener("click",()=>{if(qi<4){qi++;renderQ();}else showResult();});
+function showResult(){
+  quizPlay.classList.add("hidden");quizResult.classList.remove("hidden");
+  const score=answers.filter((a,i)=>a===QUIZ[i].a).length;
+  const msg=score===5?"Отлично! Все ключевые идеи Прима на месте. Можно браться за домашнее задание со звёздочкой ⭐"
+    :score>=3?"Хороший результат! Загляни в слайды ниже — и попробуй ещё раз для закрепления."
+    :"Пока трудно — и это нормально. Ошибки показали, что именно повторить: пройди подсказки и вернись к тесту.";
+  const tips=QUIZ.map((q,i)=>answers[i]!==q.a
+    ?`<button class="tiplink" data-s="${q.tip}">📖 Слайд ${q.tip+1} · ${slides[q.tip].dataset.title}</button>`:"").join("");
+  quizResult.innerHTML=`<div class="score">${score} / 5</div>
+    <p style="font-size:17px;margin:12px 0 8px">${msg}</p>
+    ${tips?`<div style="margin:12px 0"><b style="font-size:13.5px;color:var(--muted)">Что повторить:</b><div>${tips}</div></div>`
+      :`<p style="color:var(--green2);font-weight:700">Повторять нечего — всё верно! 🎉</p>`}
+    <p style="font-size:13.5px;color:var(--dim)">Помни: это формирующее оценивание. Цель — не балл, а понимание, куда расти.</p>
+    <button class="btn primary" id="quizRestart">↻ Пройти ещё раз</button>`;
+  quizResult.querySelectorAll("[data-s]").forEach(b=>b.addEventListener("click",()=>go(+b.dataset.s)));
+  $("#quizRestart").addEventListener("click",()=>{
+    qi=0;answers=[];quizResult.classList.add("hidden");quizPlay.classList.remove("hidden");renderQ();
+  });
+}
+
+/* ================= КАРТОЧКИ-ОТКРЫВАШКИ ================= */
+$$(".qa,.reveal").forEach(c=>c.addEventListener("click",()=>c.classList.toggle("open")));
+$$(".selfcheck .chip").forEach(c=>c.addEventListener("click",()=>{
+  c.classList.toggle("done");
+  const base=c.textContent.replace(/^✓ /,"");
+  c.textContent=c.classList.contains("done")?"✓ "+base:base;
+}));
+
+/* ================= НАВИГАЦИЯ ================= */
+const toc=$("#toc"),backdrop=$("#backdrop"),tocItems=$("#tocItems");
+function openToc(){toc.classList.add("open");backdrop.classList.add("show");}
+function closeToc(){toc.classList.remove("open");backdrop.classList.remove("show");}
+$("#menuBtn").addEventListener("click",openToc);
+$("#tocClose").addEventListener("click",closeToc);
+backdrop.addEventListener("click",closeToc);
+slides.forEach((s,i)=>{
+  const b=document.createElement("button");
+  b.className="tocitem";
+  b.innerHTML=`<span class="num">${i+1}</span><span><small>${s.dataset.section}</small>${s.dataset.title}</span>`;
+  b.addEventListener("click",()=>go(i));
+  tocItems.appendChild(b);
+});
+function updateNav(){
+  $("#curNum").textContent=cur+1;
+  $("#totNum").textContent=slides.length;
+  $("#progressFill").style.width=((cur+1)/slides.length*100)+"%";
+  $("#prevBtn").disabled=cur===0;
+  $("#nextBtn").disabled=cur===slides.length-1;
+  $$(".tocitem").forEach((t,j)=>t.classList.toggle("cur",j===cur));
+}
+function go(i){
+  closeToc();
+  i=Math.max(0,Math.min(slides.length-1,i));
+  if(i===cur)return;
+  pStop();
+  slides[cur].classList.remove("active");
+  cur=i;
+  slides[cur].classList.add("active");
+  deck.scrollTop=0;
+  updateNav();
+}
+$("#prevBtn").addEventListener("click",()=>go(cur-1));
+$("#nextBtn").addEventListener("click",()=>go(cur+1));
+$$("[data-go]").forEach(b=>b.addEventListener("click",()=>go(+b.dataset.go)));
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){closeToc();return;}
+  const tag=(e.target.tagName||"").toLowerCase();
+  if(tag==="select"||tag==="input")return;
+  if(e.key===" "&&tag==="button")return;
+  if(["ArrowRight","PageDown"," "].includes(e.key)){e.preventDefault();go(cur+1);}
+  else if(["ArrowLeft","PageUp"].includes(e.key)){e.preventDefault();go(cur-1);}
+  else if(e.key==="Home"){e.preventDefault();go(0);}
+  else if(e.key==="End"){e.preventDefault();go(slides.length-1);}
+});
+
+/* ================= КУРСОРНОЕ СВЕЧЕНИЕ ================= */
+const glow=$("#glow");
+document.addEventListener("pointermove",e=>{
+  if(e.pointerType==="touch")return;
+  glow.style.opacity="1";
+  glow.style.transform=`translate3d(${e.clientX-260}px,${e.clientY-260}px,0)`;
+});
+document.addEventListener("pointerleave",()=>glow.style.opacity="0");
+
+/* ================= СТАРТ ================= */
+renderStatics();
+renderDemo();
+renderQ();
+updateNav();
+</script>
+</body>
+</html>

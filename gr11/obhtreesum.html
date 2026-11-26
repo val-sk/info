@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Обход дерева: рекурсия → стек → очередь</title>
+<style>
+:root{
+  --bg:#0c0f1e; --panel:#151a33; --line:#272e52;
+  --text:#e9edff; --dim:#9aa5d1;
+  --acc:#7c8cf8; --acc-soft:rgba(124,140,248,.15);
+  --green:#34d399; --violet:#a78bfa; --cyan:#22d3ee; --amber:#fbbf24;
+  --mono:'Cascadia Code','JetBrains Mono','Fira Code',Consolas,'SF Mono',Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; display:flex; flex-direction:column; overflow:hidden;
+  font-family:'Segoe UI',system-ui,-apple-system,Roboto,'Helvetica Neue',Arial,sans-serif;
+  background:radial-gradient(1200px 800px at 80% -10%,#1a2044 0%,var(--bg) 55%);
+  color:var(--text);
+}
+.theme-rec  {--acc:#a78bfa; --acc-soft:rgba(167,139,250,.15)}
+.theme-stack{--acc:#22d3ee; --acc-soft:rgba(34,211,238,.13)}
+.theme-queue{--acc:#fbbf24; --acc-soft:rgba(251,191,36,.13)}
+
+#progress{height:4px;background:#1a2040;flex:none}
+#progressFill{height:100%;width:0;background:linear-gradient(90deg,var(--violet),var(--cyan),var(--amber));transition:width .3s}
+
+#deck{position:relative;flex:1;overflow:hidden}
+.slide{
+  position:absolute;inset:0;overflow-y:auto;padding:32px 46px 26px;
+  opacity:0;visibility:hidden;transform:translateY(16px);
+  transition:opacity .35s ease,transform .35s ease,visibility .35s;
+}
+.slide.active{opacity:1;visibility:visible;transform:none}
+.wrap{max-width:1180px;margin:0 auto}
+
+.kicker{color:var(--acc);letter-spacing:.14em;text-transform:uppercase;font-size:.78rem;font-weight:700;margin-bottom:10px}
+h1{font-size:clamp(2.2rem,5.2vw,3.6rem);line-height:1.1;margin:.2em 0 .35em}
+h2{font-size:clamp(1.45rem,2.6vw,2.1rem);margin:0 0 16px;line-height:1.2}
+.grad{background:linear-gradient(90deg,var(--violet),var(--cyan),var(--amber));-webkit-background-clip:text;background-clip:text;color:transparent}
+p{line-height:1.6;margin:.6em 0}
+.lead{font-size:1.12rem;color:var(--dim);max-width:60ch}
+.dim{color:var(--dim)}
+.small{font-size:.85rem}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start}
+.viz{display:grid;grid-template-columns:1.05fr 1fr;gap:24px;align-items:start}
+.code3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start}
+
+.card,.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.card h3,.panel h3{margin:0 0 10px;font-size:1.02rem}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.panel-head code{font-family:var(--mono);font-size:.78rem;color:var(--acc);background:var(--acc-soft);padding:3px 9px;border-radius:8px}
+
+ul.simple{list-style:none;padding:0;margin:8px 0}
+ul.simple li{padding-left:24px;position:relative;margin:11px 0;line-height:1.55}
+ul.simple li::before{content:"▸";position:absolute;left:2px;color:var(--acc);font-weight:700}
+
+.pill{display:inline-block;padding:6px 14px;border-radius:999px;font-weight:700;font-size:.88rem;border:1.5px solid;margin:0 6px 6px 0}
+.pill.rec{color:var(--violet);border-color:var(--violet);background:rgba(167,139,250,.12)}
+.pill.stk{color:var(--cyan);border-color:var(--cyan);background:rgba(34,211,238,.1)}
+.pill.q{color:var(--amber);border-color:var(--amber);background:rgba(251,191,36,.1)}
+
+pre{background:#12162a;border:1px solid var(--line);border-radius:12px;padding:14px 16px;overflow-x:auto;margin:12px 0}
+pre code{font-family:var(--mono);font-size:.92rem;line-height:1.65;color:#d7e0ff;display:block}
+.ln{display:block;padding:0 8px;margin:0 -8px;border-radius:6px;white-space:pre}
+.ln.hl{background:var(--acc-soft);box-shadow:inset 3px 0 0 var(--acc)}
+.tk-k{color:#c792ea}.tk-n{color:#f78c6c}.tk-c{color:#697399;font-style:italic}.tk-f{color:#82aaff}
+.code3 pre code{font-size:.8rem;line-height:1.55}
+.code3 .panel{padding:14px}
+code.inline{font-family:var(--mono);background:#1c2244;padding:2px 8px;border-radius:6px;font-size:.9em;color:#9fd0ff}
+
+.codebig{font-family:var(--mono);font-size:clamp(1rem,2vw,1.3rem);background:#12162a;border:1px solid var(--line);border-radius:12px;padding:16px 18px;overflow-x:auto;margin:14px 0}
+.c-num{color:var(--violet);font-weight:700}
+.c-a{color:var(--cyan)} .c-b{color:var(--amber)}
+
+/* ---- дерево ---- */
+.tree{width:100%;height:auto;display:block}
+.edge{stroke:#39406b;stroke-width:2.5}
+.node circle{fill:#1b2140;stroke:#4a548c;stroke-width:2.5;transition:fill .25s,stroke .25s}
+.node text{fill:#e8ecff;font-weight:700;font-size:20px;text-anchor:middle;font-family:inherit}
+.node.pend circle{stroke:var(--acc);fill:var(--acc-soft);stroke-dasharray:5 4}
+.node.cur circle{fill:var(--acc);stroke:var(--acc)}
+.node.cur text{fill:#0b0e1d}
+.node.cur{filter:drop-shadow(0 0 9px var(--acc))}
+.node.done circle{fill:rgba(52,211,153,.16);stroke:var(--green)}
+.node.done text{fill:#7ee7c0}
+.bdg{fill:var(--acc)}
+.blabel{fill:#0b0e1d;font-size:13px;font-weight:800;text-anchor:middle}
+
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:.78rem;color:var(--dim)}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:-1px}
+.dot.pend{border:2px dashed var(--acc);background:var(--acc-soft)}
+.dot.cur{background:var(--acc)}
+.dot.done{background:rgba(52,211,153,.25);border:2px solid var(--green)}
+
+.order-row{margin-top:12px;font-size:.88rem;color:var(--dim);display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.ochip{display:inline-flex;width:26px;height:26px;border-radius:8px;background:#1c2244;border:1px solid var(--line);align-items:center;justify-content:center;font-weight:700;color:var(--text);font-size:.85rem}
+.oarr{color:#5a649c;font-size:.8rem}
+.odim{font-style:italic}
+
+.total{margin-top:14px;display:flex;align-items:baseline;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 16px}
+.tlabel{color:var(--dim);font-size:.85rem}
+.total-num{font-size:2rem;font-weight:800;color:var(--acc);font-variant-numeric:tabular-nums}
+.total.fin .total-num{color:var(--green)}
+.total.fin .total-num::after{content:" ✓"}
+
+/* ---- стек / очередь / кадры ---- */
+.slabels{display:flex;justify-content:space-between;gap:10px;font-size:.72rem;color:var(--dim);margin-bottom:6px;letter-spacing:.03em}
+.struct{display:flex;gap:8px;align-items:center;min-height:62px;flex-wrap:wrap}
+.struct.frames{flex-direction:column;align-items:stretch;gap:6px;min-height:148px}
+.box{width:46px;height:46px;border-radius:10px;background:var(--acc-soft);border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.15rem;animation:pop .25s ease}
+.frame{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#1a2040;border:1.5px solid var(--line);border-radius:10px;padding:7px 12px;font-family:var(--mono);font-size:.88rem;animation:pop .25s ease}
+.frame.top{border-color:var(--acc);background:var(--acc-soft)}
+.frame span{color:var(--dim);font-size:.78rem}
+.empty{color:var(--dim);border:2px dashed var(--line);border-radius:10px;padding:12px 16px;font-size:.88rem;width:100%;text-align:center}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+.chip{min-height:28px;margin-top:10px;font-size:.9rem;color:var(--dim);opacity:0;transition:opacity .2s}
+.chip.show{opacity:1}
+.chip b{color:var(--acc);font-size:1.05rem}
+
+.desc{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--acc);border-radius:12px;padding:13px 16px;margin-top:12px;min-height:92px;font-size:.98rem;line-height:1.55}
+.controls{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.btn{background:#1c2244;border:1px solid var(--line);color:var(--text);padding:9px 14px;border-radius:10px;font-size:.92rem;cursor:pointer;transition:.15s;font-family:inherit}
+.btn:hover:not(:disabled){border-color:var(--acc);color:var(--acc)}
+.btn:disabled{opacity:.35;cursor:default}
+.btn.primary{background:var(--acc);border-color:var(--acc);color:#0b0e1d;font-weight:700}
+.btn.primary:hover:not(:disabled){filter:brightness(1.12);color:#0b0e1d}
+.btn.on{background:var(--acc-soft);border-color:var(--acc);color:var(--acc)}
+.btn.big{font-size:1.05rem;padding:12px 22px;margin-top:14px}
+.stepcount{margin-left:auto;color:var(--dim);font-size:.85rem}
+
+/* ---- таблица ---- */
+.tscroll{overflow-x:auto}
+.cmp{width:100%;border-collapse:collapse;font-size:.95rem}
+.cmp th,.cmp td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.cmp th{font-size:.85rem;font-weight:700}
+.cmp td:first-child{color:var(--dim);font-size:.88rem}
+.seq{font-family:var(--mono);font-size:.85rem;letter-spacing:.06em}
+.c-rec{color:var(--violet)} .c-stk{color:var(--cyan)} .c-q{color:var(--amber)}
+
+details{margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+summary{cursor:pointer;color:var(--acc);font-weight:600}
+.kbd{border:1px solid var(--line);background:#1a2040;padding:2px 7px;border-radius:6px;font-size:.8rem;font-family:var(--mono)}
+
+/* ---- навигация ---- */
+#nav{display:flex;align-items:center;gap:14px;padding:10px 20px;border-top:1px solid var(--line);background:rgba(12,15,30,.88);flex:none}
+.navbtn{width:44px;height:38px;border-radius:10px;background:#1c2244;border:1px solid var(--line);color:var(--text);font-size:1.05rem;cursor:pointer;transition:.15s}
+.navbtn:hover{border-color:var(--acc);color:var(--acc)}
+#dots{display:flex;gap:7px;flex:1;justify-content:center;flex-wrap:wrap}
+.dotnav{width:9px;height:9px;border-radius:50%;background:#2c3560;border:none;cursor:pointer;padding:0;transition:.2s}
+.dotnav.on{background:var(--acc);transform:scale(1.4)}
+#counter{color:var(--dim);font-size:.85rem;min-width:62px;text-align:center;font-variant-numeric:tabular-nums}
+
+@media (max-width:920px){
+  .grid2,.viz,.code3{grid-template-columns:1fr}
+  .slide{padding:20px 16px}
+  .desc{min-height:0}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"><div id="progressFill"></div></div>
+
+<main id="deck">
+
+<!-- 1. ТИТУЛ -->
+<section class="slide" data-title="Начало">
+  <div class="wrap grid2" style="align-items:center">
+    <div>
+      <div class="kicker">Python · без классов и словарей · только списки</div>
+      <h1>Обход дерева:<br><span class="grad">рекурсия → стек → очередь</span></h1>
+      <p class="lead">Одна простая задача — три способа её решить. Меняются всего пара строк, а порядок обхода становится совсем другим.</p>
+      <div>
+        <span class="pill rec">Рекурсия</span>
+        <span class="pill stk">Стек · вглубь</span>
+        <span class="pill q">Очередь · вширь</span>
+      </div>
+      <button class="btn primary big" onclick="go(1)">Начать →</button>
+      <p class="small dim" style="margin-top:16px">
+        Листай: <span class="kbd">←</span> <span class="kbd">→</span> или кнопки внизу.
+        <span class="kbd">Пробел</span> — шаг анимации.
+      </p>
+    </div>
+    <div class="panel"><div id="treeTitle"></div></div>
+  </div>
+</section>
+
+<!-- 2. ЗАДАЧА -->
+<section class="slide" data-title="Задача">
+  <div class="wrap">
+    <div class="kicker">01 · задача</div>
+    <h2>Сложить все числа в дереве</h2>
+    <div class="grid2">
+      <div>
+        <p>Есть дерево: у каждого узла — <b>число</b> и <b>дети</b>. Нужно побывать в каждом узле и сложить все числа.</p>
+        <ul class="simple">
+          <li><b>1</b> — корень, с него начинаем;</li>
+          <li><b>2</b> и <b>3</b> — его дети;</li>
+          <li><b>4, 5, 6, 7</b> — листья, детей у них нет;</li>
+          <li>ответ, конечно, <b>28</b> — но нас интересует <b>маршрут</b>: как обойти все узлы и ни один не пропустить.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <div id="treeTask"></div>
+        <details>
+          <summary>Проверить ответ</summary>
+          <p style="margin:10px 0 2px">1 + 2 + 3 + 4 + 5 + 6 + 7 = <b>28</b>. Программа должна сама дойти до каждого узла — этим и займёмся.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. ХРАНЕНИЕ -->
+<section class="slide" data-title="Дерево = список">
+  <div class="wrap">
+    <div class="kicker">02 · структура данных</div>
+    <h2>Храним дерево обычным списком</h2>
+    <p>Узел — это список: <b>первым идёт число, дальше — дети</b>. Ребёнок — такой же список. И всё, никаких классов и словарей.</p>
+    <div class="codebig">tree = [<span class="c-num">1</span>, <span class="c-a">[2, [4], [5]]</span>, <span class="c-b">[3, [6], [7]]</span>]</div>
+    <p class="small dim"><span class="c-num">■</span> число корня &nbsp; <span class="c-a">■</span> левое поддерево &nbsp; <span class="c-b">■</span> правое поддерево</p>
+    <div class="grid2">
+      <div class="card">
+        <h3>Правило для любого узла</h3>
+        <p><code class="inline">node[0]</code> — число этого узла</p>
+        <p><code class="inline">node[1:]</code> — список детей (каждый — тоже дерево)</p>
+        <p class="dim small">Лист — список из одного числа: <code class="inline">node[1:]</code> пустой.</p>
+      </div>
+      <div class="card">
+        <h3>Примеры</h3>
+<pre><code>tree[0]        # 1 — число корня
+tree[1]        # [2, [4], [5]] — левый ребёнок
+tree[1][0]     # 2
+tree[1][1]     # [4] — лист
+[4][1:]        # [] — детей нет</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. МАРШРУТЫ -->
+<section class="slide" data-title="Два маршрута">
+  <div class="wrap">
+    <div class="kicker">03 · два маршрута</div>
+    <h2>Обойти = посетить каждый узел ровно один раз</h2>
+    <p>Порядок можно выбрать. Классических маршрута два:</p>
+    <div class="grid2">
+      <div class="panel theme-stack">
+        <div class="panel-head"><span class="pill stk">Вглубь (DFS)</span></div>
+        <div id="treeDfs"></div>
+        <p class="small">Ныряем по левой ветке до листа, откатываемся, ныряем снова.<br>Порядок: <b class="seq">1 · 2 · 4 · 5 · 3 · 6 · 7</b></p>
+      </div>
+      <div class="panel theme-queue">
+        <div class="panel-head"><span class="pill q">Вширь (BFS)</span></div>
+        <div id="treeBfs"></div>
+        <p class="small">Сначала весь уровень, потом следующий — как волны.<br>Порядок: <b class="seq">1 · 2 · 3 · 4 · 5 · 6 · 7</b></p>
+      </div>
+    </div>
+    <p class="small dim">Маленькая цифра у узла — номер шага, на котором его посетили. Рекурсия и стек дадут первый маршрут, очередь — второй.</p>
+  </div>
+</section>
+
+<!-- 5. РЕКУРСИЯ: КОД -->
+<section class="slide theme-rec" data-title="Рекурсия: код">
+  <div class="wrap">
+    <div class="kicker">04 · решение 1 — рекурсия</div>
+    <h2>«Моё число + суммы детей»</h2>
+    <div class="grid2">
+      <div>
+<pre data-hl="sum_rec(child)"><code>def sum_rec(node):
+    total = node[0]              # число этого узла
+    for child in node[1:]:       # каждый ребёнок — тоже дерево
+        total += sum_rec(child)  # рекурсия: спрашиваем ребёнка
+    return total
+
+print(sum_rec(tree))   # 28</code></pre>
+      </div>
+      <div>
+        <ul class="simple">
+          <li>Функция вызывает <b>саму себя</b> для каждого ребёнка — это и есть рекурсия.</li>
+          <li><b>Где остановка?</b> У листа <code class="inline">node[1:]</code> пуст → цикл не сделает ни шага → функция просто вернёт своё число.</li>
+          <li>Незавершённые вызовы Python складывает в стопку — <b>стек вызовов</b>. Ребёнок вернул сумму — родитель продолжает с того места, где остановился.</li>
+          <li>Явного стека в коде нет — он спрятан внутри Python.</li>
+        </ul>
+        <p class="dim">На следующем слайде посмотрим на этот скрытый стек по шагам →</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. РЕКУРСИЯ: АНИМАЦИЯ -->
+<section class="slide theme-rec" id="svRec" data-title="Рекурсия: по шагам">
+  <div class="wrap">
+    <div class="kicker">05 · рекурсия по шагам</div>
+    <h2>Смотрим на стек вызовов</h2>
+    <div class="viz" id="vizRec">
+      <div>
+        <div class="panel"><div class="tree-host"></div></div>
+        <div class="legend">
+          <span><i class="dot pend"></i>активный вызов</span>
+          <span><i class="dot cur"></i>выполняется сейчас</span>
+          <span><i class="dot done"></i>уже вернулся</span>
+        </div>
+        <div class="order-row"><span>Порядок:</span><span class="order"></span></div>
+        <div class="total"><span class="tlabel">Сумма посещённых узлов</span><span class="total-num">0</span></div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="panel-head"><b>Стек вызовов</b><code>total += sum_rec(child)</code></div>
+          <div class="slabels"><span>↑ вершина — выполняется сейчас</span><span>внизу — кто ждёт</span></div>
+          <div class="struct frames"></div>
+          <div class="chip"></div>
+        </div>
+        <div class="desc"></div>
+        <div class="controls">
+          <button class="btn b-reset" title="Сначала">⟲</button>
+          <button class="btn b-prev">◀</button>
+          <button class="btn primary b-next">Шаг ▶</button>
+          <button class="btn b-auto">▶▶ авто</button>
+          <span class="stepcount"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. СТЕК: КОД -->
+<section class="slide theme-stack" data-title="Стек: код">
+  <div class="wrap">
+    <div class="kicker">06 · решение 2 — явный стек</div>
+    <h2>Тот же обход, но стек своими руками</h2>
+    <div class="grid2">
+      <div>
+        <div class="card">
+          <h3>Стек — стопка тарелок 🍽</h3>
+          <p class="small">Кладём и берём только с верхушки. В Python это обычный список:</p>
+<pre><code>stack.append(x)   # положить наверх (в конец)
+stack.pop()       # снять сверху (с конца)</code></pre>
+        </div>
+<pre data-hl=".pop()"><code>def sum_stack(tree):
+    total = 0
+    stack = [tree]          # начинаем с корня
+    while stack:            # пока есть что брать
+        node = stack.pop()  # берём с конца
+        total += node[0]
+        for child in reversed(node[1:]):
+            stack.append(child)   # кладём детей
+    return total
+
+print(sum_stack(tree))   # 28</code></pre>
+      </div>
+      <div>
+        <ul class="simple">
+          <li><b>Словами:</b> положи корень → пока стек не пуст: достань узел, прибавь его число, положи его детей.</li>
+          <li><code class="inline">reversed(node[1:])</code> — кладём детей справа налево, чтобы <b>левый</b> оказался на верхушке и достался первым.</li>
+          <li>Получается обход <b>вглубь</b> — тот же порядок, что у рекурсии: <span class="seq">1, 2, 4, 5, 3, 6, 7</span>.</li>
+          <li><code class="inline">while</code> + список = рекурсия без рекурсии. Мы сами ведём стопку «что делать дальше».</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. СТЕК: АНИМАЦИЯ -->
+<section class="slide theme-stack" id="svStack" data-title="Стек: по шагам">
+  <div class="wrap">
+    <div class="kicker">07 · стек по шагам</div>
+    <h2>pop() — берём с конца</h2>
+    <div class="viz" id="vizStack">
+      <div>
+        <div class="panel"><div class="tree-host"></div></div>
+        <div class="legend">
+          <span><i class="dot pend"></i>лежит в стеке</span>
+          <span><i class="dot cur"></i>берём сейчас</span>
+          <span><i class="dot done"></i>посчитан</span>
+        </div>
+        <div class="order-row"><span>Порядок:</span><span class="order"></span></div>
+        <div class="total"><span class="tlabel">Сумма</span><span class="total-num">0</span></div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="panel-head"><b>Стек (список)</b><code>node = stack.pop()</code></div>
+          <div class="slabels"><span>дно</span><span>вершина · pop() и append()</span></div>
+          <div class="struct"></div>
+          <div class="chip"></div>
+        </div>
+        <div class="desc"></div>
+        <div class="controls">
+          <button class="btn b-reset" title="Сначала">⟲</button>
+          <button class="btn b-prev">◀</button>
+          <button class="btn primary b-next">Шаг ▶</button>
+          <button class="btn b-auto">▶▶ авто</button>
+          <span class="stepcount"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 9. ОЧЕРЕДЬ: КОД -->
+<section class="slide theme-queue" data-title="Очередь: код">
+  <div class="wrap">
+    <div class="kicker">08 · решение 3 — очередь</div>
+    <h2>Меняем одну строку — и идём вширь</h2>
+    <div class="grid2">
+      <div>
+        <div class="card">
+          <h3>Очередь — как в кассу 🧾</h3>
+          <p class="small">Новые встают в конец, обслуживаем с начала:</p>
+<pre><code>queue.append(x)   # встать в конец
+queue.pop(0)      # взять первого (с начала)</code></pre>
+        </div>
+<pre data-hl=".pop(0)"><code>def sum_queue(tree):
+    total = 0
+    queue = [tree]
+    while queue:
+        node = queue.pop(0)   # берём с начала!
+        total += node[0]
+        for child in node[1:]:
+            queue.append(child)   # дети — в конец
+    return total
+
+print(sum_queue(tree))   # 28</code></pre>
+      </div>
+      <div>
+        <ul class="simple">
+          <li>Отличие от стека — <code class="inline">pop(0)</code> вместо <code class="inline">pop()</code>. Дети кладутся в обычном порядке, <code class="inline">reversed</code> не нужен.</li>
+          <li>Ребёнок не может «обогнать» тех, кто уже стоит в очереди → сначала досчитаем <b>весь уровень</b>, потом спустимся ниже.</li>
+          <li>Это обход <b>вширь</b> (BFS): <span class="seq">1, 2, 3, 4, 5, 6, 7</span>.</li>
+        </ul>
+        <p class="small dim">pop(0) сдвигает весь список — для учёбы идеально; для огромных очередей в бою берут collections.deque.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 10. ОЧЕРЕДЬ: АНИМАЦИЯ -->
+<section class="slide theme-queue" id="svQueue" data-title="Очередь: по шагам">
+  <div class="wrap">
+    <div class="kicker">09 · очередь по шагам</div>
+    <h2>pop(0) — берём с начала</h2>
+    <div class="viz" id="vizQueue">
+      <div>
+        <div class="panel"><div class="tree-host"></div></div>
+        <div class="legend">
+          <span><i class="dot pend"></i>стоит в очереди</span>
+          <span><i class="dot cur"></i>берём сейчас</span>
+          <span><i class="dot done"></i>посчитан</span>
+        </div>
+        <div class="order-row"><span>Порядок:</span><span class="order"></span></div>
+        <div class="total"><span class="tlabel">Сумма</span><span class="total-num">0</span></div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="panel-head"><b>Очередь (список)</b><code>node = queue.pop(0)</code></div>
+          <div class="slabels"><span>начало · pop(0)</span><span>конец · append()</span></div>
+          <div class="struct"></div>
+          <div class="chip"></div>
+        </div>
+        <div class="desc"></div>
+        <div class="controls">
+          <button class="btn b-reset" title="Сначала">⟲</button>
+          <button class="btn b-prev">◀</button>
+          <button class="btn primary b-next">Шаг ▶</button>
+          <button class="btn b-auto">▶▶ авто</button>
+          <span class="stepcount"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 11. СРАВНЕНИЕ -->
+<section class="slide" data-title="Сравнение">
+  <div class="wrap">
+    <div class="kicker">10 · сравнение</div>
+    <h2>Три решения одной задачи</h2>
+    <div class="tscroll"><table class="cmp">
+      <tr><th></th><th class="c-rec">Рекурсия</th><th class="c-stk">Стек</th><th class="c-q">Очередь</th></tr>
+      <tr><td>Где хранится «что дальше»</td><td>стек вызовов (ведёт Python)</td><td>список, берём с конца — <code class="inline">pop()</code></td><td>список, берём с начала — <code class="inline">pop(0)</code></td></tr>
+      <tr><td>Порядок посещения</td><td class="seq c-rec">1 2 4 5 3 6 7</td><td class="seq c-stk">1 2 4 5 3 6 7</td><td class="seq c-q">1 2 3 4 5 6 7</td></tr>
+      <tr><td>Как идёт</td><td>вглубь (DFS)</td><td>вглубь (DFS)</td><td>вширь (BFS)</td></tr>
+      <tr><td>Результат</td><td><b>28</b></td><td><b>28</b></td><td><b>28</b></td></tr>
+    </table></div>
+    <div class="card" style="margin-top:18px">
+      <p style="margin:0">Для суммы порядок не важен — все узлы всё равно посещены. Но для задач вроде «найти кратчайший путь» или «напечатать по уровням» очередь незаменима. А рекурсия и явный стек — близнецы: просто во втором случае стопку «что делать дальше» мы ведём сами.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 12. ВЕСЬ КОД -->
+<section class="slide" data-title="Весь код">
+  <div class="wrap">
+    <div class="kicker">11 · всё вместе</div>
+    <h2>Весь код на одном экране</h2>
+<pre><code>tree = [1, [2, [4], [5]], [3, [6], [7]]]</code></pre>
+    <div class="code3">
+      <div class="panel theme-rec">
+        <span class="pill rec">Рекурсия</span>
+<pre data-hl="sum_rec(child)"><code>def sum_rec(node):
+    total = node[0]
+    for child in node[1:]:
+        total += sum_rec(child)
+    return total
+
+print(sum_rec(tree))  # 28</code></pre>
+      </div>
+      <div class="panel theme-stack">
+        <span class="pill stk">Стек</span>
+<pre data-hl=".pop()"><code>def sum_stack(tree):
+    total = 0
+    stack = [tree]
+    while stack:
+        node = stack.pop()
+        total += node[0]
+        for child in reversed(node[1:]):
+            stack.append(child)
+    return total
+
+print(sum_stack(tree))  # 28</code></pre>
+      </div>
+      <div class="panel theme-queue">
+        <span class="pill q">Очередь</span>
+<pre data-hl=".pop(0)"><code>def sum_queue(tree):
+    total = 0
+    queue = [tree]
+    while queue:
+        node = queue.pop(0)
+        total += node[0]
+        for child in node[1:]:
+            queue.append(child)
+    return total
+
+print(sum_queue(tree))  # 28</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 13. ИТОГИ -->
+<section class="slide" data-title="Итоги">
+  <div class="wrap">
+    <div class="kicker">12 · итоги</div>
+    <h2>Что запомнить</h2>
+    <div class="grid2">
+      <div class="card"><h3>🌳 Дерево</h3><p>Просто список: <code class="inline">[число, ребёнок, ребёнок…]</code>. Лист — <code class="inline">[число]</code>. Никаких классов и словарей.</p></div>
+      <div class="card theme-rec"><h3>🪆 Рекурсия</h3><p>Сумма = моё число + суммы детей. Стек вызовов ведёт Python за нас.</p></div>
+      <div class="card theme-stack"><h3>🍽 Стек</h3><p><code class="inline">pop()</code> с конца → обход <b>вглубь</b>. Та же рекурсия, только вручную.</p></div>
+      <div class="card theme-queue"><h3>🧾 Очередь</h3><p><code class="inline">pop(0)</code> с начала → обход <b>вширь</b>, строго по уровням.</p></div>
+    </div>
+    <div class="card" style="margin-top:18px;border-left:4px solid var(--green)">
+      <h3>💪 Попробуй сам</h3>
+      <p style="margin:0">Посчитай <b>количество листьев</b>: прибавляй 1 вместо числа, и только если <code class="inline">len(node) == 1</code>. Работает во всех трёх версиях!</p>
+    </div>
+    <p class="dim small" style="margin-top:16px">Конец. Клавиша <span class="kbd">Home</span> — в начало, анимации сохраняют своё состояние при возврате.</p>
+  </div>
+</section>
+
+</main>
+
+<footer id="nav">
+  <button class="navbtn" id="btnPrev" aria-label="Назад">←</button>
+  <div id="dots"></div>
+  <span id="counter"></span>
+  <button class="navbtn" id="btnNext" aria-label="Вперёд">→</button>
+  <button class="navbtn" id="btnFull" aria-label="Полный экран" title="Полный экран">⛶</button>
+</footer>
+
+<script>
+/* ================= подсветка Python-кода ================= */
+function hlLine(raw){
+  let s = raw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return s.replace(/(#[^\n]*)|\b(def|for|in|while|return|if|else|print)\b|\b(\d+)\b|\b(sum_rec|sum_stack|sum_queue|append|pop|reversed|len)\b/g,
+    (m,c,k,n,f)=> c?`<span class="tk-c">${c}</span>` : k?`<span class="tk-k">${k}</span>` : n?`<span class="tk-n">${n}</span>` : `<span class="tk-f">${f}</span>`);
+}
+document.querySelectorAll('pre').forEach(pre=>{
+  const el = pre.querySelector('code');
+  let raw = el.textContent.replace(/^\n+/,'').replace(/\s+$/,'');
+  const ls = raw.split('\n');
+  const ind = Math.min(...ls.filter(l=>l.trim()).map(l=>l.match(/^ */)[0].length));
+  const lines = ls.map(l=>l.slice(ind));
+  const marks = (pre.dataset.hl||'').split('|').filter(Boolean);
+  el.innerHTML = lines.map(l=>{
+    const hl = marks.some(m=>l.includes(m));
+    return `<span class="ln${hl?' hl':''}">${hlLine(l)||' '}</span>`;
+  }).join('');
+});
+
+/* ================= дерево (SVG) ================= */
+const POS = {1:[300,46],2:[170,140],3:[430,140],4:[105,234],5:[235,234],6:[365,234],7:[495,234]};
+const EDGES = [[1,2],[1,3],[2,4],[2,5],[3,6],[3,7]];
+const NS = 'http://www.w3.org/2000/svg';
+
+function buildTree(host, badges){
+  const svg = document.createElementNS(NS,'svg');
+  svg.setAttribute('viewBox','0 0 600 282');
+  svg.setAttribute('class','tree');
+  for(const [a,b] of EDGES){
+    const l = document.createElementNS(NS,'line');
+    l.setAttribute('x1',POS[a][0]); l.setAttribute('y1',POS[a][1]);
+    l.setAttribute('x2',POS[b][0]); l.setAttribute('y2',POS[b][1]);
+    l.setAttribute('class','edge'); svg.appendChild(l);
+  }
+  const nodes = {};
+  for(const id of Object.keys(POS)){
+    const [x,y] = POS[id];
+    const g = document.createElementNS(NS,'g');
+    g.setAttribute('class','node');
+    const c = document.createElementNS(NS,'circle');
+    c.setAttribute('cx',x); c.setAttribute('cy',y); c.setAttribute('r',27);
+    const t = document.createElementNS(NS,'text');
+    t.setAttribute('x',x); t.setAttribute('y',y); t.setAttribute('dy','0.35em');
+    t.textContent = id;
+    g.append(c,t);
+    if(badges){
+      const bc = document.createElementNS(NS,'circle');
+      bc.setAttribute('cx',x+26); bc.setAttribute('cy',y-24); bc.setAttribute('r',12);
+      bc.setAttribute('class','bdg');
+      const bt = document.createElementNS(NS,'text');
+      bt.setAttribute('x',x+26); bt.setAttribute('y',y-24); bt.setAttribute('dy','0.35em');
+      bt.setAttribute('class','blabel'); bt.textContent = badges[id];
+      g.append(bc,bt);
+    }
+    svg.appendChild(g); nodes[id]=g;
+  }
+  host.appendChild(svg);
+  return state=>{
+    for(const id in nodes){
+      const g = nodes[id], n = +id;
+      g.classList.remove('cur','done','pend');
+      if(state.cur===n) g.classList.add('cur');
+      else if(state.done.has(n)) g.classList.add('done');
+      else if(state.pend.has(n)) g.classList.add('pend');
+    }
+  };
+}
+buildTree(document.getElementById('treeTitle'));
+buildTree(document.getElementById('treeTask'));
+buildTree(document.getElementById('treeDfs'), {1:1,2:2,4:3,5:4,3:5,6:6,7:7});
+buildTree(document.getElementById('treeBfs'), {1:1,2:2,3:3,4:4,5:5,6:6,7:7});
+
+/* ================= шаги анимаций ================= */
+/* rec: f — кадры [узел, total] снизу вверх; r — что вернули; v — посещённые */
+const REC = [
+ {d:"Вызываем sum_rec(tree) — начинаем с корня 1. Python кладёт вызов в стек вызовов.", f:[[1,1]], r:null, v:[1]},
+ {d:"total узла 1 = 1. Первый ребёнок — 2. Вызываем sum_rec(2): новый кадр ложится сверху.", f:[[1,1],[2,2]], r:null, v:[1,2]},
+ {d:"total узла 2 = 2. Первый ребёнок — 4. Вызываем sum_rec(4).", f:[[1,1],[2,2],[4,4]], r:null, v:[1,2,4]},
+ {d:"4 — лист: детей нет, цикл for не сделал ни шага. Кадр возвращает 4 и снимается. У узла 2: total = 2 + 4 = 6.", f:[[1,1],[2,6]], r:4, v:[1,2,4]},
+ {d:"Следующий ребёнок узла 2 — пятёрка. Вызываем sum_rec(5).", f:[[1,1],[2,6],[5,5]], r:null, v:[1,2,4,5]},
+ {d:"5 — лист → возвращает 5. У узла 2: total = 6 + 5 = 11.", f:[[1,1],[2,11]], r:5, v:[1,2,4,5]},
+ {d:"Дети узла 2 закончились. Кадр возвращает 11. У корня: total = 1 + 11 = 12.", f:[[1,12]], r:11, v:[1,2,4,5]},
+ {d:"Второй ребёнок корня — 3. Вызываем sum_rec(3).", f:[[1,12],[3,3]], r:null, v:[1,2,4,5,3]},
+ {d:"total узла 3 = 3. Первый ребёнок — 6. Вызываем sum_rec(6).", f:[[1,12],[3,3],[6,6]], r:null, v:[1,2,4,5,3,6]},
+ {d:"6 — лист → возвращает 6. У узла 3: total = 3 + 6 = 9.", f:[[1,12],[3,9]], r:6, v:[1,2,4,5,3,6]},
+ {d:"Следующий ребёнок узла 3 — семёрка. Вызываем sum_rec(7).", f:[[1,12],[3,9],[7,7]], r:null, v:[1,2,4,5,3,6,7]},
+ {d:"7 — лист → возвращает 7. У узла 3: total = 9 + 7 = 16.", f:[[1,12],[3,16]], r:7, v:[1,2,4,5,3,6,7]},
+ {d:"Дети узла 3 закончились → кадр возвращает 16. У корня: total = 12 + 16 = 28.", f:[[1,28]], r:16, v:[1,2,4,5,3,6,7]},
+ {d:"Корень возвращает 28 — стек вызовов пуст. Готово! Порядок: 1, 2, 4, 5, 3, 6, 7 — вглубь.", f:[], r:28, v:[1,2,4,5,3,6,7], fin:true}
+];
+/* stack/queue: s — содержимое после шага; p — что взяли; v — посещённые */
+const STK = [
+ {d:"Начало: кладём корень в стек (список). Он на верхушке — справа.", s:[1], p:null, v:[]},
+ {d:"pop() снимает с конца узел 1. Сумма = 1. Кладём детей наоборот: сначала 3, потом 2 — наверху 2.", s:[3,2], p:1, v:[1]},
+ {d:"pop() → 2. Сумма = 1 + 2 = 3. Кладём 5, потом 4 — наверху 4. Ныряем всё глубже влево.", s:[3,5,4], p:2, v:[1,2]},
+ {d:"pop() → 4. Это лист — класть нечего. Сумма = 7.", s:[3,5], p:4, v:[1,2,4]},
+ {d:"pop() → 5. Лист. Сумма = 12. Левая ветка полностью посчитана.", s:[3], p:5, v:[1,2,4,5]},
+ {d:"pop() → 3. Сумма = 15. Кладём 7, потом 6.", s:[7,6], p:3, v:[1,2,4,5,3]},
+ {d:"pop() → 6. Лист. Сумма = 21.", s:[7], p:6, v:[1,2,4,5,3,6]},
+ {d:"pop() → 7. Лист. Сумма = 28. Стек пуст — while закончился. Порядок 1, 2, 4, 5, 3, 6, 7 — точь-в-точь как у рекурсии!", s:[], p:7, v:[1,2,4,5,3,6,7], fin:true}
+];
+const QUE = [
+ {d:"Начало: корень встаёт в очередь. Брать будем с начала (слева), новых сажать в конец (справа).", s:[1], p:null, v:[]},
+ {d:"pop(0) забирает первого: 1. Сумма = 1. Дети 2 и 3 встают в конец.", s:[2,3], p:1, v:[1]},
+ {d:"pop(0) → 2. Сумма = 3. Дети 4 и 5 встают в конец — позади тройки!", s:[3,4,5], p:2, v:[1,2]},
+ {d:"pop(0) → 3. Сумма = 6. В конец встают 6 и 7. Второй уровень досчитан — раньше третьего не начнём.", s:[4,5,6,7], p:3, v:[1,2,3]},
+ {d:"pop(0) → 4. Лист. Сумма = 10.", s:[5,6,7], p:4, v:[1,2,3,4]},
+ {d:"pop(0) → 5. Лист. Сумма = 15.", s:[6,7], p:5, v:[1,2,3,4,5]},
+ {d:"pop(0) → 6. Лист. Сумма = 21.", s:[7], p:6, v:[1,2,3,4,5,6]},
+ {d:"pop(0) → 7. Сумма = 28. Очередь пуста. Порядок 1, 2, 3, 4, 5, 6, 7 — строго по уровням, вширь!", s:[], p:7, v:[1,2,3,4,5,6,7], fin:true}
+];
+
+/* ================= степпер ================= */
+function makeStepper(rootId, mode, steps){
+  const root = document.getElementById(rootId);
+  const $ = s=>root.querySelector(s);
+  const setTree = buildTree($('.tree-host'));
+  const structEl=$('.struct'), chipEl=$('.chip'), descEl=$('.desc'),
+        totalEl=$('.total-num'), orderEl=$('.order'), cntEl=$('.stepcount');
+  const bPrev=$('.b-prev'), bNext=$('.b-next'), bAuto=$('.b-auto'), bReset=$('.b-reset');
+  let i=0, timer=null;
+
+  function render(){
+    const st = steps[i];
+    let cur, pend, done;
+    if(mode==='rec'){
+      const fr = st.f.map(a=>a[0]);
+      cur = fr.length ? fr[fr.length-1] : null;
+      pend = new Set(fr.slice(0,-1));
+      done = new Set(st.v.filter(n=>!fr.includes(n)));
+      structEl.innerHTML='';
+      if(!st.f.length){
+        structEl.innerHTML='<div class="empty">(пусто — все вызовы вернулись)</div>';
+      } else {
+        [...st.f].reverse().forEach(([n,t],k)=>{
+          const d=document.createElement('div');
+          d.className='frame'+(k===0?' top':'');
+          d.innerHTML=`<b>sum_rec(${n})</b><span>total = ${t}</span>`;
+          structEl.appendChild(d);
+        });
+      }
+      chipEl.innerHTML = st.r!=null ? `вернула <b>${st.r}</b> ↩` : '';
+      chipEl.className = 'chip'+(st.r!=null?' show':'');
+    } else {
+      cur = st.p;
+      pend = new Set(st.s);
+      done = new Set(st.v.filter(n=>n!==cur));
+      structEl.innerHTML='';
+      if(!st.s.length){
+        structEl.innerHTML='<div class="empty">(пусто)</div>';
+      } else {
+        st.s.forEach(n=>{
+          const d=document.createElement('div');
+          d.className='box'; d.textContent=n;
+          structEl.appendChild(d);
+        });
+      }
+      const op = mode==='stack' ? 'pop()' : 'pop(0)';
+      chipEl.innerHTML = st.p!=null ? `${op} → <b>${st.p}</b>` : '';
+      chipEl.className = 'chip'+(st.p!=null?' show':'');
+    }
+    setTree({cur,pend,done});
+    totalEl.textContent = st.v.reduce((a,b)=>a+b,0);
+    $('.total').classList.toggle('fin', !!st.fin);
+    orderEl.innerHTML = st.v.length
+      ? st.v.map(n=>`<span class="ochip">${n}</span>`).join('<span class="oarr">→</span>')
+      : '<span class="odim">пока пусто</span>';
+    descEl.textContent = st.d;
+    cntEl.textContent = `шаг ${i} / ${steps.length-1}`;
+    bPrev.disabled = i===0;
+    bNext.disabled = i===steps.length-1;
+    if(st.fin) stopAuto();
+  }
+  function step(d){ i=Math.max(0,Math.min(steps.length-1,i+d)); render(); }
+  function stopAuto(){
+    if(timer){ clearInterval(timer); timer=null; }
+    bAuto.textContent='▶▶ авто'; bAuto.classList.remove('on');
+  }
+  function toggleAuto(){
+    if(timer){ stopAuto(); return; }
+    if(i===steps.length-1){ i=0; render(); }
+    bAuto.textContent='⏸ пауза'; bAuto.classList.add('on');
+    timer=setInterval(()=>{ i<steps.length-1 ? step(1) : stopAuto(); },1500);
+  }
+  bPrev.onclick=()=>{stopAuto();step(-1);};
+  bNext.onclick=()=>{stopAuto();step(1);};
+  bReset.onclick=()=>{stopAuto();i=0;render();};
+  bAuto.onclick=toggleAuto;
+  render();
+  return {next:()=>{stopAuto();step(1);}, stopAuto, atEnd:()=>i===steps.length-1};
+}
+
+const widgets = new Map();
+widgets.set(document.getElementById('svRec'),   makeStepper('vizRec','rec',REC));
+widgets.set(document.getElementById('svStack'), makeStepper('vizStack','stack',STK));
+widgets.set(document.getElementById('svQueue'), makeStepper('vizQueue','queue',QUE));
+
+/* ================= колода слайдов ================= */
+const slides=[...document.querySelectorAll('.slide')];
+const dotsEl=document.getElementById('dots');
+const counter=document.getElementById('counter');
+const fill=document.getElementById('progressFill');
+let idx=0;
+
+slides.forEach((s,k)=>{
+  const b=document.createElement('button');
+  b.className='dotnav'; b.title=(k+1)+'. '+(s.dataset.title||'');
+  b.setAttribute('aria-label',b.title);
+  b.onclick=()=>go(k);
+  dotsEl.appendChild(b);
+});
+const dots=[...dotsEl.children];
+
+function go(i){
+  i=Math.max(0,Math.min(slides.length-1,i));
+  const w=widgets.get(slides[idx]); if(w) w.stopAuto();
+  slides[idx].classList.remove('active');
+  idx=i;
+  slides[idx].classList.add('active');
+  slides[idx].scrollTop=0;
+  dots.forEach((d,k)=>d.classList.toggle('on',k===idx));
+  counter.textContent=(idx+1)+' / '+slides.length;
+  fill.style.width=((idx+1)/slides.length*100)+'%';
+}
+document.getElementById('btnPrev').onclick=()=>go(idx-1);
+document.getElementById('btnNext').onclick=()=>go(idx+1);
+document.getElementById('btnFull').onclick=()=>{
+  document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+};
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='PageDown'){ e.preventDefault(); go(idx+1); }
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){ e.preventDefault(); go(idx-1); }
+  else if(e.key===' '){
+    e.preventDefault();
+    const w=widgets.get(slides[idx]);
+    (w && !w.atEnd()) ? w.next() : go(idx+1);
+  }
+  else if(e.key==='Enter'){ go(idx+1); }
+  else if(e.key==='Home'){ e.preventDefault(); go(0); }
+  else if(e.key==='End'){ e.preventDefault(); go(slides.length-1); }
+});
+
+/* свайпы на телефоне */
+let tx=0,ty=0;
+document.getElementById('deck').addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY;},{passive:true});
+document.getElementById('deck').addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty;
+  if(Math.abs(dx)>60 && Math.abs(dy)<80) go(idx+(dx<0?1:-1));
+},{passive:true});
+
+go(0);
+</script>
+</body>
+</html>

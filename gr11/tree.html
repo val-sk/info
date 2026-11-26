@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Деревья · бинарные деревья · вычисление выражений</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Golos+Text:wght@400;500;600;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a1710; --panel:#122b1f; --panel2:#0e2418; --ink:#e9f4ea; --mut:#9db8a4;
+  --leaf:#7be495; --amber:#f5b942; --aqua:#6fc7d6; --coral:#f08a6a;
+  --line:rgba(123,228,149,.16); --mono:'JetBrains Mono',monospace;
+  --disp:'Unbounded',sans-serif; --body:'Golos Text',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(900px 600px at 12% -5%,rgba(123,228,149,.09),transparent 60%),
+             radial-gradient(800px 600px at 95% 20%,rgba(245,185,66,.06),transparent 60%),
+             radial-gradient(700px 700px at 50% 110%,rgba(111,199,214,.05),transparent 60%);}
+body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:radial-gradient(rgba(233,244,234,.05) 1px,transparent 1px);background-size:30px 30px;}
+#leaves{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.leafp{position:absolute;top:-6vh;opacity:.16;animation:fall linear infinite}
+.leafp svg{display:block}
+@keyframes fall{to{transform:translateY(112vh) rotate(320deg)}}
+::selection{background:var(--amber);color:#14231a}
+::-webkit-scrollbar{width:10px}::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:#24523b;border-radius:6px}
+
+/* ---------- верхняя панель ---------- */
+header{position:fixed;top:0;left:0;right:0;z-index:60;display:flex;align-items:center;gap:16px;
+  padding:12px 26px;background:rgba(10,23,16,.82);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+header .mark{width:30px;height:30px;flex:none}
+header .brand{font-family:var(--disp);font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase}
+header .brand b{color:var(--amber)}
+#progress{position:absolute;left:0;bottom:-1px;height:3px;width:0;background:linear-gradient(90deg,var(--leaf),var(--amber));transition:width .15s}
+#slideCounter{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--mut)}
+
+/* ---------- боковая навигация ---------- */
+nav.dots{position:fixed;right:18px;top:50%;transform:translateY(-50%);z-index:55;display:flex;flex-direction:column;gap:10px}
+nav.dots a{position:relative;width:10px;height:10px;border-radius:50%;background:#2b4a38;transition:.25s;display:block}
+nav.dots a:hover,nav.dots a.on{background:var(--amber);transform:scale(1.35)}
+nav.dots a::after{content:attr(data-t);position:absolute;right:20px;top:50%;transform:translateY(-50%) translateX(6px);
+  white-space:nowrap;font-family:var(--mono);font-size:11px;color:var(--amber);background:#0e2418;border:1px solid var(--line);
+  padding:4px 9px;border-radius:6px;opacity:0;pointer-events:none;transition:.2s}
+nav.dots a:hover::after{opacity:1;transform:translateY(-50%) translateX(0)}
+
+/* ---------- слайды ---------- */
+main{position:relative;z-index:2}
+section{position:relative;min-height:100svh;display:flex;align-items:center;padding:96px 0 72px;border-top:1px dashed rgba(123,228,149,.12)}
+.wrap{width:min(1180px,100%);margin:0 auto;padding:0 30px}
+.ghost{position:absolute;top:14px;right:2vw;font-family:var(--disp);font-weight:900;font-size:clamp(110px,20vw,270px);
+  color:rgba(123,228,149,.05);line-height:1;z-index:0;user-select:none;pointer-events:none}
+.wrap{position:relative;z-index:1}
+.kicker{font-family:var(--mono);font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--amber);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.kicker::before{content:"";width:26px;height:2px;background:var(--amber)}
+h1,h2{font-family:var(--disp);font-weight:700;line-height:1.12;letter-spacing:-.01em}
+h2{font-size:clamp(26px,4vw,46px);margin-bottom:20px}
+h2 em,h1 em{font-style:normal;color:var(--leaf)}
+h3{font-family:var(--disp);font-weight:500;font-size:19px;margin-bottom:10px}
+p.lead{font-size:clamp(17px,1.6vw,20px);color:#cfe2d2;max-width:62ch}
+p{color:#c3d6c6}
+.accent{color:var(--amber)}
+.small{font-size:14px;color:var(--mut)}
+
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1;transform:none}
+
+.card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:16px;padding:24px}
+.card.tilt:hover{transform:translateY(-4px) rotate(-.4deg);border-color:rgba(245,185,66,.45);box-shadow:0 18px 40px -20px rgba(0,0,0,.7);transition:.3s}
+.card.tilt{transition:.3s}
+
+.btn{font-family:var(--body);font-weight:700;font-size:15px;background:var(--amber);color:#16281d;border:none;cursor:pointer;
+  padding:11px 22px;border-radius:10px;transition:.2s;box-shadow:0 6px 18px -8px rgba(245,185,66,.6)}
+.btn:hover{transform:translateY(-2px);box-shadow:0 12px 26px -10px rgba(245,185,66,.7)}
+.btn:active{transform:translateY(0)}
+.btn.ghost{background:transparent;color:var(--leaf);border:1px solid rgba(123,228,149,.4);box-shadow:none}
+.btn.ghost:hover{border-color:var(--leaf);background:rgba(123,228,149,.08)}
+.btn.sm{padding:7px 14px;font-size:13px;border-radius:8px}
+
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.1em;padding:4px 10px;border-radius:999px;border:1px solid var(--line);color:var(--mut)}
+.tag.g{color:var(--leaf);border-color:rgba(123,228,149,.4)}
+.tag.a{color:var(--amber);border-color:rgba(245,185,66,.4)}
+
+/* ---------- SVG деревьев ---------- */
+.edge{stroke:#587f68;stroke-width:2.5;fill:none}
+.edge.draw{stroke-dasharray:140;stroke-dashoffset:140;transition:stroke-dashoffset .6s ease}
+.in .edge.draw,.built .edge.draw{stroke-dashoffset:0}
+.node circle{transition:transform .5s cubic-bezier(.3,1.6,.4,1),fill .3s,stroke .3s;transform-box:fill-box;transform-origin:center}
+.node.pop circle{transform:scale(0)}
+.in .node.pop circle,.built .node.pop circle{transform:scale(1)}
+.node text{font-family:var(--mono);font-weight:700;font-size:19px;fill:#eafff0;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.n-op circle{fill:#b47f1d;stroke:var(--amber)}
+.n-num circle{fill:#123527;stroke:var(--leaf)}
+.n-num text{fill:var(--leaf)}
+.t-label{font-family:var(--mono);font-size:12px;fill:var(--mut);text-anchor:middle}
+.term-link{cursor:pointer}
+.term-link:hover circle{stroke:var(--amber);stroke-width:3}
+.term-link.hot circle{stroke:var(--amber);stroke-width:3.5;filter:drop-shadow(0 0 8px rgba(245,185,66,.7))}
+.edge.hot{stroke:var(--amber);stroke-width:3.5}
+
+/* ---------- титул ---------- */
+#s1 .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:44px;align-items:center}
+.title{font-family:var(--disp);font-weight:900;font-size:clamp(52px,9vw,118px);line-height:.98;letter-spacing:-.02em;margin:8px 0 18px}
+.title span{display:inline-block;opacity:0;transform:translateY(40px) rotate(3deg);transition:.7s cubic-bezier(.2,.8,.2,1)}
+#s1.in .title span{opacity:1;transform:none}
+#s1.in .title span:nth-child(2){transition-delay:.12s}
+#s1.in .title span:nth-child(3){transition-delay:.24s;color:var(--leaf)}
+.chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:26px}
+.subtopics{margin-top:26px;display:grid;gap:8px}
+.subtopics div{font-family:var(--mono);font-size:13px;color:#bcd7c1;display:flex;gap:10px}
+.subtopics div::before{content:"▸";color:var(--amber)}
+#titleTree .edge{stroke-dasharray:160;stroke-dashoffset:160}
+#s1.in #titleTree .edge{animation:drawE 1s ease forwards}
+#titleTree .node circle{transform:scale(0)}
+#s1.in #titleTree .node circle{animation:popN .5s cubic-bezier(.3,1.7,.4,1) forwards}
+#titleTree .node:nth-of-type(1) circle{animation-delay:.2s}#titleTree .node:nth-of-type(2) circle{animation-delay:.45s}
+#titleTree .node:nth-of-type(3) circle{animation-delay:.6s}#titleTree .node:nth-of-type(4) circle{animation-delay:.85s}
+#titleTree .node:nth-of-type(5) circle{animation-delay:1s}#titleTree .node:nth-of-type(6) circle{animation-delay:1.2s}
+#titleTree .node:nth-of-type(7) circle{animation-delay:1.35s}
+@keyframes drawE{to{stroke-dashoffset:0}}
+@keyframes popN{to{transform:scale(1)}}
+.scrollhint{margin-top:34px;font-family:var(--mono);font-size:12px;color:var(--mut);display:flex;align-items:center;gap:10px}
+.scrollhint .arr{animation:bob 1.6s ease-in-out infinite;display:inline-block;color:var(--amber)}
+@keyframes bob{50%{transform:translateY(6px)}}
+
+/* ---------- сетка жизни ---------- */
+.bento{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:30px}
+.bento .big{grid-column:span 2;grid-row:span 2;padding:28px}
+.bento .card h3{display:flex;gap:10px;align-items:center}
+.bento .ico{width:34px;height:34px;flex:none}
+.br-team{font-family:var(--mono);font-size:10.5px;fill:#cfe2d2}
+.br-score{font-family:var(--mono);font-size:10px;font-weight:700;fill:var(--amber)}
+.br-win{stroke:var(--amber);stroke-width:2}
+.pulse-dot{animation:pulseD 1.6s ease-in-out infinite}
+@keyframes pulseD{50%{opacity:.3}}
+
+/* ---------- теория ---------- */
+.grid2{display:grid;grid-template-columns:1.05fr .95fr;gap:34px;align-items:start;margin-top:26px}
+.terms{display:grid;gap:9px;margin-top:18px}
+.term{display:flex;gap:14px;align-items:baseline;padding:10px 14px;border:1px solid transparent;border-radius:10px;cursor:pointer;transition:.2s}
+.term:hover,.term.hot{background:rgba(245,185,66,.08);border-color:rgba(245,185,66,.35);transform:translateX(4px)}
+.term b{font-family:var(--disp);font-weight:500;font-size:14px;color:var(--amber);min-width:96px}
+.term span{font-size:14.5px;color:#c3d6c6}
+.mem svg{width:100%;height:auto}
+.membox{fill:#123527;stroke:var(--leaf);stroke-width:1.5}
+.membox.ref{fill:#3a2f12;stroke:var(--amber)}
+.memtxt{font-family:var(--mono);font-size:13px;fill:#eafff0;text-anchor:middle;dominant-baseline:central}
+.arrowline{stroke:var(--amber);stroke-width:2;fill:none;marker-end:url(#arrA)}
+.ptr-label{font-family:var(--mono);font-size:11px;fill:var(--amber)}
+.null-t{font-family:var(--mono);font-size:11px;fill:#7d997f}
+
+/* ---------- бинарные ---------- */
+.kinds{display:grid;grid-template-columns:1.3fr 1fr;gap:22px;margin-top:26px}
+.kindrow{display:flex;gap:20px;align-items:center;justify-content:space-between;padding:12px 6px;border-bottom:1px dashed rgba(123,228,149,.14)}
+.kindrow:last-child{border:none}
+.kindrow svg{width:150px;flex:none}
+.formula{font-family:var(--mono);background:#0d2015;border:1px solid var(--line);border-left:3px solid var(--amber);border-radius:8px;padding:12px 16px;margin-top:12px;font-size:14px;color:#d9ecd9}
+.formula b{color:var(--amber)}
+.warn{border-left-color:var(--coral)}
+.warn b{color:var(--coral)}
+
+/* ---------- дерево выражения ---------- */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:26px 0}
+.step{position:relative;padding:20px 18px 18px;overflow:hidden}
+.step .n{position:absolute;top:-8px;right:6px;font-family:var(--disp);font-weight:900;font-size:64px;color:rgba(245,185,66,.12)}
+.step .ex{font-family:var(--mono);font-size:clamp(16px,1.7vw,21px);margin:10px 0 8px;color:#eafff0}
+mark{background:var(--amber);color:#16281d;border-radius:4px;padding:0 4px;font-weight:700}
+.demo-panel{margin-top:28px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#12301f,#0d2015);padding:26px}
+.demo-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+#demoIn{flex:1;min-width:220px;font-family:var(--mono);font-size:19px;background:#0a1a11;border:1px solid rgba(123,228,149,.35);
+  color:#eafff0;border-radius:10px;padding:11px 16px;outline:none;transition:.2s}
+#demoIn:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(245,185,66,.18)}
+#demoSvgWrap{margin-top:22px;overflow-x:auto}
+#demoSvgWrap svg{display:block;margin:0 auto}
+.demo-outs{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:20px}
+.out{background:#0a1a11;border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-family:var(--mono);font-size:14px}
+.out .lbl{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--mut);display:block;margin-bottom:4px}
+.out .val{color:var(--leaf);word-break:break-word}
+.out .val.big{font-size:22px;color:var(--amber)}
+.err{color:var(--coral);font-family:var(--mono);margin-top:12px;font-size:14px}
+.demo-note{margin-top:16px;font-size:13.5px;color:var(--mut)}
+
+/* ---------- задания ---------- */
+.task{margin-top:26px}
+.task-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px;margin-bottom:8px}
+.task-head .tno{font-family:var(--disp);font-weight:900;color:var(--amber);font-size:22px}
+.task-expr{font-family:var(--mono);font-size:19px;background:#0a1a11;border:1px solid var(--line);border-radius:8px;padding:6px 14px;color:#eafff0}
+.task-body{display:grid;grid-template-columns:minmax(300px,420px) 1fr;gap:20px;align-items:center}
+.task svg{width:100%;height:auto}
+.blank-in{width:52px;height:52px;border-radius:50%;border:2px dashed var(--amber);background:#132a1d;color:#eafff0;
+  font:700 18px var(--mono);text-align:center;outline:none;transition:.2s}
+.blank-in:focus{border-style:solid;border-color:var(--leaf);box-shadow:0 0 0 4px rgba(123,228,149,.18)}
+.blank-in.ok{border-color:var(--leaf);background:#123527;color:var(--leaf);animation:pop .4s}
+.blank-in.bad{border-color:var(--coral);background:#331a16;color:var(--coral);animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@keyframes pop{50%{transform:scale(1.15)}}
+.slot circle{fill:#0d2015;stroke:#4b7a5e;stroke-width:2;stroke-dasharray:5 5;cursor:pointer;transition:.2s}
+.slot:hover circle{stroke:var(--amber);stroke-width:2.5}
+.slot.filled circle{stroke-dasharray:none;stroke-width:2}
+.slot.filled.op circle{fill:#b47f1d;stroke:var(--amber)}
+.slot.filled.num circle{fill:#123527;stroke:var(--leaf)}
+.slot text{font-family:var(--mono);font-weight:700;font-size:18px;fill:#eafff0;text-anchor:middle;dominant-baseline:central}
+.slot.filled.num text{fill:var(--leaf)}
+.slot.ok circle{stroke:var(--leaf);stroke-width:3.5}
+.slot.bad circle{stroke:var(--coral);stroke-width:3.5;animation:shake .4s}
+.bank{display:flex;flex-wrap:wrap;gap:10px;padding:16px;background:#0a1a11;border:1px solid var(--line);border-radius:12px;min-height:66px}
+.chip{font:700 17px var(--mono);width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;border:2px solid var(--leaf);background:#123527;color:var(--leaf);transition:.2s;user-select:none}
+.chip.op{border-color:var(--amber);background:#3a2f12;color:var(--amber)}
+.chip:hover{transform:translateY(-3px) scale(1.06)}
+.chip.sel{outline:3px solid #fff;outline-offset:2px;transform:scale(1.08)}
+.chip.placed{display:none}
+.tabs{display:flex;gap:8px;margin:22px 0 6px}
+.tabs button{font-family:var(--mono);font-size:13px;background:transparent;color:var(--mut);border:1px solid var(--line);
+  border-radius:999px;padding:8px 18px;cursor:pointer;transition:.2s}
+.tabs button.on{background:var(--amber);color:#16281d;border-color:var(--amber);font-weight:700}
+.verdict{font-family:var(--mono);font-size:14px;margin-top:12px;min-height:22px}
+.verdict.good{color:var(--leaf)}.verdict.badv{color:var(--coral)}
+.hint-toggle{font-family:var(--mono);font-size:12px;color:var(--aqua);background:none;border:none;cursor:pointer;text-decoration:underline dotted;margin-top:10px}
+.hint-box{margin-top:10px;border-left:3px solid var(--aqua);padding:10px 14px;background:rgba(111,199,214,.06);border-radius:0 8px 8px 0;font-size:14px;color:#cfe0d2;display:none}
+.hint-box.open{display:block}
+
+/* ---------- тест ---------- */
+.quiz-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:26px}
+.q{padding:22px}
+.q h4{font-family:var(--disp);font-weight:500;font-size:15px;margin-bottom:16px;color:#eafff0}
+.q .qno{color:var(--amber);font-family:var(--mono);margin-right:8px}
+.q-cols{display:grid;grid-template-columns:1.15fr .85fr;gap:16px}
+.q-item,.q-opt{display:block;width:100%;text-align:left;font:500 13.5px var(--body);color:#dbead9;background:#0d2015;
+  border:1px solid var(--line);border-radius:9px;padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:.18s;position:relative}
+.q-item:hover,.q-opt:hover{border-color:rgba(245,185,66,.5);transform:translateX(3px)}
+.q-item.sel{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.35)}
+.q-item .badge,.q-opt .badge{position:absolute;top:-7px;left:-7px;width:20px;height:20px;border-radius:50%;font:700 11px var(--mono);
+  display:flex;align-items:center;justify-content:center;color:#10241a}
+.p0{background:var(--amber)}.p1{background:var(--leaf)}.p2{background:var(--aqua)}.p3{background:var(--coral)}
+.q-item.paired,.q-opt.paired{border-style:dashed}
+.q-item.right,.q-opt.right{border-color:var(--leaf);background:rgba(123,228,149,.1)}
+.q-item.wrong,.q-opt.wrong{border-color:var(--coral);background:rgba(240,138,106,.1)}
+.q-foot{display:flex;gap:10px;margin-top:6px;align-items:center}
+.q-res{font-family:var(--mono);font-size:13px}
+#quizTotal{margin-top:24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.grade{font-family:var(--disp);font-weight:900;font-size:34px;color:var(--amber)}
+
+/* ---------- код ---------- */
+.code-card{position:relative;background:#0b1a12;border:1px solid var(--line);border-radius:12px;margin-top:14px;overflow:hidden}
+.code-card .hd{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid rgba(123,228,149,.12);font-family:var(--mono);font-size:11px;color:var(--mut);letter-spacing:.1em}
+.copy{font-family:var(--mono);font-size:11px;background:transparent;border:1px solid var(--line);color:var(--leaf);border-radius:6px;padding:4px 10px;cursor:pointer;transition:.2s}
+.copy:hover{background:rgba(123,228,149,.12)}
+pre{padding:16px 18px;overflow-x:auto;font:400 13.5px/1.65 var(--mono);color:#dbead9}
+.k{color:var(--amber)}.s{color:var(--leaf)}.c{color:#6f8a74;font-style:italic}.n{color:var(--aqua)}.f{color:#ffd58a}.op2{color:#f08a6a}
+.console{background:#050d08;border:1px solid rgba(123,228,149,.2);border-radius:10px;padding:14px 18px;font:400 14px var(--mono);margin-top:14px}
+.console .pr{color:var(--leaf)}.console .out-l{color:#cfe2d2}
+details.hintd{margin-top:12px}
+details.hintd summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--aqua)}
+details.hintd div{margin-top:10px;padding:12px 14px;background:rgba(111,199,214,.06);border-left:3px solid var(--aqua);border-radius:0 8px 8px 0;font-size:14px}
+.steps-code{display:grid;gap:16px;margin-top:22px}
+.step-code{display:grid;grid-template-columns:64px 1fr;gap:16px}
+.step-code .num{font-family:var(--disp);font-weight:900;font-size:34px;color:rgba(245,185,66,.55)}
+.prac{display:grid;gap:18px;margin-top:26px}
+.prac .card{display:grid;grid-template-columns:90px 1fr;gap:20px}
+.prac .pnum{font-family:var(--disp);font-weight:900;font-size:44px;color:var(--leaf);line-height:1}
+.stars{color:var(--amber);letter-spacing:2px;font-size:13px}
+.req{margin:10px 0;padding-left:0;list-style:none;display:grid;gap:5px;font-size:14.5px}
+.req li{display:flex;gap:9px}.req li::before{content:"✦";color:var(--amber);flex:none}
+.ans-line{font-family:var(--mono);font-size:13.5px;color:var(--leaf);background:#0a1a11;border:1px dashed rgba(123,228,149,.3);border-radius:8px;padding:8px 12px;margin-top:10px}
+
+/* ---------- финал ---------- */
+.final-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:36px;align-items:center}
+.checks{display:grid;gap:11px;margin-top:20px}
+.checks div{display:flex;gap:12px;align-items:baseline}
+.checks div::before{content:"✓";color:var(--leaf);font-weight:800;font-family:var(--mono)}
+.ctrl{margin-top:22px;display:grid;gap:8px}
+.ctrl div{font-family:var(--mono);font-size:13.5px;color:#bcd7c1;display:flex;gap:10px}
+.ctrl div b{color:var(--amber);font-weight:600}
+footer{position:relative;z-index:2;text-align:center;padding:36px 20px 46px;font-family:var(--mono);font-size:12px;color:var(--mut);border-top:1px dashed rgba(123,228,149,.12)}
+
+@media(max-width:1020px){
+  #s1 .wrap,.grid2,.kinds,.final-grid,.quiz-grid{grid-template-columns:1fr}
+  .bento{grid-template-columns:1fr 1fr}.bento .big{grid-column:span 2}
+  .task-body{grid-template-columns:1fr}
+  nav.dots{display:none}
+  .steps{grid-template-columns:1fr}
+  .prac .card{grid-template-columns:1fr}
+}
+@media(max-width:640px){.bento{grid-template-columns:1fr}.bento .big{grid-column:span 1}.ghost{font-size:90px}}
+@media(hover:none){.leafp{display:none}}
+</style>
+</head>
+<body>
+
+<div id="leaves" aria-hidden="true"></div>
+
+<header>
+  <svg class="mark" viewBox="0 0 32 32" fill="none">
+    <line x1="16" y1="8" x2="8" y2="20" stroke="#7be495" stroke-width="2"/>
+    <line x1="16" y1="8" x2="24" y2="20" stroke="#7be495" stroke-width="2"/>
+    <circle cx="16" cy="7" r="4" fill="#f5b942"/>
+    <circle cx="8" cy="23" r="3.4" fill="#123527" stroke="#7be495" stroke-width="1.6"/>
+    <circle cx="24" cy="23" r="3.4" fill="#123527" stroke="#7be495" stroke-width="1.6"/>
+  </svg>
+  <div class="brand">Деревья <b>·</b> структуры данных</div>
+  <span id="slideCounter">01 / 11</span>
+  <div id="progress"></div>
+</header>
+
+<nav class="dots" id="dots"></nav>
+
+<main>
+
+<!-- ============ 01 ТИТУЛ ============ -->
+<section id="s1" data-title="Титул">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="kicker">Лекция-практикум · Информатика · 19.11.2026</div>
+      <h1 class="title"><span>ДЕРЕВЬЯ</span></h1>
+      <p class="lead">Ссылочные структуры, бинарные деревья и деревья арифметических выражений — с практикой на Python.</p>
+      <div class="subtopics">
+        <div>Реализация дерева с помощью ссылочных структур</div>
+        <div>Двоичные (бинарные) деревья и их свойства</div>
+        <div>Построение дерева для арифметического выражения</div>
+        <div>Практическая работа: вычисление выражений деревом</div>
+      </div>
+      <div class="chips">
+        <span class="tag g">Python</span><span class="tag">ссылки и узлы</span><span class="tag">обходы</span><span class="tag a">6 практических заданий</span><span class="tag">тест</span>
+      </div>
+      <div class="scrollhint">Листайте вниз или жмите <b style="color:var(--amber)">↓</b> <span class="arr">▼</span></div>
+    </div>
+    <div class="reveal" style="transition-delay:.2s">
+      <svg id="titleTree" viewBox="0 0 420 330" width="100%">
+        <line class="edge" x1="210" y1="60" x2="110" y2="160" style="animation-delay:.3s"/>
+        <line class="edge" x1="210" y1="60" x2="310" y2="160" style="animation-delay:.45s"/>
+        <line class="edge" x1="110" y1="160" x2="55" y2="265" style="animation-delay:.7s"/>
+        <line class="edge" x1="110" y1="160" x2="165" y2="265" style="animation-delay:.8s"/>
+        <line class="edge" x1="310" y1="160" x2="255" y2="265" style="animation-delay:.95s"/>
+        <line class="edge" x1="310" y1="160" x2="365" y2="265" style="animation-delay:1.05s"/>
+        <g class="node n-op"><circle cx="210" cy="55" r="30" style="animation-delay:.15s"/><text x="210" y="55">*</text></g>
+        <g class="node n-op"><circle cx="110" cy="160" r="28" style="animation-delay:.5s"/><text x="110" y="160">+</text></g>
+        <g class="node n-op"><circle cx="310" cy="160" r="28" style="animation-delay:.65s"/><text x="310" y="160">−</text></g>
+        <g class="node n-num"><circle cx="55" cy="265" r="25" style="animation-delay:1s"/><text x="55" y="265">3</text></g>
+        <g class="node n-num"><circle cx="165" cy="265" r="25" style="animation-delay:1.1s"/><text x="165" y="265">5</text></g>
+        <g class="node n-num"><circle cx="255" cy="265" r="25" style="animation-delay:1.25s"/><text x="255" y="265">9</text></g>
+        <g class="node n-num"><circle cx="365" cy="265" r="25" style="animation-delay:1.35s"/><text x="365" y="265">4</text></g>
+        <text class="t-label" x="210" y="320">(3 + 5) * (9 − 4) = 32</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 02 ЗАЧЕМ ============ -->
+<section id="s2" data-title="Зачем нужны деревья">
+  <span class="ghost">02</span>
+  <div class="wrap">
+    <div class="reveal">
+      <div class="kicker">01 · Пример из жизни</div>
+      <h2>Зачем нужны <em>бинарные деревья</em>?</h2>
+      <p class="lead">Плей-офф любого турнира — это <b class="accent">полное бинарное дерево</b>: каждая игра порождает ровно двух участников следующей стадии, а корень — финал. Алгоритм «провести сетку» идентичен обходу дерева от листьев к корню.</p>
+    </div>
+    <div class="bento">
+      <div class="card big tilt reveal">
+        <h3>Турнирная сетка на 8 команд</h3>
+        <p class="small" style="margin-bottom:10px">Листья — команды, внутренние узлы — матчи, корень — чемпион. Золотая линия — путь победителя от листа к корню.</p>
+        <svg viewBox="0 0 560 290" width="100%">
+          <defs><marker id="arrB" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0L6,3L0,6z" fill="#f5b942"/></marker></defs>
+          <!-- раунд 1 -->
+          <g><rect x="10" y="14" width="120" height="26" rx="5" fill="#123527" stroke="#587f68"/><text class="br-team" x="18" y="31">Ирбисы</text><text class="br-score" x="118" y="31" text-anchor="end">2</text></g>
+          <g><rect x="10" y="46" width="120" height="26" rx="5" fill="#0d2015" stroke="#587f68"/><text class="br-team" x="18" y="63" fill="#8aa792">Соколы</text><text class="br-score" x="118" y="63" text-anchor="end" fill="#8aa792">0</text></g>
+          <g><rect x="10" y="94" width="120" height="26" rx="5" fill="#0d2015" stroke="#587f68"/><text class="br-team" x="18" y="111" fill="#8aa792">Волки</text><text class="br-score" x="118" y="111" text-anchor="end" fill="#8aa792">1</text></g>
+          <g><rect x="10" y="126" width="120" height="26" rx="5" fill="#123527" stroke="#587f68"/><text class="br-team" x="18" y="143">Барсы</text><text class="br-score" x="118" y="143" text-anchor="end">3</text></g>
+          <g><rect x="10" y="174" width="120" height="26" rx="5" fill="#123527" stroke="#587f68"/><text class="br-team" x="18" y="191">Рыси</text><text class="br-score" x="118" y="191" text-anchor="end">2</text></g>
+          <g><rect x="10" y="206" width="120" height="26" rx="5" fill="#0d2015" stroke="#587f68"/><text class="br-team" x="18" y="223" fill="#8aa792">Зубры</text><text class="br-score" x="118" y="223" text-anchor="end" fill="#8aa792">1</text></g>
+          <g><rect x="10" y="254" width="120" height="26" rx="5" fill="#0d2015" stroke="#587f68"/><text class="br-team" x="18" y="271" fill="#8aa792">Орлы</text><text class="br-score" x="118" y="271" text-anchor="end" fill="#8aa792">0</text></g>
+          <g><rect x="10" y="286" width="120" height="26" rx="5" fill="#123527" stroke="#587f68" style="display:none"/></g>
+          <!-- полуфиналы -->
+          <g><rect x="200" y="54" width="120" height="26" rx="5" fill="#123527" stroke="#587f68"/><text class="br-team" x="208" y="71">Ирбисы</text><text class="br-score" x="308" y="71" text-anchor="end">2</text></g>
+          <g><rect x="200" y="86" width="120" height="26" rx="5" fill="#0d2015" stroke="#587f68"/><text class="br-team" x="208" y="103" fill="#8aa792">Барсы</text><text class="br-score" x="308" y="103" text-anchor="end" fill="#8aa792">1</text></g>
+          <g><rect x="200" y="214" width="120" height="26" rx="5" fill="#0d2015" stroke="#587f68"/><text class="br-team" x="208" y="231" fill="#8aa792">Рыси</text><text class="br-score" x="308" y="231" text-anchor="end" fill="#8aa792">0</text></g>
+          <!-- финал -->
+          <g><rect x="390" y="134" width="130" height="30" rx="6" fill="#3a2f12" stroke="#f5b942"/><text class="br-team" x="398" y="153" fill="#ffe9bd" font-weight="700">Ирбисы 🏆</text><text class="br-score" x="510" y="153" text-anchor="end">3</text></g>
+          <!-- линии: путь победителя -->
+          <path class="br-win" d="M130,27 h40 v40 h30" fill="none" marker-end="url(#arrB)"/>
+          <path d="M130,59 h40 v18 h30" fill="none" stroke="#41604c" stroke-width="2"/>
+          <path d="M130,107 h40 v-18 h30" fill="none" stroke="#41604c" stroke-width="2"/>
+          <path d="M130,139 h40 v-40 h30" fill="none" stroke="#41604c" stroke-width="2"/>
+          <path d="M130,187 h40 v40 h30" fill="none" stroke="#41604c" stroke-width="2"/>
+          <path d="M130,219 h40 v18 h30" fill="none" stroke="#41604c" stroke-width="2"/>
+          <path d="M130,267 h40 v-18 h30" fill="none" stroke="#41604c" stroke-width="2"/>
+          <path class="br-win" d="M320,67 h40 v74 h28" fill="none" marker-end="url(#arrB)"/>
+          <path d="M320,227 h40 v-74 h28" fill="none" stroke="#41604c" stroke-width="2"/>
+          <circle class="pulse-dot" cx="392" cy="149" r="5" fill="#f5b942"/>
+          <text class="t-label" x="80" y="10" text-anchor="middle" font-size="10">листья — команды</text>
+          <text class="t-label" x="280" y="30" text-anchor="middle" font-size="10">внутренние узлы — матчи</text>
+          <text class="t-label" x="455" y="122" text-anchor="middle" font-size="10" fill="#f5b942">корень — чемпион</text>
+        </svg>
+      </div>
+      <div class="card tilt reveal" style="transition-delay:.1s">
+        <h3><svg class="ico" viewBox="0 0 34 34"><circle cx="17" cy="8" r="5" fill="#f5b942"/><path d="M17,13 v6 M17,19 l-7,8 M17,19 l7,8" stroke="#7be495" stroke-width="2"/><circle cx="10" cy="28" r="3" fill="none" stroke="#7be495" stroke-width="1.6"/><circle cx="24" cy="28" r="3" fill="none" stroke="#7be495" stroke-width="1.6"/></svg>Код Хаффмана</h3>
+        <p class="small">Архиваторы ZIP и аудиокодеры строят бинарное дерево частот символов — так файлы сжимаются без потерь.</p>
+      </div>
+      <div class="card tilt reveal" style="transition-delay:.16s">
+        <h3><svg class="ico" viewBox="0 0 34 34"><rect x="4" y="5" width="26" height="7" rx="2" fill="none" stroke="#f5b942" stroke-width="1.6"/><path d="M17,12 v5 M17,17 l-8,5 M17,17 l8,5" stroke="#7be495" stroke-width="1.8" fill="none"/><rect x="4" y="23" width="10" height="6" rx="2" fill="#123527" stroke="#7be495" stroke-width="1.4"/><rect x="20" y="23" width="10" height="6" rx="2" fill="#123527" stroke="#7be495" stroke-width="1.4"/></svg>Деревья решений</h3>
+        <p class="small">Банк решает «дать ли кредит», врач — диагноз: на каждом шаге вопрос с двумя ответами «да/нет» — бинарное ветвление.</p>
+      </div>
+      <div class="card tilt reveal" style="transition-delay:.22s">
+        <h3><svg class="ico" viewBox="0 0 34 34"><path d="M5,27 h6 l3,-4 h15 v11 h-24 z" fill="#3a2f12" stroke="#f5b942" stroke-width="1.5"/><path d="M8,27 v-14 h7 l3,4" fill="none" stroke="#7be495" stroke-width="1.6"/></svg>Файловая система</h3>
+        <p class="small">Каталог содержит подкаталоги и файлы — дерево. Путь <code style="font-family:var(--mono);color:var(--leaf)">C:\учёба\информатика\дз</code> — маршрут от корня к листу.</p>
+      </div>
+      <div class="card tilt reveal" style="transition-delay:.28s">
+        <h3><svg class="ico" viewBox="0 0 34 34"><circle cx="17" cy="8" r="4" fill="none" stroke="#f5b942" stroke-width="1.6"/><path d="M17,12 v4 M17,16 l-8,4 M17,16 l8,4" stroke="#7be495" stroke-width="1.6" fill="none"/><circle cx="9" cy="24" r="3.4" fill="none" stroke="#7be495" stroke-width="1.6"/><circle cx="25" cy="24" r="3.4" fill="none" stroke="#7be495" stroke-width="1.6"/></svg>Родословные</h3>
+        <p class="small">Генеалогическое дерево — классическая иерархия: у каждой записи не более двух родителей и сколько угодно детей.</p>
+      </div>
+    </div>
+    <p class="reveal small" style="margin-top:18px">Вывод: <b>дерево — это иерархия</b>, а бинарное дерево — иерархия, где у каждого элемента не более двух «ветвей». Дальше — строгие определения и реализация.</p>
+  </div>
+</section>
+
+<!-- ============ 03 ТЕОРИЯ + ССЫЛКИ ============ -->
+<section id="s3" data-title="Дерево и ссылки">
+  <span class="ghost">03</span>
+  <div class="wrap">
+    <div class="reveal">
+      <div class="kicker">02 · Теория</div>
+      <h2>Что такое дерево. <em>Ссылочная реализация</em></h2>
+      <p class="lead"><b>Дерево</b> — иерархическая структура из узлов, соединённых рёбрами: один узел объявляется корнем, а каждый остальные имеет ровно одного родителя. Реализуется дерево <b class="accent">ссылками</b>: узел хранит данные и адреса своих потомков.</p>
+    </div>
+    <div class="grid2">
+      <div class="card reveal">
+        <h3>Наведите на термин — дерево подсветит его</h3>
+        <svg id="termSvg" viewBox="0 0 460 330" width="100%">
+          <line id="e-root-left"  class="edge" data-term="edge" x1="230" y1="52" x2="120" y2="150"/>
+          <line id="e-root-right" class="edge" data-term="edge" x1="230" y1="52" x2="340" y2="150"/>
+          <line class="edge" data-term="edge" x1="120" y1="150" x2="60" y2="255"/>
+          <line class="edge" data-term="edge" x1="120" y1="150" x2="180" y2="255"/>
+          <line class="edge" data-term="edge" x1="340" y1="150" x2="280" y2="255"/>
+          <line class="edge" data-term="edge" x1="340" y1="150" x2="400" y2="255"/>
+          <g class="node n-op term-link" data-term="root"><circle cx="230" cy="48" r="26"/><text x="230" y="48">A</text></g>
+          <g class="node n-num term-link" data-term="internal"><circle cx="120" cy="150" r="24"/><text x="120" y="150">B</text></g>
+          <g class="node n-num term-link" data-term="internal"><circle cx="340" cy="150" r="24"/><text x="340" y="150">C</text></g>
+          <g class="node n-num term-link" data-term="leaf"><circle cx="60" cy="255" r="22"/><text x="60" y="255">D</text></g>
+          <g class="node n-num term-link" data-term="leaf"><circle cx="180" cy="255" r="22"/><text x="180" y="255">E</text></g>
+          <g class="node n-num term-link" data-term="leaf"><circle cx="280" cy="255" r="22"/><text x="280" y="255">F</text></g>
+          <g class="node n-num term-link" data-term="leaf"><circle cx="400" cy="255" r="22"/><text x="400" y="255">G</text></g>
+          <path d="M40,48 Q140,8 205,32" fill="none" stroke="#f5b942" stroke-width="1.4" stroke-dasharray="4 4"/>
+          <text class="t-label" x="46" y="62" text-anchor="start" fill="#f5b942">уровень 0</text>
+          <text class="t-label" x="46" y="154" text-anchor="start" fill="#f5b942">уровень 1</text>
+          <text class="t-label" x="46" y="259" text-anchor="start" fill="#f5b942">уровень 2</text>
+          <text class="t-label" x="230" y="305">высота этого дерева = 2 (ребра в самом длинном пути)</text>
+        </svg>
+      </div>
+      <div class="reveal" style="transition-delay:.12s">
+        <div class="terms">
+          <div class="term" data-term="root"><b>Корень</b><span>единственный узел без родителя — вершина иерархии (A)</span></div>
+          <div class="term" data-term="internal"><b>Внутренний узел</b><span>узел, у которого есть потомки (B, C)</span></div>
+          <div class="term" data-term="leaf"><b>Лист</b><span>узел без потомков (D, E, F, G)</span></div>
+          <div class="term" data-term="edge"><b>Ребро</b><span>связь «родитель → потомок»; в дереве из N узлов ровно N−1 ребро</span></div>
+          <div class="term" data-term="level"><b>Уровень</b><span>расстояние узла от корня в рёбрах; корень — на уровне 0</span></div>
+          <div class="term" data-term="height"><b>Высота</b><span>длина самого длинного пути от корня до листа</span></div>
+        </div>
+        <div class="card mem" style="margin-top:18px">
+          <h3 style="font-size:16px">Как узел устроен в памяти</h3>
+          <svg viewBox="0 0 400 210" width="100%">
+            <defs><marker id="arrA" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0L6,3L0,6z" fill="#f5b942"/></marker></defs>
+            <rect class="membox" x="20" y="30" width="120" height="46" rx="6"/>
+            <text class="memtxt" x="80" y="53">data: 7</text>
+            <rect class="membox ref" x="20" y="86" width="120" height="34" rx="6"/>
+            <text class="memtxt" x="80" y="103" fill="#f5b942">left →</text>
+            <rect class="membox ref" x="20" y="130" width="120" height="34" rx="6"/>
+            <text class="memtxt" x="80" y="147" fill="#f5b942">right →</text>
+            <rect class="membox" x="250" y="70" width="120" height="40" rx="6" opacity=".9"/>
+            <text class="memtxt" x="310" y="90">data: 2 …</text>
+            <rect class="membox" x="250" y="140" width="120" height="40" rx="6" opacity=".9"/>
+            <text class="memtxt" x="310" y="160">data: 5 …</text>
+            <path class="arrowline" d="M140,103 C200,103 200,90 246,90"/>
+            <path class="arrowline" d="M140,147 C200,147 200,160 246,160"/>
+            <text class="ptr-label" x="182" y="88">адрес</text>
+            <text class="ptr-label" x="182" y="176">адрес</text>
+            <text class="null-t" x="20" y="186">у листа: left = None, right = None</text>
+            <text class="null-t" x="250" y="30">каждый блок — объект в памяти,</text>
+            <text class="null-t" x="250" y="46">создаётся по мере необходимости</text>
+          </svg>
+        </div>
+        <div class="formula">Дерево — <b>рекурсивная</b> структура: каждый потомок сам является корнем поддерева. Поэтому почти все алгоритмы на деревьях — рекурсивны.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 04 БИНАРНЫЕ ============ -->
+<section id="s4" data-title="Бинарные деревья">
+  <span class="ghost">04</span>
+  <div class="wrap">
+    <div class="reveal">
+      <div class="kicker">03 · Теория</div>
+      <h2>Двоичные (<em>бинарные</em>) деревья</h2>
+      <p class="lead">Бинарное дерево — дерево, в котором у каждого узла <b class="accent">не более двух потомков</b>, причём различаются <b>левый</b> и <b>правый</b> (поменять местами — получится другое дерево).</p>
+    </div>
+    <div class="kinds">
+      <div class="card reveal">
+        <h3>Какие бывают</h3>
+        <div id="kindsBox"></div>
+      </div>
+      <div class="reveal" style="transition-delay:.12s">
+        <div class="card">
+          <h3>Свойства полного бинарного дерева</h3>
+          <div class="formula">На уровне <b>k</b> максимум <b>2ᵏ</b> узлов</div>
+          <div class="formula">Всего узлов при высоте <b>h</b>: <b>2<sup>h+1</sup> − 1</b></div>
+          <div class="formula">Листьев при высоте <b>h</b>: <b>2ʰ</b></div>
+          <div class="formula warn">Внимание: если узлы вставлять в отсортированном порядке, дерево <b>вырождается в список</b> — высота N вместо log₂N, и поиск снова становится линейным.</div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3 style="font-size:16px">Дерево двоичного поиска (ДДП / BST)</h3>
+          <p class="small">Особый вид бинарного дерева: <b>слева</b> от узла — значения <b>меньше</b>, <b>справа</b> — <b>больше</b>. Благодаря этому поиск работает за O(log n): на каждом шаге отбрасываем половину.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 05 ДЕРЕВО ВЫРАЖЕНИЯ ============ -->
+<section id="s5" data-title="Дерево выражения">
+  <span class="ghost">05</span>
+  <div class="wrap">
+    <div class="reveal">
+      <div class="kicker">04 · Теория + живой инструмент</div>
+      <h2>Дерево <em>арифметического выражения</em></h2>
+      <p class="lead">Листья — <b>операнды</b> (числа), внутренние узлы — <b>операции</b>. Корень — операция, которая выполняется <b class="accent">последней</b>. Строится рекурсивно: находим главную операцию → левый операнд уходит в левое поддерево, правый — в правое.</p>
+    </div>
+    <div class="steps">
+      <div class="card step reveal"><span class="n">1</span>
+        <span class="tag a">главная операция</span>
+        <div class="ex">(3 + 5) <mark>*</mark> (9 − 4)</div>
+        <p class="small">Вне скобок только «*» — она выполняется последней и становится <b>корнем</b>.</p>
+      </div>
+      <div class="card step reveal" style="transition-delay:.1s"><span class="n">2</span>
+        <span class="tag">левое поддерево</span>
+        <div class="ex"><mark>(3 + 5)</mark></div>
+        <p class="small">Главная операция операнда — «+». Её операнды 3 и 5 становятся <b>листьями</b>.</p>
+      </div>
+      <div class="card step reveal" style="transition-delay:.2s"><span class="n">3</span>
+        <span class="tag">правое поддерево</span>
+        <div class="ex"><mark>(9 − 4)</mark></div>
+        <p class="small">Аналогично: «−» — узел, 9 и 4 — листья. Дерево готово, можно вычислять снизу вверх.</p>
+      </div>
+    </div>
+
+    <div class="demo-panel reveal">
+      <h3>🌳 Живой построитель — введите своё выражение</h3>
+      <div class="demo-row" style="margin-top:14px">
+        <input id="demoIn" value="(3+5)*(9-4)" spellcheck="false" aria-label="Выражение">
+        <button class="btn" id="demoBtn">Построить дерево</button>
+      </div>
+      <div id="demoErr" class="err" hidden></div>
+      <div id="demoSvgWrap"></div>
+      <div class="demo-outs">
+        <div class="out"><span class="lbl">Инфиксная запись (in-order)</span><span class="val" id="outInfix">—</span></div>
+        <div class="out"><span class="lbl">Постфиксная запись (post-order)</span><span class="val" id="outPost">—</span></div>
+        <div class="out"><span class="lbl">Результат вычисления</span><span class="val big" id="outVal">—</span></div>
+      </div>
+      <p class="demo-note">Поддерживаются числа, скобки и операции <code>+ − * /</code>. Обход в глубину снизу вверх = вычисление: листья дают числа, каждый узел применяет свою операцию к результатам детей.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 06 ЗАДАНИЯ С ПРОПУСКАМИ ============ -->
+<section id="s6" data-title="Задания: пропуски">
+  <span class="ghost">06</span>
+  <div class="wrap">
+    <div class="reveal">
+      <div class="kicker">05 · Практика · часть 1</div>
+      <h2>Заполните <em>пропуски</em> в деревьях</h2>
+      <p class="lead">Деревья уже почти построены — не хватает нескольких узлов. Впишите их (операции: <b>+ − * /</b>) и нажмите «Проверить».</p>
+    </div>
+    <div id="taskABox"></div>
+  </div>
+</section>
+
+<!-- ============ 07 С НУЛЯ ============ -->
+<section id="s7" data-title="Задания: с нуля">
+  <span class="ghost">07</span>
+  <div class="wrap">
+    <div class="reveal">
+      <div class="kicker">06 · Практика · часть 2</div>
+      <h2>Постройте дерево <em>с нуля</em></h2>
+      <p class="lead">Выберите фишку из банка и щёлкните по нужному узлу-ячейке. Снова щёлкните по заполненному узлу, чтобы вернуть фишку. В банке есть и <b>лишние</b> фишки!</p>
+    </div>
+    <div class="tabs" id="taskBTabs"></div>
+    <div id="taskBBox"></div>
+  </div>
+</section>
+
+<!-- ============ 08 ТЕСТ ============ -->
+<section id="s8" data-title="Тест: сопоставления">
+  <span class="ghost">08</span>
+  <div class="wrap">
+    <div class="reveal">
+      <div class="kicker">07 · Самопроверка</div>
+      <h2>Тест: <em>сопоставьте</em> пары</h2>
+      <p class="lead">Щёлкните элемент слева, затем подходящий справа — появится цветная метка пары. Чтобы убрать пару, щёлкните по любому её элементу.</p>
+    </div>
+    <div class="quiz-grid" id="quizBox"></div>
+    <div id="quizTotal" class="reveal">
+      <button class="btn" id="quizCheck">Показать результат</button>
+      <button class="btn ghost" id="quizReset">Начать заново</button>
+      <span class="q-res" id="quizScore"></span>
+      <span class="grade" id="quizGrade"></span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 09 PYTHON ============ -->
+<section id="s9" data-title="Разработка на Python">
+  <span class="ghost">09</span>
+  <div class="wrap">
+    <div class="reveal">
+      <div class="kicker">08 · Разработка программы</div>
+      <h2>Вычислитель выражений <em>на Python</em></h2>
+      <p class="lead">Соберём программу из трёх шагов: класс узла → построение дерева «снизу вверх» → рекурсивное вычисление. Задача: вычислить <b class="accent">(2 + 3) * (9 − 4)</b>.</p>
+    </div>
+    <div class="grid2" style="grid-template-columns:1.2fr .8fr">
+      <div class="steps-code">
+        <div class="step-code reveal">
+          <div class="num">1</div>
+          <div>
+            <h3 style="font-size:16px">Узел — ссылочная структура</h3>
+            <p class="small">Значение + две ссылки на потомков. <code>None</code> — потомка нет.</p>
+            <div class="code-card"><div class="hd"><span>ШАГ 1 · узел</span><button class="copy">копировать</button></div><pre data-copy>class Node:
+    def __init__(self, value, left=None, right=None):
+        self.value = value   # число или знак операции
+        self.left  = left    # ссылка на левое поддерево
+        self.right = right   # ссылка на правое поддерево</pre></div>
+          </div>
+        </div>
+        <div class="step-code reveal" style="transition-delay:.1s">
+          <div class="num">2</div>
+          <div>
+            <h3 style="font-size:16px">Строим дерево для (2 + 3) * (9 − 4)</h3>
+            <p class="small">Сначала листья, потом их «родители», последним — корень. Читается как вложенные скобки.</p>
+            <div class="code-card"><div class="hd"><span>ШАГ 2 · построение</span><button class="copy">копировать</button></div><pre data-copy>plus  = Node('+', Node(2), Node(3))   # левое поддерево: 2 + 3
+minus = Node('-', Node(9), Node(4))   # правое поддерево: 9 - 4
+tree  = Node('*', plus, minus)        # корень: (2+3) * (9-4)</pre></div>
+            <div id="pyTreeWrap" style="margin-top:12px"></div>
+          </div>
+        </div>
+        <div class="step-code reveal" style="transition-delay:.2s">
+          <div class="num">3</div>
+          <div>
+            <h3 style="font-size:16px">Вычисляем обходом в глубину</h3>
+            <p class="small">Лист возвращает число; узел рекурсивно вычисляет детей и применяет операцию.</p>
+            <div class="code-card"><div class="hd"><span>ШАГ 3 · вычисление</span><button class="copy">копировать</button></div><pre data-copy>def evaluate(t):
+    if t.left is None and t.right is None:
+        return t.value              # лист: просто число
+    l = evaluate(t.left)            # результат левого поддерева
+    r = evaluate(t.right)           # результат правого поддерева
+    if t.value == '+': return l + r
+    if t.value == '-': return l - r
+    if t.value == '*': return l * r
+    if t.value == '/': return l / r
+
+print("Результат:", evaluate(tree))</pre></div>
+            <div class="console"><span class="pr">$ python expr_tree.py</span><br><span class="out-l">Результат: 25</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="reveal" style="transition-delay:.15s">
+        <div class="card">
+          <h3>Полная программа одним файлом</h3>
+          <div class="code-card"><div class="hd"><span>expr_tree.py</span><button class="copy">копировать</button></div><pre data-copy># Дерево арифметического выражения
+class Node:
+    def __init__(self, value, left=None, right=None):
+        self.value = value
+        self.left  = left
+        self.right = right
+
+def evaluate(t):
+    if t.left is None and t.right is None:
+        return t.value
+    l = evaluate(t.left)
+    r = evaluate(t.right)
+    if t.value == '+': return l + r
+    if t.value == '-': return l - r
+    if t.value == '*': return l * r
+    if t.value == '/': return l / r
+
+# строим:  (2 + 3) * (9 - 4)
+tree = Node('*',
+        Node('+', Node(2), Node(3)),
+        Node('-', Node(9), Node(4)))
+
+print("Результат:", evaluate(tree))   # 25</pre></div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3 style="font-size:16px">Бонус: постфиксная запись</h3>
+          <p class="small">Тот же обход, только вместо вычисления собираем строку — получаем запись без скобок, понятную стековой машине.</p>
+          <div class="code-card"><div class="hd"><span>postfix.py</span><button class="copy">копировать</button></div><pre data-copy>def postfix(t):
+    if t.left is None and t.right is None:
+        return str(t.value)
+    return postfix(t.left) + " " + \
+           postfix(t.right) + " " + t.value
+
+print(postfix(tree))   # 2 3 + 9 4 - *</pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10 ПРАКТИКУМ ============ -->
+<section id="s10" data-title="Практикум">
+  <span class="ghost">10</span>
+  <div class="wrap">
+    <div class="reveal">
+      <div class="kicker">09 · Практическая работа за компьютером</div>
+      <h2>Три задания <em>на разработку программ</em></h2>
+      <p class="lead">Используйте класс <code>Node</code> из предыдущего шага. Каждое задание сдаётся работающим файлом .py с комментариями.</p>
+    </div>
+    <div class="prac">
+      <div class="card reveal">
+        <div class="pnum">П1</div>
+        <div>
+          <div class="task-head" style="margin-bottom:4px"><h3 style="margin:0">Дерево и результат</h3><span class="stars">★☆☆</span><span class="tag g">базовый</span></div>
+          <p>Постройте ссылочное дерево для выражения <b class="task-expr" style="font-size:15px;padding:2px 10px">3 * (2 + 8)</b> и вычислите его функцией <code>evaluate(t)</code>.</p>
+          <ul class="req">
+            <li>создайте узлы-листья 2, 8, 3 отдельными переменными;</li>
+            <li>соберите дерево «снизу вверх»;</li>
+            <li>выведите результат на экран.</li>
+          </ul>
+          <div class="ans-line">Ожидаемый вывод: Результат: 30</div>
+          <details class="hintd"><summary>Подсказка</summary><div>Корень — операция «*» (выполняется последней). Её правый ребёнок — поддерево «+» с листьями 2 и 8, левый — лист 3.</div></details>
+        </div>
+      </div>
+      <div class="card reveal" style="transition-delay:.1s">
+        <div class="pnum">П2</div>
+        <div>
+          <div class="task-head" style="margin-bottom:4px"><h3 style="margin:0">Обходы дерева</h3><span class="stars">★★☆</span><span class="tag a">средний</span></div>
+          <p>Для дерева выражения <b class="task-expr" style="font-size:15px;padding:2px 10px">(5 - 2) * 4</b> напишите три функции обхода: <code>infix(t)</code>, <code>prefix(t)</code>, <code>postfix(t)</code> — и выведите все три записи.</p>
+          <ul class="req">
+            <li>infix — левое поддерево, узел, правое поддерево;</li>
+            <li>prefix — узел, левое, правое;</li>
+            <li>postfix — левое, правое, узел.</li>
+          </ul>
+          <div class="ans-line">Ожидаемый вывод: * - 5 2 4 &nbsp;·&nbsp; 5 2 - 4 * &nbsp;·&nbsp; инфиксная запись может содержать скобки</div>
+          <details class="hintd"><summary>Подсказка</summary><div>Все три обхода отличаются только тем, в какой момент печатается сам узел: до, между или после рекурсивных вызовов детей.</div></details>
+        </div>
+      </div>
+      <div class="card reveal" style="transition-delay:.2s">
+        <div class="pnum">П3</div>
+        <div>
+          <div class="task-head" style="margin-bottom:4px"><h3 style="margin:0">Защита от ошибок</h3><span class="stars">★★★</span><span class="tag" style="color:var(--coral);border-color:rgba(240,138,106,.4)">продвинутый</span></div>
+          <p>Возьмите программу из П1 и доработайте: вычислите выражение <b class="task-expr" style="font-size:15px;padding:2px 10px">10 / (5 - 5)</b> так, чтобы программа <b>не падала</b>, а выводила понятное сообщение.</p>
+          <ul class="req">
+            <li>используйте <code>try / except ZeroDivisionError</code> при вызове <code>evaluate</code>;</li>
+            <li>при ошибке выведите «Ошибка: деление на ноль»;</li>
+            <li>дополнительно (на «5»): запрашивайте числа листьев через <code>input()</code>.</li>
+          </ul>
+          <div class="ans-line">Ожидаемый вывод: Ошибка: деление на ноль</div>
+          <details class="hintd"><summary>Подсказка</summary><div>Оборачивайте не саму рекурсию, а итоговый вызов: <code>try: print(evaluate(tree)) except ZeroDivisionError: print(...)</code> — исключение «всплывёт» из глубины дерева само.</div></details>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 11 ИТОГИ ============ -->
+<section id="s11" data-title="Итоги">
+  <span class="ghost">11</span>
+  <div class="wrap final-grid">
+    <div class="reveal">
+      <div class="kicker">10 · Итоги</div>
+      <h2>Что <em>запоминаем</em></h2>
+      <div class="checks">
+        <div>Дерево — иерархия узлов: корень, родители, потомки, листья; у листа степень 0.</div>
+        <div>Ссылочная реализация: узел = данные + ссылки на потомков; у листа ссылки равны <code>None</code>.</div>
+        <div>В бинарном дереве у узла не более двух детей, левый и правый различаются.</div>
+        <div>Дерево выражения: листья — числа, узлы — операции, корень — последняя операция.</div>
+        <div>Обход в глубину одновременно и вычисляет выражение, и даёт пре-/постфиксную запись.</div>
+      </div>
+      <div class="card" style="margin-top:24px">
+        <h3 style="font-size:16px">Контрольные вопросы</h3>
+        <div class="ctrl">
+          <div><b>Q1</b> Сколько рёбер в дереве из 15 узлов?</div>
+          <div><b>Q2</b> Почему скобки в выражении «исчезают» в дереве?</div>
+          <div><b>Q3</b> Какой обход возвращает исходную запись выражения?</div>
+          <div><b>Q4</b> Что произойдёт с ДДП, если вставить 1, 2, 3, 4, 5 по порядку?</div>
+        </div>
+      </div>
+    </div>
+    <div class="reveal" style="transition-delay:.15s;text-align:center">
+      <svg id="finalTree" viewBox="0 0 300 260" width="78%">
+        <line class="edge" x1="150" y1="50" x2="80" y2="125"/><line class="edge" x1="150" y1="50" x2="220" y2="125"/>
+        <line class="edge" x1="80" y1="125" x2="40" y2="205"/><line class="edge" x1="80" y1="125" x2="120" y2="205"/>
+        <line class="edge" x1="220" y1="125" x2="180" y2="205"/><line class="edge" x1="220" y1="125" x2="260" y2="205"/>
+        <g class="node n-op"><circle cx="150" cy="45" r="24"/><text x="150" y="45">*</text></g>
+        <g class="node n-op"><circle cx="80" cy="125" r="21"/><text x="80" y="125">+</text></g>
+        <g class="node n-op"><circle cx="220" cy="125" r="21"/><text x="220" y="125">−</text></g>
+        <g class="node n-num"><circle cx="40" cy="205" r="18"/><text x="40" y="205">3</text></g>
+        <g class="node n-num"><circle cx="120" cy="205" r="18"/><text x="120" y="205">5</text></g>
+        <g class="node n-num"><circle cx="180" cy="205" r="18"/><text x="180" y="205">9</text></g>
+        <g class="node n-num"><circle cx="260" cy="205" r="18"/><text x="260" y="205">4</text></g>
+      </svg>
+      <div style="font-family:var(--disp);font-weight:900;font-size:clamp(24px,3vw,34px);margin-top:10px">Спасибо за внимание!</div>
+      <p class="small" style="margin-top:8px">Домашнее задание: придумать своё выражение из 6+ чисел, нарисовать его дерево и проверить себя живым построителем со слайда 05.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>Презентация «Деревья и вычисление арифметических выражений» · все задания интерактивны и проверяются на странице</footer>
+
+<script>
+/* ================= утилиты ================= */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const OPS=['+','-','*','/'];
+const isOp=t=>OPS.includes(t);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const normAns=v=>v.trim().replace(/[·×хx]/g,'*').replace(/[−–—]/g,'-').replace(/÷/g,'/');
+
+/* ================= парсер выражений ================= */
+function parseExpression(src){
+  let i=0;
+  const skip=()=>{while(i<src.length&&src[i]===' ')i++;};
+  function expr(){let n=term();skip();while(i<src.length&&(src[i]==='+'||src[i]==='-')){const op=src[i++];const r=term();n={v:op,l:n,r};skip();}return n;}
+  function term(){let n=fact();skip();while(i<src.length&&(src[i]==='*'||src[i]==='/')){const op=src[i++];const r=fact();n={v:op,l:n,r};skip();}return n;}
+  function fact(){skip();const c=src[i];
+    if(c==='('){i++;const n=expr();skip();if(src[i]!==')')throw'Ожидается закрывающая скобка «)»';i++;return n;}
+    if(c==='-'){i++;const n=fact();return{v:'neg',l:n,r:null};}
+    const m=/^\d+(\.\d+)?/.exec(src.slice(i));
+    if(!m)throw'Некорректный символ в выражении';
+    i+=m[0].length;return{v:m[0],l:null,r:null};}
+  const root=expr();skip();
+  if(i<src.length)throw'Лишние символы после выражения';
+  return root;
+}
+function evaluate(t){
+  if(t.v==='neg')return -evaluate(t.l);
+  if(!t.l&&!t.r)return parseFloat(t.v);
+  const a=evaluate(t.l),b=evaluate(t.r);
+  if(t.v==='/'){if(b===0)throw'Деление на ноль';return a/b;}
+  return t.v==='+'?a+b:t.v==='-'?a-b:a*b;
+}
+const prec=t=>t.v==='+'||t.v==='-'?1:2;
+function infix(t,parentPrec=0,wrap=true){
+  if(t.v==='neg')return'-'+infix(t.l,3);
+  if(!t.l&&!t.r)return t.v;
+  let s=infix(t.l,prec(t))+' '+t.v+' '+infix(t.r,prec(t));
+  return (wrap&&prec(t)<parentPrec)?'('+s+')':s;
+}
+const postfix=t=>!t.l&&!t.r?(t.v==='neg'?'-':'')+(t.v):(t.v==='neg'?postfix(t.l)+' -':postfix(t.l)+' '+postfix(t.r)+' '+t.v);
+function layout(root){let x=0,maxD=0;(function rec(n,d){n.depth=d;maxD=Math.max(maxD,d);
+  if(!n.l){n.x=x++;}else{rec(n.l,d+1);if(n.r)rec(n.r,d+1);n.x=(n.l.x+(n.r?n.r.x:n.l.x))/2;} })(root,0);
+  return{root,leaves:x,maxDepth:maxD};}
+
+/* ================= отрисовка дерева (для демо и П9) ================= */
+function renderTreeSVG(root,{interactive=false,animate=true}={}){
+  const{leaves,maxDepth}=layout(root);
+  const SP=88,RP=30;
+  const W=Math.max(leaves*SP+40,260),H=(maxDepth+1)*RP*3+20;
+  const px=n=>40+n.x*SP+SP/2-SP/2+SP/2, X=n=>20+n.x*SP+SP/2;
+  const Y=n=>40+n.depth*RP*3;
+  let edges='',nodes='',idx=0;
+  (function draw(n){
+    if(n.l){edges+=`<line class="edge ${animate?'draw':''}" x1="${X(n)}" y1="${Y(n)}" x2="${X(n.l)}" y2="${Y(n.l)}" style="transition-delay:${idx*90}ms"/>`;draw(n.l);}
+    if(n.r){edges+=`<line class="edge ${animate?'draw':''}" x1="${X(n)}" y1="${Y(n)}" x2="${X(n.r)}" y2="${Y(n.r)}" style="transition-delay:${idx*90+60}ms"/>`;draw(n.r);}
+    const cls=isOp(n.v)||n.v==='neg'?'n-op':'n-num';
+    nodes+=`<g class="node ${cls} ${animate?'pop':''}"><circle cx="${X(n)}" cy="${Y(n)}" r="${RP-4}" style="transition-delay:${idx*90}ms"/><text x="${X(n)}" y="${Y(n)}">${esc(n.v==='neg'?'±':n.v)}</text></g>`;
+    idx++;})(root);
+  return`<svg viewBox="0 0 ${W} ${H}" width="${Math.min(W,760)}" style="max-width:100%">${edges}${nodes}</svg>`;
+}
+
+/* ================= живой построитель ================= */
+function runDemo(){
+  const src=$('#demoIn').value.trim(),err=$('#demoErr');
+  err.hidden=true;
+  try{
+    const root=parseExpression(src);
+    const val=evaluate(root);
+    $('#demoSvgWrap').innerHTML=renderTreeSVG(root);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>$('#demoSvgWrap svg')?.classList.add('built')));
+    $('#outInfix').textContent=infix(root);
+    $('#outPost').textContent=postfix(root);
+    $('#outVal').textContent=(Number.isInteger(val)?val:+val.toFixed(4));
+  }catch(e){
+    $('#demoSvgWrap').innerHTML='';$('#outInfix').textContent=$('#outPost').textContent=$('#outVal').textContent='—';
+    err.textContent='⚠ '+(typeof e==='string'?e:'Ошибка разбора выражения');err.hidden=false;
+  }
+}
+$('#demoBtn').onclick=runDemo;
+$('#demoIn').addEventListener('keydown',e=>{if(e.key==='Enter')runDemo();});
+
+/* ================= терминология: наведение ================= */
+$$('.term').forEach(t=>{
+  const k=t.dataset.term;
+  t.addEventListener('mouseenter',()=>$$('#termSvg [data-term="'+k+'"]').forEach(el=>el.classList.add('hot')));
+  t.addEventListener('mouseleave',()=>$$('#termSvg .hot').forEach(el=>el.classList.remove('hot')));
+});
+
+/* ================= виды деревьев (слайд 04) ================= */
+function miniTree(nodes){
+  let e='',n='';
+  nodes.forEach(([x,y,label,kind,px,py],i)=>{
+    if(px!==undefined)e+=`<line class="edge" x1="${px}" y1="${py}" x2="${x}" y2="${y}"/>`;
+    n+=`<g class="node ${kind}"><circle cx="${x}" cy="${y}" r="11"/><text x="${x}" y="${y}" style="font-size:10px">${label}</text></g>`;});
+  return`<svg viewBox="0 0 150 105">${e}${n}</svg>`;
+}
+const kinds=[
+ ['Полное — все уровни заполнены',[[75,16,'',  'n-op'],[38,52,'','n-num',75,16],[112,52,'','n-num',75,16],[19,88,'','n-num',38,52],[57,88,'','n-num',38,52],[93,88,'','n-num',112,52],[131,88,'','n-num',112,52]]],
+ ['Двоичный поиск: слева меньше, справа больше',[[75,16,'5','n-op'],[38,52,'3','n-num',75,16],[112,52,'8','n-num',75,16],[19,88,'1','n-num',38,52],[131,88,'9','n-num',112,52]]],
+ ['Вырожденное — «дерево-список» ❌',[[40,14,'1','n-op'],[62,40,'2','n-num',40,14],[84,66,'3','n-num',62,40],[106,92,'4','n-num',84,66]]]
+];
+$('#kindsBox').innerHTML=kinds.map(([t,nodes])=>`<div class="kindrow">${miniTree(nodes)}<div class="small" style="max-width:220px">${t}</div></div>`).join('');
+
+/* ================= ЗАДАНИЯ А: пропуски ================= */
+const TASKS_A=[
+ {expr:'(7 − 2) · 3',nodes:[
+   {id:'r',x:180,y:52,ans:'*',blank:1},{id:'m',x:110,y:142,ans:'-',p:'r'},
+   {id:'n3',x:262,y:142,ans:'3',blank:1,p:'r'},
+   {id:'n7',x:62,y:232,ans:'7',p:'m'},{id:'n2',x:158,y:232,ans:'2',blank:1,p:'m'}]},
+ {expr:'8 / (1 + 1) + 2',nodes:[
+   {id:'r',x:185,y:44,ans:'+',blank:1},{id:'d',x:101,y:112,ans:'/',p:'r'},
+   {id:'n2',x:268,y:112,ans:'2',blank:1,p:'r'},{id:'p',x:157,y:180,ans:'+',p:'d'},
+   {id:'n8',x:45,y:248,ans:'8',blank:1,p:'d'},{id:'l1',x:122,y:248,ans:'1',p:'p'},{id:'r1',x:192,y:248,ans:'1',blank:1,p:'p'}]},
+ {expr:'(3 + 4) · (9 − 2)',nodes:[
+   {id:'r',x:180,y:52,ans:'*',blank:1},{id:'pl',x:86,y:142,ans:'+',p:'r'},{id:'mi',x:274,y:142,ans:'-',p:'r'},
+   {id:'a',x:48,y:232,ans:'3',blank:1,p:'pl'},{id:'b',x:124,y:232,ans:'4',p:'pl'},
+   {id:'c',x:236,y:232,ans:'9',p:'mi'},{id:'d',x:312,y:232,ans:'2',blank:1,p:'mi'}]}
+];
+function buildTaskA(){
+  $('#taskABox').innerHTML=TASKS_A.map((t,i)=>{
+    const byId={};t.nodes.forEach(n=>byId[n.id]=n);
+    let edges='',nodesSvg='';
+    t.nodes.forEach(n=>{
+      if(n.p){const p=byId[n.p];edges+=`<line class="edge" x1="${p.x}" y1="${p.y}" x2="${n.x}" y2="${n.y}"/>`;}
+      if(n.blank){
+        nodesSvg+=`<foreignObject x="${n.x-26}" y="${n.y-26}" width="52" height="52"><input xmlns="http://www.w3.org/1999/xhtml" class="blank-in" maxlength="3" data-ans="${n.ans}" aria-label="Пропуск"></foreignObject>`;
+      }else{
+        const cls=isOp(n.ans)?'n-op':'n-num';
+        nodesSvg+=`<g class="node ${cls}"><circle cx="${n.x}" cy="${n.y}" r="26"/><text x="${n.x}" y="${n.y}">${n.ans==='-'?'−':n.ans}</text></g>`;
+      }});
+    return`<div class="card task reveal" data-task="${i}">
+      <div class="task-head"><span class="tno">А${i+1}.</span><span class="tag">заполните пропуски</span><span class="task-expr">${t.expr}</span></div>
+      <div class="task-body">
+        <svg viewBox="0 0 360 282">${edges}${nodesSvg}</svg>
+        <div>
+          <p class="small">Впишите недостающие операнды и операции так, чтобы дерево вычисляло выражение слева.</p>
+          <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+            <button class="btn sm checkA">Проверить</button>
+            <button class="btn sm ghost resetA">Сбросить</button>
+          </div>
+          <div class="verdict"></div>
+        </div>
+      </div></div>`;
+  }).join('');
+  $$('#taskABox .task').forEach(card=>{
+    card.querySelector('.checkA').onclick=()=>{
+      let ok=0,total=0;
+      card.querySelectorAll('.blank-in').forEach(inp=>{
+        total++;const good=normAns(inp.value)===inp.dataset.ans;
+        inp.classList.toggle('ok',good);inp.classList.toggle('bad',!good);
+        if(good)ok++;});
+      const v=card.querySelector('.verdict');
+      if(ok===total){v.textContent='✓ Верно! Дерево построено без ошибок.';v.className='verdict good';}
+      else{v.textContent=`✗ Ошибок: ${total-ok} из ${total}. Сравните с порядком действий.`;v.className='verdict badv';}
+    };
+    card.querySelector('.resetA').onclick=()=>{
+      card.querySelectorAll('.blank-in').forEach(inp=>{inp.value='';inp.classList.remove('ok','bad');});
+      card.querySelector('.verdict').textContent='';};
+  });
+}
+buildTaskA();
+
+/* ================= ЗАДАНИЯ Б: с нуля ================= */
+const TASKS_B=[
+ {expr:'(5+2)*(8-6)'},
+ {expr:'10-4/(1+1)'},
+ {expr:'(2+3)*4-6/2'}
+];
+let curB=0,bankB=[],selChip=null;
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function buildTaskB(i){
+  curB=i;selChip=null;
+  const t=TASKS_B[i];
+  const root=parseExpression(t.expr);
+  layout(root);
+  // сбор всех значений узлов дерева
+  const vals=[];(function coll(n){vals.push(n.v);if(n.l)coll(n.l);if(n.r)coll(n.r);})(root);
+  const tokens=vals.slice();
+  if(tokens.length<11){ // добавляем дистракторы-числа
+    const nums=[];(function collN(n){if(!n.l&&!n.r)nums.push(n.v);if(n.l)collN(n.l);if(n.r)collN(n.r);})(root);
+    let add=11-tokens.length, cand=nums.map(n=>String(+n+1)).concat(['1','6','3','7']);
+    cand=cand.filter(c=>c!=='0');let k=0;
+    while(add>0&&k<cand.length){tokens.push(cand[k++]);add--;}
+  }
+  bankB=shuffle(tokens.slice());
+  // SVG со слотами
+  const SP=88,RP=29;
+  const leaves=Math.max(...(function ls(n,a=[]){if(!n.l)a.push(n.x);if(n.l)ls(n.l,a);if(n.r)ls(n.r,a);return a;})(root))+1;
+  const maxD=(function md(n){return Math.max(n.depth,n.l?md(n.l):0,n.r?md(n.r):0);})(root);
+  const W=leaves*SP+40,H=(maxD+1)*RP*3+10;
+  const X=n=>20+n.x*SP+SP/2, Y=n=>36+n.depth*RP*3;
+  let edges='',slots='',key=0;
+  (function draw(n){
+    if(n.l){edges+=`<line class="edge" x1="${X(n)}" y1="${Y(n)}" x2="${X(n.l)}" y2="${Y(n.l)}"/>`;draw(n.l);}
+    if(n.r){edges+=`<line class="edge" x1="${X(n)}" y1="${Y(n)}" x2="${X(n.r)}" y2="${Y(n.r)}"/>`;draw(n.r);}
+    slots+=`<g class="slot" data-key="${key++}" data-x="${X(n)}" data-y="${Y(n)}"><circle cx="${X(n)}" cy="${Y(n)}" r="${RP}"/><text x="${X(n)}" y="${Y(n)}" style="fill:#4b7a5e;font-size:13px">${key}</text></g>`;
+  })(root);
+  $('#taskBBox').innerHTML=`
+   <div class="card task">
+    <div class="task-head"><span class="tno">Б${i+1}.</span><span class="tag a">постройте дерево</span><span class="task-expr">${t.expr.replace(/\*/g,' · ').replace(/-/g,' − ')}</span></div>
+    <div class="task-body" style="grid-template-columns:1fr">
+      <svg viewBox="0 0 ${W} ${H}" id="svgB">${edges}${slots}</svg>
+      <div class="bank" id="bankB">${bankB.map((tk,bi)=>`<div class="chip ${isOp(tk)?'op':''}" data-bi="${bi}" data-v="${esc(tk)}">${tk==='-'?'−':esc(tk)}</div>`).join('')}</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn sm" id="checkB">Проверить</button>
+        <button class="btn sm ghost" id="resetB">Сбросить</button>
+        <span class="verdict" id="verdictB"></span>
+      </div>
+      <div class="hint-box" id="hintB">Подсказка: корень — операция с наименьшим приоритетом вне скобок. В выражении «${t.expr}» главная операция выполняется последней, её операнды — целые подвыражения (со скобками).</div>
+      <button class="hint-toggle" id="hintBT">Показать подсказку</button>
+    </div>
+   </div>`;
+  const placed={}; // key -> bi
+  $$('#bankB .chip').forEach(ch=>{
+    ch.onclick=()=>{
+      if(ch.classList.contains('placed'))return;
+      $$('#bankB .chip').forEach(c=>c.classList.remove('sel'));
+      ch.classList.toggle('sel',selChip!==ch);
+      selChip=ch.classList.contains('sel')?ch:null;
+    };
+  });
+  $$('#svgB .slot').forEach(sl=>{
+    sl.onclick=()=>{
+      const k=sl.dataset.key;
+      if(placed[k]!==undefined){ // вернуть фишку
+        $(`#bankB .chip[data-bi="${placed[k]}"]`).classList.remove('placed');
+        delete placed[k];sl.classList.remove('filled','op','num');
+        sl.querySelector('text').textContent=+k+1;sl.querySelector('text').style.fill='#4b7a5e';sl.querySelector('text').style.fontSize='13px';
+        return;
+      }
+      if(!selChip)return;
+      placed[k]=selChip.dataset.bi;
+      const v=selChip.dataset.v;
+      sl.classList.add('filled',isOp(v)?'op':'num');
+      sl.querySelector('text').textContent=v==='-'?'−':v;
+      sl.querySelector('text').style.fill='';sl.querySelector('text').style.fontSize='';
+      selChip.classList.add('placed');selChip.classList.remove('sel');selChip=null;
+    };
+  });
+  $('#checkB').onclick=()=>{
+    let ok=0,total=0;
+    $$('#svgB .slot').forEach(sl=>{
+      total++;
+      const bi=placed[sl.dataset.key];
+      const good=bi!==undefined&&bankB[bi]===vals[+sl.dataset.key];
+      sl.classList.toggle('ok',good);sl.classList.toggle('bad',!good);
+      if(good)ok++;});
+    const v=$('#verdictB');
+    if(ok===total){v.textContent='✓ Отлично! Дерево собрано верно.';v.className='verdict good';}
+    else{v.textContent=`✗ Неверных узлов: ${total-ok} из ${total}.`;v.className='verdict badv';}
+  };
+  $('#resetB').onclick=()=>buildTaskB(i);
+  $('#hintBT').onclick=()=>{const h=$('#hintB');h.classList.toggle('open');$('#hintBT').textContent=h.classList.contains('open')?'Скрыть подсказку':'Показать подсказку';};
+}
+$('#taskBTabs').innerHTML=TASKS_B.map((t,i)=>`<button data-i="${i}" class="${i===0?'on':''}">Задание Б${i+1}</button>`).join('');
+$$('#taskBTabs button').forEach(b=>b.onclick=()=>{
+  $$('#taskBTabs button').forEach(x=>x.classList.remove('on'));b.classList.add('on');buildTaskB(+b.dataset.i);});
+buildTaskB(0);
+
+/* ================= ТЕСТ: сопоставления ================= */
+const QUIZ=[
+ {q:'Термин ↔ определение',
+  left:['Корень','Лист','Ребро','Высота дерева'],
+  right:['Узел, не имеющий родителя','Узел без потомков','Связь между родителем и потомком','Длина самого длинного пути от корня до листа'],
+  map:[0,1,2,3]},
+ {q:'Выражение ↔ корень его дерева',
+  left:['(2 + 3) · 4','9 − 3 / 3','6 / (2 + 1)','7 + 2 · 3'],
+  right:['*','−','/','+'],map:[0,1,2,3]},
+ {q:'Вид обхода ↔ что даёт',
+  left:['Инфиксный (L·К·R)','Префиксный (К·Л·Р)','Постфиксный (Л·Р·К)','Любой обход в глубину'],
+  right:['Исходная запись выражения','Сначала операция, затем операнды','Сначала операнды, затем операция','Спускается к листьям через поддеревья'],
+  map:[0,1,2,3]},
+ {q:'Свойство полного бинарного дерева ↔ число',
+  left:['Узлов на уровне 2','Всего узлов при высоте 2','Листьев при высоте 2','Всего узлов при высоте 1'],
+  right:['4','7','4','3'],map:[0,2,0,3]}
+];
+const PAIRC=['p0','p1','p2','p3'];
+let quizState;
+function buildQuiz(){
+  quizState=QUIZ.map(()=>({pairs:{},order:[],checked:false}));
+  $('#quizBox').innerHTML=QUIZ.map((q,qi)=>{
+    const rs=shuffle(q.right.map((_,ri)=>ri));
+    return`<div class="card q reveal" data-q="${qi}">
+      <h4><span class="qno">В${qi+1}.</span>${q.q}</h4>
+      <div class="q-cols">
+        <div class="q-left">${q.left.map((l,li)=>`<button class="q-item" data-li="${li}">${l}</button>`).join('')}</div>
+        <div class="q-right">${rs.map(ri=>`<button class="q-opt" data-ri="${ri}">${q.right[ri]}</button>`).join('')}</div>
+      </div>
+      <div class="q-foot"><button class="btn sm ghost q-reset">Сбросить</button><span class="q-res"></span></div>
+    </div>`;
+  }).join('');
+  $$('#quizBox .q').forEach(card=>{
+    const qi=+card.dataset.q,st=quizState[qi];let selLi=null;
+    const paint=()=>{
+      card.querySelectorAll('.q-item,.q-opt').forEach(el=>{
+        el.classList.remove('paired','sel',...PAIRC);
+        el.querySelector('.badge')?.remove();});
+      st.order.forEach((ri,pIdx)=>{
+        const li=Object.keys(st.pairs).find(k=>st.pairs[k]===ri);
+        const it=card.querySelector(`.q-item[data-li="${li}"]`),op=card.querySelector(`.q-opt[data-ri="${ri}"]`);
+        [it,op].forEach(el=>{if(!el)return;el.classList.add('paired',PAIRC[pIdx%4]);
+          const b=document.createElement('span');b.className='badge '+PAIRC[pIdx%4];b.textContent=pIdx+1;el.appendChild(b);});
+      });
+      if(selLi!==null)card.querySelector(`.q-item[data-li="${selLi}"]`)?.classList.add('sel');
+    };
+    card.addEventListener('click',e=>{
+      if(st.checked)return;
+      const it=e.target.closest('.q-item'),op=e.target.closest('.q-opt');
+      if(it){const li=+it.dataset.li;
+        if(st.pairs[li]!==undefined){delete st.pairs[li];st.order=st.order.filter(r=>st.pairs&&Object.values(st.pairs).includes(r));selLi=null;paint();return;}
+        selLi=(selLi===li)?null:li;paint();return;}
+      if(op){const ri=+op.dataset.ri;
+        if(Object.values(st.pairs).includes(ri)){
+          const li=Object.keys(st.pairs).find(k=>st.pairs[k]===ri);
+          delete st.pairs[li];paint();return;}
+        if(selLi===null){op.animate([{transform:'translateX(0)'},{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'translateX(0)'}],{duration:200});return;}
+        st.pairs[selLi]=ri;selLi=null;paint();}
+    });
+    card.querySelector('.q-reset').onclick=()=>{if(st.checked)return;st.pairs={};selLi=null;paint();};
+  });
+}
+buildQuiz();
+$('#quizCheck').onclick=()=>{
+  let total=0,correct=0;
+  $$('#quizBox .q').forEach((card,qi)=>{
+    const q=QUIZ[qi],st=quizState[qi];st.checked=true;let c=0;
+    card.querySelectorAll('.q-item').forEach(it=>{
+      const li=+it.dataset.li;total++;
+      const paired=st.pairs[li]!==undefined;
+      const good=paired&&st.pairs[li]===q.map[li];
+      it.classList.add(good?'right':'wrong');
+      const correctRi=q.map[li];
+      const opt=card.querySelector(`.q-opt[data-ri="${correctRi}"]`);
+      if(good){c++;opt.classList.add('right');}
+      else{opt.classList.add('wrong');opt.insertAdjacentHTML('beforeend',` <span style="color:var(--leaf);font-family:var(--mono)">← верно</span>`);}
+    });
+    correct+=c;
+    card.querySelector('.q-res').innerHTML=`<span style="color:${c===4?'var(--leaf)':'var(--coral)'}">${c} / 4</span>`;
+  });
+  $('#quizScore').textContent=`Итог: ${correct} из ${total}`;
+  const g=correct===16?'Оценка 5':correct>=12?'Оценка 4':correct>=8?'Оценка 3':'Повторите теорию ↺';
+  $('#quizGrade').textContent=g;
+};
+$('#quizReset').onclick=()=>{buildQuiz();$('#quizScore').textContent='';$('#quizGrade').textContent='';};
+
+/* ================= подсветка Python + копирование ================= */
+function highlight(code){
+  let s=esc(code);
+  s=s.replace(/(#[^\n]*)|(&quot;.*?&quot;|'[^'\n]*')/g,m=>m.startsWith('#')?`<span class="c">${m}</span>`:`<span class="s">${m}</span>`);
+  s=s.replace(/\b(class|def|return|if|elif|else|None|is|and|or|not|in|while|for|try|except|print|input|str|True|False|self)\b/g,'<span class="k">$1</span>');
+  s=s.replace(/\b(\d+(\.\d+)?)\b/g,'<span class="n">$1</span>');
+  s=s.replace(/(def\s+<span class="k">)<\/span>/,'$1');
+  return s;
+}
+$$('pre[data-copy]').forEach(pre=>{pre.innerHTML=highlight(pre.textContent);});
+$$('.copy').forEach(btn=>btn.onclick=async()=>{
+  const txt=btn.closest('.code-card').querySelector('pre').innerText;
+  try{await navigator.clipboard.writeText(txt);}catch(e){
+    const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();}
+  btn.textContent='✓ скопировано';setTimeout(()=>btn.textContent='копировать',1600);
+});
+/* дерево для шага 2 на слайде 09 */
+$('#pyTreeWrap').innerHTML=renderTreeSVG(parseExpression('(2+3)*(9-4)'),{animate:false});
+$('#pyTreeWrap svg').style.maxHeight='190px';
+
+/* ================= навигация, прогресс, ревил ================= */
+const sections=$$('section');
+const dotsNav=$('#dots');
+sections.forEach((s,i)=>{
+  const a=document.createElement('a');a.href='#'+s.id;a.dataset.t=`${String(i+1).padStart(2,'0')} · ${s.dataset.title}`;dotsNav.appendChild(a);
+});
+const dots=$$('#dots a');
+const io=new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){
+      const i=sections.indexOf(e.target);
+      dots.forEach((d,j)=>d.classList.toggle('on',i===j));
+      $('#slideCounter').textContent=`${String(i+1).padStart(2,'0')} / ${sections.length}`;
+      e.target.classList.add('in');
+    }});
+},{rootMargin:'-40% 0px -40% 0px'});
+sections.forEach(s=>io.observe(s));
+const rio=new IntersectionObserver(es=>{
+  es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');rio.unobserve(e.target);}});
+},{threshold:.12});
+$$('.reveal').forEach(el=>rio.observe(el));
+addEventListener('scroll',()=>{
+  const h=document.documentElement;
+  $('#progress').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';
+},{passive:true});
+let navLock=false;
+addEventListener('keydown',e=>{
+  const tag=document.activeElement.tagName;
+  if(['INPUT','TEXTAREA'].includes(tag))return;
+  if(e.key!=='ArrowDown'&&e.key!=='ArrowUp'&&e.key!=='PageDown'&&e.key!=='PageUp')return;
+  e.preventDefault();if(navLock)return;navLock=true;setTimeout(()=>navLock=false,550);
+  const mid=innerHeight/2;
+  let cur=sections.findIndex(s=>{const r=s.getBoundingClientRect();return r.top<=mid&&r.bottom>mid;});
+  cur=Math.max(0,cur);
+  const fwd=e.key==='ArrowDown'||e.key==='PageDown';
+  const next=sections[Math.min(sections.length-1,Math.max(0,cur+(fwd?1:-1)))];
+  next.scrollIntoView({behavior:'smooth'});
+});
+
+/* ================= падающие листья ================= */
+const leafLayer=$('#leaves');
+const LEAF='<svg viewBox="0 0 24 24" width="__S" height="__S"><path d="M12 2 C20 8 20 16 12 22 C4 16 4 8 12 2 Z" fill="__C"/><path d="M12 4 V20" stroke="rgba(10,23,16,.5)" stroke-width="1"/></svg>';
+for(let i=0;i<13;i++){
+  const d=document.createElement('div');d.className='leafp';
+  const s=10+Math.random()*16;
+  const col=Math.random()<.5?'#7be495':'#f5b942';
+  d.innerHTML=LEAF.replace(/__S/g,s.toFixed(0)).replace('__C',col);
+  d.style.left=Math.random()*100+'vw';
+  d.style.animationDuration=(16+Math.random()*22)+'s';
+  d.style.animationDelay=(-Math.random()*30)+'s';
+  leafLayer.appendChild(d);
+}
+/* первичная отрисовка демо при загрузке */
+runDemo();
+</script>
+</body>
+</html>

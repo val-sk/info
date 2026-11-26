@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тайные языки машин: Троичная и Двоично-десятичная системы</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --text-main: #c9d1d9;
+            --text-bright: #ffffff;
+            --accent-ternary: #bc8cff;
+            --accent-bcd: #39d353;
+            --accent-history: #f0883e;
+            --accent-amazing: #f778ba;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Контейнер слайдов */
+        .presentation-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            opacity: 0;
+            transform: translateX(50px);
+            transition: all 0.5s ease-in-out;
+            pointer-events: none;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: all;
+        }
+
+        .slide-content {
+            max-width: 1000px;
+            width: 100%;
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid #30363d;
+        }
+
+        h1 {
+            font-size: 3rem;
+            color: var(--text-bright);
+            text-align: center;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, var(--accent-ternary), var(--accent-bcd));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            font-size: 2.2rem;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            margin: 20px 0 10px;
+            color: var(--text-bright);
+        }
+
+        p, li {
+            font-size: 1.15rem;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        .highlight-ternary { color: var(--accent-ternary); font-weight: bold; }
+        .highlight-bcd { color: var(--accent-bcd); font-weight: bold; }
+        .highlight-history { color: var(--accent-history); font-weight: bold; }
+        .highlight-amazing { color: var(--accent-amazing); font-weight: bold; }
+
+        .code-block {
+            background: #010409;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            margin: 15px 0;
+            color: #79c0ff;
+            overflow-x: auto;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #30363d;
+        }
+
+        /* Навигация */
+        .nav-controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: #21262d;
+            color: var(--text-bright);
+            border: 1px solid #30363d;
+            padding: 12px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            background: #30363d;
+            transform: translateY(-2px);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-ternary), var(--accent-bcd));
+            transition: width 0.3s ease;
+            z-index: 100;
+        }
+
+        /* Квиз */
+        .quiz-item {
+            background: rgba(255,255,255,0.02);
+            border-left: 4px solid #30363d;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .quiz-item.ternary { border-left-color: var(--accent-ternary); }
+        .quiz-item.bcd { border-left-color: var(--accent-bcd); }
+
+        .quiz-btn {
+            background: transparent;
+            border: 1px solid #30363d;
+            color: var(--accent-bcd);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.2s;
+        }
+
+        .quiz-btn:hover { background: rgba(57, 211, 83, 0.1); }
+
+        .answer {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(57, 211, 83, 0.05);
+            border-radius: 8px;
+            color: var(--text-bright);
+            font-weight: bold;
+        }
+
+        .answer.show { display: block; }
+
+        @media (max-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            h1 { font-size: 2rem; }
+            h2 { font-size: 1.5rem; }
+            .slide-content { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<div class="presentation-container">
+    
+    <!-- Слайд 1: Титульный -->
+    <div class="slide active">
+        <div class="slide-content" style="text-align: center;">
+            <h1>Тайные языки машин</h1>
+            <p style="font-size: 1.4rem; color: #8b949e;">Погружение в миры <span class="highlight-ternary">Троичной уравновешенной</span> и <span class="highlight-bcd">Двоично-десятичной</span> систем счисления</p>
+            <br>
+            <p style="font-size: 1.1rem;">Используйте стрелки на клавиатуре (← →) или кнопки внизу для навигации</p>
+        </div>
+    </div>
+
+    <!-- Слайд 2: Исторический факт -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2><span class="highlight-history">📜</span> Исторический факт</h2>
+            <div class="grid-2">
+                <div class="card">
+                    <h3 class="highlight-ternary">Деревянный компьютер из 1840 года</h3>
+                    <p>Идея троичной системы обсуждалась еще Л. Эйлером и Дж. Колсоном в XVIII веке для упрощения вычислений. Но первым её материализовал <b>Томас Фаулер</b>. В 1840 году он построил <b>счетную машину из дерева</b>, которая работала в уравновешенной троичной системе. Она была проще и надежнее двоичных аналогов того времени!</p>
+                </div>
+                <div class="card">
+                    <h3 class="highlight-bcd">Перфокарты и банкиры</h3>
+                    <p>Двоично-десятичная система (BCD) родилась не в лабораториях, а в бухгалтерии. В 1920-х годах <b>IBM</b>требовался способ обработки финансовых данных на перфокартах. Чтобы избежать сложного перевода чисел из двоичной системы в десятичную для печати чеков, инженеры закодировали каждую цифру отдельно. Так BCD стал стандартом для корпоративных вычислений.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Слайд 3: Удивительный факт -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2><span class="highlight-amazing">✨</span> Удивительный факт</h2>
+            <div class="grid-2">
+                <div class="card">
+                    <h3 class="highlight-ternary">Советский триумф: «Сетунь»</h3>
+                    <p>Единственный в мире <b>серийно выпускавшийся троичный компьютер</b> был создан в СССР! ЭВМ «Сетунь» (1958 г., МГУ) использовала уравновешенную троичную систему. Она была невероятно надежной, экономичной и элегантно решала задачи логики. К сожалению, из-за бюрократии проект закрыли, выпустив лишь около 50 машин.</p>
+                </div>
+                <div class="card">
+                    <h3 class="highlight-bcd">Почему банки любят BCD?</h3>
+                    <p>В обычной двоичной системе <code>0.1 + 0.2 = 0.30000000000000004</code>. Эта ошибка плавающей точки стоит миллиардам. Но в BCD числа хранятся <b>именно так, как мы их пишем</b>. В финансовых системах и банкоматах до сих пор используется BCD, чтобы копейки никогда не «терялись» при конвертации!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Слайд 4: Теория (Троичная) -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2><span class="highlight-ternary">⚖️</span> Теория: Троичная уравновешенная</h2>
+            <p>Основание системы: <b>3</b>. Вместо привычных 0, 1, 2 используются симметричные цифры: <b>-1, 0, 1</b> (часто -1 записывают как <code>T</code> или <code>Ī</code>).</p>
+            
+            <h3>Магия симметрии</h3>
+            <ul>
+                <li><b>Нет знака минус!</b> Чтобы сделать число отрицательным, нужно просто заменить все <code>1</code> на <code>-1</code> и наоборот.</li>
+                <li><b>Округление — это отбрасывание!</b> Чтобы округлить число, можно просто отсечь младшие разряды (как в двоичной, но без ошибок).</li>
+            </ul>
+
+            <h3>Пример вычисления</h3>
+            <div class="code-block">
+                Число: <span class="highlight-ternary">1 T 1 0</span><br>
+                Перевод: 1×3³ + (-1)×3² + 1×3¹ + 0×3⁰<br>
+                Результат: 27 - 9 + 3 + 0 = <b>21</b>
+            </div>
+        </div>
+    </div>
+
+    <!-- Слайд 5: Теория (BCD) -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2><span class="highlight-bcd">🔢</span> Теория: Двоично-десятичная (BCD)</h2>
+            <p>Это гибрид. Мы используем двоичный код (биты), но группируем их так, чтобы они представляли привычные десятичные цифры.</p>
+            
+            <h3>Правило 4-х бит</h3>
+            <p>Каждая десятичная цифра (от 0 до 9) кодируется <b>4 битами</b> (тетрадой). Комбинации от <code>1010</code> до <code>1111</code> являются запрещенными.</p>
+
+            <h3>Пример кодирования</h3>
+            <div class="code-block">
+                Десятичное число: <span class="highlight-bcd">9 3</span><br>
+                BCD-код: <b>1001</b> (для 9) и <b>0011</b> (для 3)<br>
+                Итог: <code>1001 0011</code><br><br>
+                ⚠️ Внимание: Это НЕ двоичное число 147! Это именно BCD-представление числа 93.
+            </div>
+        </div>
+    </div>
+
+    <!-- Слайд 6: Примеры использования -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2>🚀 Где это используется сегодня?</h2>
+            <div class="grid-2">
+                <div class="card">
+                    <h3 class="highlight-ternary">Троичная логика</h3>
+                    <ul>
+                        <li><b>Квантовые компьютеры:</b> Вместо кубитов (0 и 1) используются <b>кутриты</b> (0, 1, 2), что экспоненциально увеличивает плотность данных.</li>
+                        <li><b>Искусственный интеллект:</b> Троичная логика (Истина, Ложь, Неизвестно) идеальна для нейросетей и баз данных с неполной информацией.</li>
+                        <li><b>Математическая оптимальность:</b> Основание <code>e ≈ 2.71</code> — самое эффективное для хранения данных. Троичная система (3) ближе всего к этому идеалу!</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3 class="highlight-bcd">Двоично-десятичная (BCD)</h3>
+                    <ul>
+                        <li><b>Финансы и Бухгалтерия:</b> Точное представление дробных чисел без ошибок округления (стандарт IEEE 754 decimal).</li>
+                        <li><b>Цифровые часы и дисплеи:</b> Легко извлекать цифры для вывода на 7-сегментные индикаторы.</li>
+                        <li><b>BIOS/UEFI:</b> Часы реального времени (RTC) в материнских платах хранят время именно в BCD.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Слайд 7: Вопросы (Троичная) -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2><span class="highlight-ternary">🧠</span> Проверь себя: Троичная система</h2>
+            
+            <div class="quiz-item ternary">
+                <p><b>1.</b> Какие три цифры используются в уравновешенной троичной системе?</p>
+                <button class="quiz-btn" onclick="toggleAnswer(this)">Показать ответ</button>
+                <div class="answer">Ответ: -1, 0 и 1 (часто -1 обозначается как T или Ī).</div>
+            </div>
+
+            <div class="quiz-item ternary">
+                <p><b>2.</b> Как в этой системе получить отрицательное число из положительного?</p>
+                <button class="quiz-btn" onclick="toggleAnswer(this)">Показать ответ</button>
+                <div class="answer">Ответ: Нужно просто инвертировать цифры: заменить все 1 на -1, а все -1 на 1. Знак "минус" не нужен!</div>
+            </div>
+
+            <div class="quiz-item ternary">
+                <p><b>3.</b> Какое математическое число (константа) делает троичную систему теоретически самой эффективной для хранения данных?</p>
+                <button class="quiz-btn" onclick="toggleAnswer(this)">Показать ответ</button>
+                <div class="answer">Ответ: Число e (≈ 2.718). Поскольку основание системы должно быть целым, тройка является ближайшим и самым оптимальным вариантом.</div>
+            </div>
+
+            <div class="quiz-item ternary">
+                <p><b>4.</b> Как назывался советский компьютер, серийно работавший в троичной системе?</p>
+                <button class="quiz-btn" onclick="toggleAnswer(this)">Показать ответ</button>
+                <div class="answer">Ответ: «Сетунь» (разработан в МГУ в 1958 году под руководством Н.П. Брусенцова).</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Слайд 8: Вопросы (BCD) -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2><span class="highlight-bcd">🧠</span> Проверь себя: Двоично-десятичная (BCD)</h2>
+            
+            <div class="quiz-item bcd">
+                <p><b>1.</b> Сколько бит отводится для кодирования одной десятичной цифры в классическом BCD?</p>
+                <button class="quiz-btn" onclick="toggleAnswer(this)">Показать ответ</button>
+                <div class="answer">Ответ: 4 бита (одна тетрада). Это позволяет закодировать числа от 0 до 15, но используются только 0-9.</div>
+            </div>
+
+            <div class="quiz-item bcd">
+                <p><b>2.</b> Как будет выглядеть десятичное число <b>74</b> в BCD-коде?</p>
+                <button class="quiz-btn" onclick="toggleAnswer(this)">Показать ответ</button>
+                <div class="answer">Ответ: 0111 0100. (7 = 0111, 4 = 0100). Не путайте с обычным двоичным переводом!</div>
+            </div>
+
+            <div class="quiz-item bcd">
+                <p><b>3.</b> Почему BCD до сих пор незаменим в банковских и финансовых системах?</p>
+                <button class="quiz-btn" onclick="toggleAnswer(this)">Показать ответ</button>
+                <div class="answer">Ответ: Он исключает ошибки плавающей точки (например, 0.1 + 0.2 ≠ 0.3). Деньги хранятся и считаются абсолютно точно, как в десятичной системе.</div>
+            </div>
+
+            <div class="quiz-item bcd">
+                <p><b>4.</b> Что произойдет, если в BCD-тетраде встретится комбинация <code>1011</code>?</p>
+                <button class="quiz-btn" onclick="toggleAnswer(this)">Показать ответ</button>
+                <div class="answer">Ответ: Это запрещенная комбинация (в десятичной системе нет цифры 11). Процессор расценит это как ошибку или специальные служебные данные.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Слайд 9: Финал -->
+    <div class="slide">
+        <div class="slide-content" style="text-align: center;">
+            <h1>Спасибо за внимание!</h1>
+            <p style="font-size: 1.3rem; margin-top: 20px;">Мир чисел гораздо разнообразнее, чем кажется на первый взгляд.</p>
+            <p style="color: #8b949e; margin-top: 40px;">Нажмите ← чтобы вернуться к вопросам или закрыть вкладку.</p>
+        </div>
+    </div>
+
+</div>
+
+<!-- Навигация -->
+<div class="nav-controls">
+    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">← Назад</button>
+    <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">Вперед →</button>
+</div>
+
+<script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    const progressBar = document.getElementById('progressBar');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    function showSlide(n) {
+        slides.forEach(slide => slide.classList.remove('active'));
+        
+        if (n >= totalSlides) {
+            currentSlide = totalSlides - 1;
+        } else if (n < 0) {
+            currentSlide = 0;
+        } else {
+            currentSlide = n;
+        }
+
+        slides[currentSlide].classList.add('active');
+        
+        // Обновление прогресс-бара
+        const progress = ((currentSlide) / (totalSlides - 1)) * 100;
+        progressBar.style.width = progress + '%';
+
+        // Блокировка кнопок на краях
+        prevBtn.disabled = currentSlide === 0;
+        nextBtn.disabled = currentSlide === totalSlides - 1;
+    }
+
+    function changeSlide(direction) {
+        showSlide(currentSlide + direction);
+    }
+
+    // Управление с клавиатуры
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ') {
+            e.preventDefault();
+            changeSlide(1);
+        }
+        if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            changeSlide(-1);
+        }
+    });
+
+    // Логика квиза
+    function toggleAnswer(btn) {
+        const answerDiv = btn.nextElementSibling;
+        answerDiv.classList.toggle('show');
+        btn.textContent = answerDiv.classList.contains('show') ? 'Скрыть ответ' : 'Показать ответ';
+    }
+
+    // Инициализация
+    showSlide(0);
+</script>
+
+</body>
+</html>

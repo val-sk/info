@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Сортировка бинарным деревом — Python</title>
+<style>
+  :root{
+    --bg:#fdfdfd;
+    --panel:#ffffff;
+    --ink:#1f2430;
+    --muted:#6b7280;
+    --accent:#2563eb;
+    --accent-soft:#dbeafe;
+    --code-bg:#f6f8fa;
+    --code-border:#e5e7eb;
+    --kw:#a626a4;
+    --str:#50a14f;
+    --num:#986801;
+    --com:#a0a1a7;
+    --fn:#4078f2;
+    --ok:#16a34a;
+    --ok-soft:#dcfce7;
+    --err:#dc2626;
+    --err-soft:#fee2e2;
+    --shadow:0 6px 24px rgba(20,30,60,.06);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+  .stage{position:relative;width:100%;height:100vh;overflow:hidden}
+  .slide{
+    position:absolute;inset:0;padding:48px 72px;
+    display:none;flex-direction:column;justify-content:center;
+    opacity:0;transition:opacity .4s ease;
+  }
+  .slide.active{display:flex;opacity:1}
+  h1{font-size:44px;margin:0 0 12px;letter-spacing:-.5px}
+  h2{font-size:32px;margin:0 0 20px;color:var(--accent)}
+  h3{font-size:22px;margin:24px 0 10px}
+  p,li{font-size:19px;line-height:1.55;color:#374151}
+  .muted{color:var(--muted)}
+  .tag{display:inline-block;background:var(--accent-soft);color:var(--accent);padding:4px 12px;border-radius:999px;font-size:14px;font-weight:600;margin-bottom:16px}
+  pre{
+    background:var(--code-bg);border:1px solid var(--code-border);
+    border-radius:12px;padding:20px 24px;font-size:16px;line-height:1.5;
+    font-family:"JetBrains Mono","Fira Code",Consolas,monospace;
+    overflow:auto;box-shadow:var(--shadow);
+  }
+  code{font-family:inherit}
+  .kw{color:var(--kw);font-weight:600}
+  .str{color:var(--str)}
+  .num{color:var(--num)}
+  .com{color:var(--com);font-style:italic}
+  .fn{color:var(--fn)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:center}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:16px}
+  .card{background:var(--panel);border:1px solid var(--code-border);border-radius:14px;padding:20px;box-shadow:var(--shadow)}
+  .card b{color:var(--accent)}
+  ul{padding-left:22px}
+  li{margin-bottom:8px}
+  .controls{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+    display:flex;gap:10px;align-items:center;
+    background:var(--panel);border:1px solid var(--code-border);
+    border-radius:999px;padding:8px 16px;box-shadow:var(--shadow);
+    font-size:14px;color:var(--muted);
+  }
+  .controls button{
+    background:var(--accent);color:#fff;border:none;border-radius:999px;
+    width:36px;height:36px;cursor:pointer;font-size:16px;
+    transition:transform .15s;
+  }
+  .controls button:hover{transform:scale(1.08)}
+  .controls button:disabled{background:#cbd5e1;cursor:not-allowed;transform:none}
+  .progress{
+    position:fixed;top:0;left:0;height:3px;background:var(--accent);
+    transition:width .3s ease;width:0;
+  }
+  svg.tree{width:100%;height:100%;max-height:360px}
+  .node circle{fill:#fff;stroke:var(--accent);stroke-width:2.5}
+  .node text{font-size:16px;font-weight:700;fill:var(--ink);text-anchor:middle;dominant-baseline:central;font-family:inherit}
+  .edge{stroke:#94a3b8;stroke-width:2;fill:none}
+  .node.hl circle{fill:var(--accent);stroke:var(--accent)}
+  .node.hl text{fill:#fff}
+  .title-big{font-size:64px;font-weight:800;letter-spacing:-1.5px;margin:0}
+  .title-big span{color:var(--accent)}
+  .subtitle{font-size:22px;color:var(--muted);margin-top:12px}
+  .step-list{counter-reset:step;list-style:none;padding:0}
+  .step-list li{counter-increment:step;position:relative;padding-left:44px;margin-bottom:14px}
+  .step-list li::before{
+    content:counter(step);position:absolute;left:0;top:-2px;
+    width:32px;height:32px;border-radius:50%;
+    background:var(--accent);color:#fff;font-weight:700;
+    display:flex;align-items:center;justify-content:center;font-size:15px;
+  }
+  .complexity{display:flex;gap:16px;margin-top:12px}
+  .complexity .card{flex:1;text-align:center}
+  .complexity .big{font-size:28px;font-weight:800;color:var(--accent)}
+
+  /* Тест */
+  .quiz-tag{display:inline-block;background:#fef3c7;color:#92400e;padding:4px 12px;border-radius:999px;font-size:14px;font-weight:600;margin-bottom:16px}
+  .q-num{color:var(--muted);font-size:16px;margin-bottom:8px}
+  .q-text{font-size:24px;font-weight:600;margin-bottom:24px;line-height:1.4}
+  .options{display:flex;flex-direction:column;gap:12px;max-width:760px}
+  .option{
+    background:var(--panel);border:2px solid var(--code-border);
+    border-radius:12px;padding:14px 20px;cursor:pointer;
+    font-size:18px;text-align:left;transition:all .2s;
+    display:flex;align-items:center;gap:14px;
+  }
+  .option:hover:not(.locked){border-color:var(--accent);background:var(--accent-soft)}
+  .option .letter{
+    width:32px;height:32px;border-radius:50%;
+    background:var(--code-bg);border:1px solid var(--code-border);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;color:var(--muted);flex-shrink:0;
+  }
+  .option.correct{background:var(--ok-soft);border-color:var(--ok)}
+  .option.correct .letter{background:var(--ok);color:#fff;border-color:var(--ok)}
+  .option.wrong{background:var(--err-soft);border-color:var(--err)}
+  .option.wrong .letter{background:var(--err);color:#fff;border-color:var(--err)}
+  .option.locked{cursor:default}
+  .feedback{
+    margin-top:20px;padding:16px 20px;border-radius:12px;
+    font-size:17px;line-height:1.5;display:none;max-width:760px;
+  }
+  .feedback.show{display:block}
+  .feedback.ok{background:var(--ok-soft);border-left:4px solid var(--ok);color:#14532d}
+  .feedback.bad{background:var(--err-soft);border-left:4px solid var(--err);color:#7f1d1d}
+  .feedback b{display:block;margin-bottom:4px;font-size:18px}
+  .quiz-next{
+    margin-top:20px;align-self:flex-start;
+    background:var(--accent);color:#fff;border:none;border-radius:999px;
+    padding:10px 22px;cursor:pointer;font-size:16px;font-weight:600;
+    opacity:0;pointer-events:none;transition:opacity .3s;
+  }
+  .quiz-next.show{opacity:1;pointer-events:auto}
+
+  /* Финальный результат */
+  .score-big{font-size:96px;font-weight:800;color:var(--accent);line-height:1}
+  .score-label{font-size:22px;color:var(--muted);margin-top:8px}
+  .score-comment{font-size:20px;margin-top:24px;max-width:720px;line-height:1.6}
+  .score-bar{display:flex;gap:8px;margin-top:24px}
+  .score-bar .dot{width:36px;height:36px;border-radius:50%;background:var(--code-border);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:14px}
+  .score-bar .dot.ok{background:var(--ok)}
+  .score-bar .dot.bad{background:var(--err)}
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<div class="stage" id="stage">
+
+  <!-- Слайд 1: Титул -->
+  <section class="slide active">
+    <div class="tag">Python · списки · рекурсия</div>
+    <h1 class="title-big">Сортировка<br><span>бинарным деревом</span></h1>
+    <p class="subtitle">Tree Sort — вставляем числа в BST, потом обходим по порядку.<br>Никаких классов, только списки и рекурсия.</p>
+    <p class="muted" style="margin-top:40px">← → или кнопки снизу для навигации</p>
+  </section>
+
+  <!-- Слайд 2: Идея -->
+  <section class="slide">
+    <h2>Идея алгоритма</h2>
+    <p>Бинарное дерево поиска (BST) хранит элементы так: в левом поддереве узла — всё <b>меньше</b>, в правом — всё <b>больше</b>.</p>
+    <div class="grid-3">
+      <div class="card"><b>1. Вставка</b><br>Пробегаем дерево, сравнивая с корнем, и кладём число влево или вправо.</div>
+      <div class="card"><b>2. Обход</b><br>Рекурсивный <i>inorder</i>: левое → корень → правое. Даёт отсортированную последовательность.</div>
+      <div class="card"><b>3. Результат</b><br>Обход по inorder возвращает числа по возрастанию — готовая сортировка.</div>
+    </div>
+  </section>
+
+  <!-- Слайд 3: Код вставки -->
+  <section class="slide">
+    <h2>Шаг 1. Вставка в дерево</h2>
+    <p>Узел — это список <code>[value, left, right]</code>. Пустой узел — <code>None</code>.</p>
+<pre><span class="kw">def</span> <span class="fn">insert</span>(node, value):
+    <span class="kw">if</span> node <span class="kw">is</span> <span class="kw">None</span>:
+        <span class="kw">return</span> [value, <span class="kw">None</span>, <span class="kw">None</span>]     <span class="com"># новый лист</span>
+    <span class="kw">if</span> value &lt; node[<span class="num">0</span>]:
+        node[<span class="num">1</span>] = insert(node[<span class="num">1</span>], value) <span class="com"># идём влево</span>
+    <span class="kw">else</span>:
+        node[<span class="num">2</span>] = insert(node[<span class="num">2</span>], value) <span class="com"># идём вправо</span>
+    <span class="kw">return</span> node</pre>
+  </section>
+
+  <!-- Слайд 4: Код обхода -->
+  <section class="slide">
+    <h2>Шаг 2. Обход по возрастанию</h2>
+    <p>Классический <b>inorder</b>: сначала левое поддерево, потом корень, потом правое.</p>
+<pre><span class="kw">def</span> <span class="fn">inorder</span>(node):
+    <span class="kw">if</span> node <span class="kw">is</span> <span class="kw">None</span>:
+        <span class="kw">return</span> []
+    <span class="kw">return</span> inorder(node[<span class="num">1</span>]) + [node[<span class="num">0</span>]] + inorder(node[<span class="num">2</span>])</pre>
+    <p>А теперь — сама сортировка:</p>
+<pre><span class="kw">def</span> <span class="fn">tree_sort</span>(arr):
+    root = <span class="kw">None</span>
+    <span class="kw">for</span> x <span class="kw">in</span> arr:
+        root = insert(root, x)
+    <span class="kw">return</span> inorder(root)</pre>
+  </section>
+
+  <!-- Слайд 5: Пошаговый пример — построение -->
+  <section class="slide">
+    <h2>Шаг 3. Пошагово: строим дерево</h2>
+    <p>Вставляем числа <code>[5, 3, 8, 1, 4, 7, 9]</code> по одному.</p>
+    <div class="grid">
+      <div>
+        <ol class="step-list">
+          <li><code>5</code> → корень</li>
+          <li><code>3 &lt; 5</code> → влево</li>
+          <li><code>8 &gt; 5</code> → вправо</li>
+          <li><code>1 &lt; 5, 1 &lt; 3</code> → левее 3</li>
+          <li><code>4 &lt; 5, 4 &gt; 3</code> → правее 3</li>
+          <li><code>7 &gt; 5, 7 &lt; 8</code> → левее 8</li>
+          <li><code>9 &gt; 5, 9 &gt; 8</code> → правее 8</li>
+        </ol>
+      </div>
+      <div>
+        <svg class="tree" viewBox="0 0 400 320">
+          <line class="edge" x1="200" y1="40"  x2="120" y2="120"/>
+          <line class="edge" x1="200" y1="40"  x2="280" y2="120"/>
+          <line class="edge" x1="120" y1="120" x2="60"  y2="200"/>
+          <line class="edge" x1="120" y1="120" x2="180" y2="200"/>
+          <line class="edge" x1="280" y1="120" x2="220" y2="200"/>
+          <line class="edge" x1="280" y1="120" x2="340" y2="200"/>
+          <g class="node"><circle cx="200" cy="40"  r="22"/><text x="200" y="40">5</text></g>
+          <g class="node"><circle cx="120" cy="120" r="22"/><text x="120" y="120">3</text></g>
+          <g class="node"><circle cx="280" cy="120" r="22"/><text x="280" y="120">8</text></g>
+          <g class="node"><circle cx="60"  cy="200" r="22"/><text x="60"  y="200">1</text></g>
+          <g class="node"><circle cx="180" cy="200" r="22"/><text x="180" y="200">4</text></g>
+          <g class="node"><circle cx="220" cy="200" r="22"/><text x="220" y="200">7</text></g>
+          <g class="node"><circle cx="340" cy="200" r="22"/><text x="340" y="200">9</text></g>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- Слайд 6: Пошаговый обход -->
+  <section class="slide">
+    <h2>Шаг 4. Пошагово: inorder-обход</h2>
+    <p>Для каждого узла: <b>левое → корень → правое</b>. Собираем в список.</p>
+    <div class="grid">
+      <div>
+        <svg class="tree" viewBox="0 0 400 320">
+          <line class="edge" x1="200" y1="40"  x2="120" y2="120"/>
+          <line class="edge" x1="200" y1="40"  x2="280" y2="120"/>
+          <line class="edge" x1="120" y1="120" x2="60"  y2="200"/>
+          <line class="edge" x1="120" y1="120" x2="180" y2="200"/>
+          <line class="edge" x1="280" y1="120" x2="220" y2="200"/>
+          <line class="edge" x1="280" y1="120" x2="340" y2="200"/>
+          <g class="node"><circle cx="200" cy="40"  r="22"/><text x="200" y="40">5</text></g>
+          <g class="node hl"><circle cx="120" cy="120" r="22"/><text x="120" y="120">3</text></g>
+          <g class="node hl"><circle cx="60"  cy="200" r="22"/><text x="60"  y="200">1</text></g>
+          <g class="node hl"><circle cx="180" cy="200" r="22"/><text x="180" y="200">4</text></g>
+          <g class="node"><circle cx="280" cy="120" r="22"/><text x="280" y="120">8</text></g>
+          <g class="node"><circle cx="220" cy="200" r="22"/><text x="220" y="200">7</text></g>
+          <g class="node"><circle cx="340" cy="200" r="22"/><text x="340" y="200">9</text></g>
+        </svg>
+      </div>
+      <div>
+        <p style="font-size:18px">Порядок посещения:</p>
+        <ol class="step-list">
+          <li>Стартуем в <code>5</code>, идём влево в <code>3</code></li>
+          <li>Из <code>3</code> — влево в <code>1</code>, дальше некуда → <b>забираем 1</b></li>
+          <li>Возврат в <code>3</code> → <b>забираем 3</b></li>
+          <li>Из <code>3</code> — вправо в <code>4</code> → <b>забираем 4</b></li>
+          <li>Возврат в <code>5</code> → <b>забираем 5</b></li>
+          <li>Вправо в <code>8</code>, оттуда влево в <code>7</code> → <b>7</b></li>
+          <li>Возврат в <code>8</code> → <b>8</b>, затем вправо в <code>9</code> → <b>9</b></li>
+        </ol>
+        <p style="margin-top:16px"><b>Итог:</b> <code>[1, 3, 4, 5, 7, 8, 9]</code></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Слайд 7: Запуск -->
+  <section class="slide">
+    <h2>Шаг 5. Запуск</h2>
+<pre><span class="com"># Собираем всё вместе</span>
+arr = [<span class="num">5</span>, <span class="num">3</span>, <span class="num">8</span>, <span class="num">1</span>, <span class="num">4</span>, <span class="num">7</span>, <span class="num">9</span>]
+result = tree_sort(arr)
+<span class="fn">print</span>(result)   <span class="com"># [1, 3, 4, 5, 7, 8, 9]</span></pre>
+    <p>Никаких классов. Только:</p>
+    <ul>
+      <li>списки <code>[value, left, right]</code> как узлы,</li>
+      <li>две рекурсивные функции: <code>insert</code> и <code>inorder</code>,</li>
+      <li>одна функция-обёртка <code>tree_sort</code>.</li>
+    </ul>
+  </section>
+
+  <!-- Слайд 8: Сложность -->
+  <section class="slide">
+    <h2>Сложность</h2>
+    <div class="complexity">
+      <div class="card">
+        <div class="big">O(n log n)</div>
+        <div>средний случай<br>(сбалансированное дерево)</div>
+      </div>
+      <div class="card">
+        <div class="big">O(n²)</div>
+        <div>худший случай<br>(уже отсортированный вход)</div>
+      </div>
+      <div class="card">
+        <div class="big">O(n)</div>
+        <div>дополнительная память<br>под узлы дерева</div>
+      </div>
+    </div>
+    <p style="margin-top:24px">На практике tree sort уступает quicksort/mergesort из-за накладных расходов на память и плохого поведения на отсортированных данных. Но как учебный пример — идеален.</p>
+  </section>
+
+  <!-- Слайд 9: Полный код -->
+  <section class="slide">
+    <h2>Полный код программы</h2>
+<pre><span class="com"># Сортировка бинарным деревом (Tree Sort)</span>
+<span class="com"># Узлы — списки [value, left, right]</span>
+
+<span class="kw">def</span> <span class="fn">insert</span>(node, value):
+    <span class="kw">if</span> node <span class="kw">is</span> <span class="kw">None</span>:
+        <span class="kw">return</span> [value, <span class="kw">None</span>, <span class="kw">None</span>]
+    <span class="kw">if</span> value &lt; node[<span class="num">0</span>]:
+        node[<span class="num">1</span>] = insert(node[<span class="num">1</span>], value)
+    <span class="kw">else</span>:
+        node[<span class="num">2</span>] = insert(node[<span class="num">2</span>], value)
+    <span class="kw">return</span> node
+
+<span class="kw">def</span> <span class="fn">inorder</span>(node):
+    <span class="kw">if</span> node <span class="kw">is</span> <span class="kw">None</span>:
+        <span class="kw">return</span> []
+    <span class="kw">return</span> inorder(node[<span class="num">1</span>]) + [node[<span class="num">0</span>]] + inorder(node[<span class="num">2</span>])
+
+<span class="kw">def</span> <span class="fn">tree_sort</span>(arr):
+    root = <span class="kw">None</span>
+    <span class="kw">for</span> x <span class="kw">in</span> arr:
+        root = insert(root, x)
+    <span class="kw">return</span> inorder(root)
+
+<span class="kw">if</span> __name__ == <span class="str">"__main__"</span>:
+    data = [<span class="num">5</span>, <span class="num">3</span>, <span class="num">8</span>, <span class="num">1</span>, <span class="num">4</span>, <span class="num">7</span>, <span class="num">9</span>]
+    <span class="fn">print</span>(tree_sort(data))   <span class="com"># [1, 3, 4, 5, 7, 8, 9]</span></pre>
+  </section>
+
+  <!-- Слайд 10: Вопрос 1 -->
+  <section class="slide quiz" data-correct="1">
+    <div class="quiz-tag">Формирующее оценивание · вопрос 1 из 5</div>
+    <div class="q-num">Вопрос 1</div>
+    <div class="q-text">Что вернёт вызов <code>inorder([5, [3, None, None], [8, None, None]])</code>?</div>
+    <div class="options">
+      <button class="option" data-i="0"><span class="letter">A</span><span><code>[5, 3, 8]</code></span></button>
+      <button class="option" data-i="1"><span class="letter">B</span><span><code>[3, 5, 8]</code></span></button>
+      <button class="option" data-i="2"><span class="letter">C</span><span><code>[8, 5, 3]</code></span></button>
+      <button class="option" data-i="3"><span class="letter">D</span><span><code>[3, 8, 5]</code></span></button>
+    </div>
+    <div class="feedback" data-ok="1"><b>✓ Верно!</b>Inorder обходит «лево → корень → право»: сначала 3, потом 5, потом 8.</div>
+    <div class="feedback" data-ok="0"><b>✗ Не совсем.</b>Inorder — это <b>лево → корень → право</b>. Для корня 5 с левым 3 и правым 8 порядок будет <code>[3, 5, 8]</code>.</div>
+    <button class="quiz-next">Дальше →</button>
+  </section>
+
+  <!-- Слайд 11: Вопрос 2 -->
+  <section class="slide quiz" data-correct="2">
+    <div class="quiz-tag">Формирующее оценивание · вопрос 2 из 5</div>
+    <div class="q-num">Вопрос 2</div>
+    <div class="q-text">Какая сложность tree sort в <b>худшем</b> случае?</div>
+    <div class="options">
+      <button class="option" data-i="0"><span class="letter">A</span><span>O(n)</span></button>
+      <button class="option" data-i="1"><span class="letter">B</span><span>O(n log n)</span></button>
+      <button class="option" data-i="2"><span class="letter">C</span><span>O(n²)</span></button>
+      <button class="option" data-i="3"><span class="letter">D</span><span>O(log n)</span></button>
+    </div>
+    <div class="feedback" data-ok="1"><b>✓ Верно!</b>Если вход уже отсортирован, дерево вырождается в «ленту» глубиной n, и каждая вставка занимает O(n) — итого O(n²).</div>
+    <div class="feedback" data-ok="0"><b>✗ Не то.</b>O(n²) — худший случай: когда вход уже отсортирован, дерево превращается в «ленту», и каждая из n вставок идёт по n узлам.</div>
+    <button class="quiz-next">Дальше →</button>
+  </section>
+
+  <!-- Слайд 12: Вопрос 3 -->
+  <section class="slide quiz" data-correct="0">
+    <div class="quiz-tag">Формирующее оценивание · вопрос 3 из 5</div>
+    <div class="q-num">Вопрос 3</div>
+    <div class="q-text">Что произойдёт, если на вход <code>tree_sort</code> подать массив <code>[1, 2, 3, 4, 5]</code>?</div>
+    <div class="options">
+      <button class="option" data-i="0"><span class="letter">A</span><span>Дерево станет «лентой» вправо, сортировка всё равно сработает, но медленно</span></button>
+      <button class="option" data-i="1"><span class="letter">B</span><span>Функция упадёт с ошибкой</span></button>
+      <button class="option" data-i="2"><span class="letter">C</span><span>Дерево будет идеально сбалансированным</span></button>
+      <button class="option" data-i="3"><span class="letter">D</span><span>Результат будет отсортирован по убыванию</span></button>
+    </div>
+    <div class="feedback" data-ok="1"><b>✓ Верно!</b>Каждое следующее число больше предыдущего → всегда идём вправо. Дерево превращается в «ленту», но inorder всё равно вернёт <code>[1,2,3,4,5]</code>.</div>
+    <div class="feedback" data-ok="0"><b>✗ Нет.</b>Ошибка не возникнет — код корректен. Но дерево действительно станет «лентой»: каждое следующее число больше, поэтому всегда идём вправо. Сортировка сработает, но за O(n²).</div>
+    <button class="quiz-next">Дальше →</button>
+  </section>
+
+  <!-- Слайд 13: Вопрос 4 -->
+  <section class="slide quiz" data-correct="1">
+    <div class="quiz-tag">Формирующее оценивание · вопрос 4 из 5</div>
+    <div class="q-num">Вопрос 4</div>
+    <div class="q-text">Какую роль играет рекурсия в функции <code>insert</code>?</div>
+    <div class="options">
+      <button class="option" data-i="0"><span class="letter">A</span><span>Она сортирует массив на месте</span></button>
+      <button class="option" data-i="1"><span class="letter">B</span><span>Она спускается по дереву, пока не найдёт пустое место для нового узла</span></button>
+      <button class="option" data-i="2"><span class="letter">C</span><span>Она печатает дерево на экран</span></button>
+      <button class="option" data-i="3"><span class="letter">D</span><span>Она удаляет дубликаты из массива</span></button>
+    </div>
+    <div class="feedback" data-ok="1"><b>✓ Верно!</b>Каждый вызов <code>insert</code> сравнивает значение с текущим узлом и рекурсивно идёт в левого или правого ребёнка, пока не достигнет <code>None</code> — туда и встанет новый лист.</div>
+    <div class="feedback" data-ok="0"><b>✗ Не то.</b><code>insert</code> не сортирует, не печатает и не чистит дубликаты. Её задача — найти место для нового значения, спускаясь по дереву рекурсивно.</div>
+    <button class="quiz-next">Дальше →</button>
+  </section>
+
+  <!-- Слайд 14: Вопрос 5 -->
+  <section class="slide quiz" data-correct="2">
+    <div class="quiz-tag">Формирующее оценивание · вопрос 5 из 5</div>
+    <div class="q-num">Вопрос 5</div>
+    <div class="q-text">Какое свойство BST гарантирует, что inorder-обход даст отсортированный список?</div>
+    <div class="options">
+      <button class="option" data-i="0"><span class="letter">A</span><span>В дереве всегда чётное число узлов</span></button>
+      <button class="option" data-i="1"><span class="letter">B</span><span>Корень всегда равен среднему арифметическому всех значений</span></button>
+      <button class="option" data-i="2"><span class="letter">C</span><span>Слева от узла — значения меньше, справа — больше</span></button>
+      <button class="option" data-i="3"><span class="letter">D</span><span>Все листья находятся на одной глубине</span></button>
+    </div>
+    <div class="feedback" data-ok="1"><b>✓ Верно!</b>Именно это свойство (left &lt; node &lt; right) делает inorder-обход отсортированным: сначала все меньшие, потом сам узел, потом все большие.</div>
+    <div class="feedback" data-ok="0"><b>✗ Не то.</b>Ключевое свойство BST: <b>слева от узла — всё меньше, справа — всё больше</b>. Благодаря этому inorder («лево → корень → право») автоматически выдаёт значения по возрастанию.</div>
+    <button class="quiz-next">Завершить тест →</button>
+  </section>
+
+  <!-- Слайд 15: Результат -->
+  <section class="slide">
+    <h2>Результат теста</h2>
+    <div class="score-big" id="scoreBig">0 / 5</div>
+    <div class="score-label">правильных ответов</div>
+    <div class="score-bar" id="scoreBar"></div>
+    <div class="score-comment" id="scoreComment"></div>
+    <p class="muted" style="margin-top:32px">← можно вернуться к любому вопросу и разобрать его ещё раз</p>
+  </section>
+
+</div>
+
+<div class="controls">
+  <button id="prev" title="Назад (←)">‹</button>
+  <span id="counter">1 / 15</span>
+  <button id="next" title="Вперёд (→)">›</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let idx = 0;
+  const prev = document.getElementById('prev');
+  const next = document.getElementById('next');
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+
+  // Результаты теста: индекс слайда -> номер выбранного варианта (-1 если не отвечено)
+  const answers = {};
+
+  function render(){
+    slides.forEach((s,i)=>s.classList.toggle('active', i===idx));
+    counter.textContent = (idx+1)+' / '+total;
+    prev.disabled = idx===0;
+    next.disabled = idx===total-1;
+    progress.style.width = ((idx+1)/total*100)+'%';
+    if (slides[idx].classList.contains('final-score')) buildFinalScore();
+  }
+
+  prev.onclick = ()=>{ if(idx>0){idx--;render()} };
+  next.onclick = ()=>{ if(idx<total-1){idx++;render()} };
+  document.addEventListener('keydown', e=>{
+    if(e.key==='ArrowRight'){ next.click() }
+    else if(e.key==='ArrowLeft'){ prev.click() }
+  });
+
+  // Логика теста
+  document.querySelectorAll('.slide.quiz').forEach(slide=>{
+    const correctIdx = parseInt(slide.dataset.correct, 10);
+    const options = slide.querySelectorAll('.option');
+    const feedbackOk = slide.querySelector('.feedback[data-ok="1"]');
+    const feedbackBad = slide.querySelector('.feedback[data-ok="0"]');
+    const nextBtn = slide.querySelector('.quiz-next');
+
+    options.forEach(opt=>{
+      opt.addEventListener('click', ()=>{
+        if (opt.classList.contains('locked')) return;
+        const chosen = parseInt(opt.dataset.i, 10);
+        answers[slides.indexOf(slide)] = chosen;
+
+        options.forEach(o=>o.classList.add('locked'));
+        if (chosen === correctIdx){
+          opt.classList.add('correct');
+          feedbackOk.classList.add('show');
+        } else {
+          opt.classList.add('wrong');
+          options[correctIdx].classList.add('correct');
+          feedbackBad.classList.add('show');
+        }
+        nextBtn.classList.add('show');
+      });
+    });
+
+    nextBtn.addEventListener('click', ()=>{
+      // Переходим на следующий слайд
+      if (idx < total-1){ idx++; render(); }
+    });
+  });
+
+  // Финальный слайд — собираем результат
+  const finalSlide = slides[slides.length - 1];
+  finalSlide.classList.add('final-score');
+
+  function buildFinalScore(){
+    const quizSlides = [...document.querySelectorAll('.slide.quiz')];
+    let correct = 0;
+    const bar = document.getElementById('scoreBar');
+    bar.innerHTML = '';
+    quizSlides.forEach((s, i)=>{
+      const correctIdx = parseInt(s.dataset.correct, 10);
+      const chosen = answers[slides.indexOf(s)];
+      const ok = chosen === correctIdx;
+      if (ok) correct++;
+      const dot = document.createElement('div');
+      dot.className = 'dot ' + (ok ? 'ok' : 'bad');
+      dot.textContent = i+1;
+      bar.appendChild(dot);
+    });
+    document.getElementById('scoreBig').textContent = correct + ' / ' + quizSlides.length;
+
+    let comment = '';
+    const n = quizSlides.length;
+    if (correct === n) comment = '🏆 Отлично! Вы полностью разобрались, как работает сортировка бинарным деревом: и вставка, и inorder-обход, и сложность.';
+    else if (correct >= n - 1) comment = '👍 Очень хорошо! Почти идеальное понимание. Загляните в вопросы, где ошиблись — там важные нюансы.';
+    else if (correct >= Math.ceil(n/2)) comment = '📘 Неплохо, база есть. Стоит ещё раз пройтись по слайдам про inorder-обход и сложность — это ключевые моменты.';
+    else comment = '📖 Есть пробелы. Совет: вернитесь к слайдам 2–6 и разберите построение дерева и обход по шагам. Потом пройдите тест снова.';
+    document.getElementById('scoreComment').textContent = comment;
+  }
+
+  render();
+</script>
+</body>
+</html>

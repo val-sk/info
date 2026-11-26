@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Минимальное остовное дерево · интерактивный урок</title>
+<style>
+:root{
+  --bg:#f4f6fb; --card:#fff; --ink:#0f172a; --muted:#5b6b83; --line:#e2e8f0;
+  --ind:#4f46e5; --ind-soft:#eef2ff; --green:#16a34a; --green-soft:#f0fdf4;
+  --red:#dc2626; --red-soft:#fef2f2; --amber:#d97706; --amber-soft:#fffbeb;
+  --shadow:0 6px 24px rgba(15,23,42,.07); --r:16px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  background:var(--bg);color:var(--ink);font-size:17px;line-height:1.55;overflow:hidden}
+header.topbar{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(255,255,255,.93);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--line);display:flex;align-items:center;
+  gap:14px;padding:0 16px;z-index:50}
+.topbar .title{font-weight:700;font-size:15px;color:var(--muted);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;flex:1}
+.counter{font-variant-numeric:tabular-nums;font-weight:700;color:var(--ind);font-size:14px;
+  background:var(--ind-soft);padding:4px 12px;border-radius:999px;flex:none}
+.progress{position:absolute;left:0;bottom:-1px;height:3px;width:100%}
+#progressFill{height:100%;width:0;background:linear-gradient(90deg,#6366f1,#22c55e);
+  transition:width .35s;border-radius:0 3px 3px 0}
+main#deck{position:fixed;top:56px;bottom:62px;left:0;right:0;overflow-y:auto}
+.slide{display:none;padding:26px 20px 44px}
+.slide.active{display:block;animation:fadeUp .4s ease}
+.wrap{max-width:1120px;margin:0 auto}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+footer.navbar{position:fixed;bottom:0;left:0;right:0;height:62px;background:rgba(255,255,255,.93);
+  backdrop-filter:blur(8px);border-top:1px solid var(--line);display:flex;align-items:center;
+  justify-content:space-between;padding:0 16px;z-index:50}
+.hint{color:var(--muted);font-size:13px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:12px;
+  border:1.5px solid var(--line);background:#fff;color:var(--ink);font:inherit;font-size:15px;
+  font-weight:650;cursor:pointer;transition:.18s;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+.btn:hover{border-color:#c7d2fe;transform:translateY(-1px);box-shadow:0 4px 12px rgba(79,70,229,.15)}
+.btn.primary{background:var(--ind);border-color:var(--ind);color:#fff}
+.btn.primary:hover{background:#4338ca}
+.btn.small{padding:7px 14px;font-size:13.5px;border-radius:10px}
+.btn:disabled{opacity:.35;pointer-events:none}
+.kicker{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:800;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--kc,var(--ind))}
+.kicker::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--kc,var(--ind))}
+h1{font-size:clamp(30px,4.6vw,46px);line-height:1.15;margin:10px 0 8px}
+h2{font-size:clamp(23px,3.2vw,32px);line-height:1.2;margin:8px 0 10px}
+h3{margin:0 0 8px;font-size:18px}
+.lead{color:var(--muted);font-size:17.5px;max-width:860px;margin:0 0 18px}
+.accent{color:var(--ind)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:18px 20px;box-shadow:var(--shadow)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:880px){.grid2,.grid3{grid-template-columns:1fr}}
+.note{background:var(--ind-soft);border-left:4px solid var(--ind);padding:12px 16px;
+  border-radius:12px;font-size:15.5px;margin-top:14px}
+.note.green{background:var(--green-soft);border-color:var(--green)}
+.note.amber{background:var(--amber-soft);border-color:var(--amber)}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:8px 16px;
+  font-size:14.5px;font-weight:600}
+button.chip{cursor:pointer;transition:.2s;font-family:inherit;color:var(--ink)}
+button.chip:hover{border-color:var(--ind);color:var(--ind);transform:translateY(-1px)}
+.qa{cursor:pointer;transition:transform .15s,border-color .2s}
+.qa:hover{transform:translateY(-2px);border-color:#c7d2fe}
+.qa .q{display:flex;gap:12px;align-items:flex-start;font-weight:650}
+.qa .badge{flex:none;width:28px;height:28px;border-radius:50%;background:var(--ind-soft);
+  color:var(--ind);display:flex;align-items:center;justify-content:center;font-weight:800;transition:.25s}
+.qa.open .badge{background:var(--green-soft);color:var(--green)}
+.qa .a{max-height:0;overflow:hidden;transition:max-height .35s ease,margin .35s;
+  color:#374151;font-size:15.5px}
+.qa.open .a{max-height:260px;margin-top:12px}
+.qa .a-inner{border-top:1px dashed var(--line);padding-top:10px}
+pre.code{background:#0f172a;color:#e2e8f0;border-radius:14px;padding:16px 18px;overflow:auto;
+  font-family:Consolas,"JetBrains Mono",Menlo,"Courier New",monospace;font-size:14.5px;
+  line-height:1.62;margin:0;box-shadow:var(--shadow)}
+pre.code.out{color:#a7f3d0}
+.tok-k{color:#c4b5fd;font-weight:600}.tok-s{color:#86efac}
+.tok-c{color:#8194ad;font-style:italic}.tok-n{color:#fcd34d}.tok-f{color:#7dd3fc}
+.codebar{display:flex;align-items:center;gap:10px;margin:0 0 10px;flex-wrap:wrap}
+.filechip{font-family:Consolas,monospace;font-size:13px;background:#e2e8f0;color:#334155;
+  padding:4px 12px;border-radius:8px;font-weight:700}
+svg.graph{width:100%;height:auto;display:block;user-select:none}
+.anim-dash{animation:dashmove 1s linear infinite}
+@keyframes dashmove{to{stroke-dashoffset:-36}}
+.pill{padding:3px 12px;border-radius:999px;font-size:13px;font-weight:800;flex:none}
+.pill.blue{background:#eff6ff;color:#1d4ed8}.pill.green{background:#f0fdf4;color:#15803d}
+.demo{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;align-items:start}
+@media(max-width:960px){.demo{grid-template-columns:1fr}}
+.stats{display:flex;gap:12px;margin-top:12px}
+.stat{flex:1;background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:10px 14px;text-align:center}
+.stat b{display:block;font-size:24px;color:var(--ind)}
+.stat span{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.erow{display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:10px;
+  border:1.5px solid transparent;font-size:15px;cursor:pointer;transition:.15s;font-weight:600}
+.erow:hover{background:#f8fafc}
+.erow .ic{width:22px;text-align:center;font-weight:800}
+.erow .w{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--muted)}
+.erow.pending{color:#64748b}
+.erow.taken{background:var(--green-soft);color:#166534}
+.erow.rejected{background:var(--red-soft);color:#991b1b}
+.erow.rejected .lbl{text-decoration:line-through;text-decoration-color:#fca5a5}
+.erow.current{border-color:var(--amber)}
+.erow.unused{opacity:.45}
+.exp{border-radius:12px;padding:14px 16px;background:#fff;border:1px solid var(--line);min-height:140px}
+.badge2{display:inline-block;font-size:11.5px;font-weight:800;letter-spacing:.1em;
+  padding:3px 10px;border-radius:999px;margin-bottom:6px}
+.badge2.start{background:var(--ind-soft);color:var(--ind)}
+.badge2.take{background:var(--green-soft);color:var(--green)}
+.badge2.skip{background:var(--red-soft);color:var(--red)}
+.badge2.done{background:#dcfce7;color:#15803d}
+.exp h4{margin:2px 0 6px;font-size:16.5px}
+.exp p{margin:0;font-size:14.5px;color:#374151}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted);margin:4px 0 14px}
+.legend i{display:inline-block;width:22px;height:0;border-top:4px solid;border-radius:2px;
+  margin-right:6px;vertical-align:middle}
+.reveal{cursor:pointer}
+.reveal .rfront{display:flex;align-items:center;gap:10px;font-weight:700}
+.reveal .rhint{margin-left:auto;font-size:12.5px;color:var(--ind);font-weight:600;flex:none}
+.reveal.open .rhint{display:none}
+.reveal .rbody{max-height:0;overflow:hidden;transition:max-height .4s ease,margin .3s}
+.reveal.open .rbody{max-height:640px;margin-top:12px}
+.big{font-size:30px;font-weight:800;color:var(--ind)}
+.big.green{color:var(--green)}
+.quiz{max-width:780px}
+.qprogress{display:flex;align-items:center;gap:12px;margin-bottom:10px;font-size:14px;
+  font-weight:700;color:var(--muted)}
+.qdots{display:flex;gap:6px}
+.qdot{width:26px;height:6px;border-radius:3px;background:#e2e8f0}
+.qdot.done{background:#86efac}.qdot.miss{background:#fca5a5}.qdot.cur{background:var(--ind)}
+.qtext{font-size:20px;font-weight:700;margin:6px 0 14px}
+.qopt{display:block;width:100%;text-align:left;padding:13px 16px;margin:9px 0;border-radius:12px;
+  border:1.5px solid var(--line);background:#fff;cursor:pointer;font-size:16px;font-family:inherit;
+  color:var(--ink);transition:.15s;line-height:1.4}
+.qopt:hover:not(:disabled){border-color:var(--ind);background:var(--ind-soft)}
+.qopt:disabled{cursor:default}
+.qopt.correct{border-color:var(--green);background:var(--green-soft);font-weight:650}
+.qopt.wrong{border-color:var(--red);background:var(--red-soft)}
+.qopt.muted{opacity:.55}
+.fb{border-radius:12px;padding:13px 16px;margin-top:12px;font-size:15px}
+.fb.ok{background:var(--green-soft);border:1px solid #bbf7d0}
+.fb.no{background:var(--red-soft);border:1px solid #fecaca}
+.fb b.verdict{display:block;margin-bottom:4px}
+.tiplink{display:inline-block;margin-top:8px;background:#fff;border:1.5px solid var(--line);
+  border-radius:10px;padding:6px 12px;font-size:13.5px;font-weight:650;color:var(--ind);
+  cursor:pointer;font-family:inherit}
+.tiplink:hover{border-color:var(--ind)}
+.score{font-size:56px;font-weight:800;color:var(--ind);line-height:1}
+.selfcheck .chip.done{background:var(--green-soft);border-color:var(--green);color:#15803d}
+.toc{position:fixed;top:0;left:0;bottom:0;width:340px;max-width:88vw;background:#fff;z-index:100;
+  box-shadow:0 0 40px rgba(15,23,42,.25);transform:translateX(-105%);transition:transform .3s ease;
+  display:flex;flex-direction:column}
+.toc.open{transform:none}
+.toc .toc-head{padding:16px 18px;border-bottom:1px solid var(--line);font-weight:800;
+  display:flex;justify-content:space-between;align-items:center}
+.toc .items{overflow-y:auto;padding:10px}
+.tocitem{display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:none;
+  border:none;padding:10px 12px;border-radius:12px;cursor:pointer;font-family:inherit;
+  font-size:14.5px;color:var(--ink)}
+.tocitem:hover{background:#f1f5f9}
+.tocitem.cur{background:var(--ind-soft);color:var(--ind);font-weight:700}
+.tocitem .num{flex:none;width:26px;height:26px;border-radius:8px;background:#f1f5f9;
+  display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:800}
+.tocitem.cur .num{background:var(--ind);color:#fff}
+.tocitem small{display:block;color:var(--muted);font-size:11px;font-weight:700;
+  letter-spacing:.05em;text-transform:uppercase}
+#backdrop{position:fixed;inset:0;background:rgba(15,23,42,.4);z-index:90;opacity:0;
+  pointer-events:none;transition:.3s}
+#backdrop.show{opacity:1;pointer-events:auto}
+#toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:#0f172a;color:#fff;padding:10px 20px;border-radius:12px;font-size:14px;
+  opacity:0;pointer-events:none;transition:.3s;z-index:120}
+#toast.show{opacity:1;transform:translateX(-50%)}
+.hidden{display:none!important}
+@media(max-width:640px){body{font-size:16px}.hint{display:none}.slide{padding:18px 14px 32px}
+  pre.code{font-size:13px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <button class="btn small" id="menuBtn">☰ Оглавление</button>
+  <div class="title">Минимальное остовное дерево · алгоритм Краскала</div>
+  <span class="counter"><span id="curNum">1</span> / <span id="totNum">14</span></span>
+  <div class="progress"><div id="progressFill"></div></div>
+</header>
+
+<div id="backdrop"></div>
+<nav class="toc" id="toc">
+  <div class="toc-head">Содержание урока <button class="btn small" id="tocClose">✕</button></div>
+  <div class="items" id="tocItems"></div>
+</nav>
+
+<main id="deck">
+
+<!-- 0 · ТИТУЛ -->
+<section class="slide active" data-title="Титульный лист" data-section="Старт">
+  <div class="wrap grid2" style="align-items:center">
+    <div>
+      <span class="kicker">Интерактивный урок · графы · 10–11 класс</span>
+      <h1>Построение <span class="accent">минимального остовного дерева</span></h1>
+      <p class="lead">Взвешенный связный неориентированный граф: от идеи — до программы на Python.</p>
+      <div class="chips" style="margin:16px 0 20px">
+        <button class="chip" data-go="1">1 · Повторение</button>
+        <button class="chip" data-go="3">2 · Пример из жизни</button>
+        <button class="chip" data-go="4">3 · Алгоритм</button>
+        <button class="chip" data-go="6">4 · Код шаг за шагом</button>
+        <button class="chip" data-go="12">5 · Рефлексия</button>
+      </div>
+      <button class="btn primary" data-go="1">Начать урок →</button>
+      <p style="font-size:13px;color:var(--muted);margin-top:26px">
+        В. Г. Соловьянюк-Кротова · АНО «Павловская гимназия» · val-sk.github.io/info</p>
+    </div>
+    <div class="card" style="padding:12px">
+      <svg id="titleSvg" class="graph" viewBox="0 0 640 430"></svg>
+      <p style="font-size:13.5px;color:var(--muted);margin:8px 6px 4px">
+        Зелёные рёбра — минимальное остовное дерево этого графа. Почему именно они — выясним на уроке.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 1 · РАЗМИНКА -->
+<section class="slide" data-title="Разминка: вопросы" data-section="Повторение">
+  <div class="wrap">
+    <span class="kicker">Шаг 1 · Разминка</span>
+    <h2>Вспомним теорию графов</h2>
+    <p class="lead">Сначала ответь вслух — потом нажми на карточку и проверь себя.</p>
+    <div class="grid2">
+      <div class="card qa"><div class="q"><span class="badge">?</span>Что такое граф?</div>
+        <div class="a"><div class="a-inner">Набор <b>вершин</b> и <b>рёбер</b>, соединяющих пары вершин.
+          Граф моделирует связи между объектами: города и дороги, компьютеры и кабели.</div></div></div>
+      <div class="card qa"><div class="q"><span class="badge">?</span>Чем неориентированный граф отличается от ориентированного?</div>
+        <div class="a"><div class="a-inner">У неориентированного графа рёбра <b>без направления</b>:
+          связь работает «в обе стороны», A–B — то же самое, что B–A.</div></div></div>
+      <div class="card qa"><div class="q"><span class="badge">?</span>Что такое взвешенный граф?</div>
+        <div class="a"><div class="a-inner">Граф, в котором каждому ребру приписано число — <b>вес</b>:
+          длина, стоимость, время, пропускная способность.</div></div></div>
+      <div class="card qa"><div class="q"><span class="badge">?</span>Что такое связный граф?</div>
+        <div class="a"><div class="a-inner">Граф, в котором из <b>любой</b> вершины есть путь в <b>любую другую</b>.
+          Никаких «оторванных островков».</div></div></div>
+      <div class="card qa"><div class="q"><span class="badge">?</span>Что такое цикл?</div>
+        <div class="a"><div class="a-inner">Путь, который начинается и заканчивается в одной вершине
+          и не повторяет рёбра. «Круговой маршрут».</div></div></div>
+      <div class="card qa"><div class="q"><span class="badge">?</span>Что такое дерево? Сколько в нём рёбер?</div>
+        <div class="a"><div class="a-inner"><b>Связный граф без циклов.</b>
+          В дереве с n вершинами ровно <b>n − 1</b> ребро — ни больше, ни меньше.</div></div></div>
+    </div>
+    <div class="note">Всё вспомнили? Теперь соберём из этих понятий новое — «минимальное остовное дерево».</div>
+  </div>
+</section>
+
+<!-- 2 · ОПРЕДЕЛЕНИЕ -->
+<section class="slide" data-title="Что такое МОД" data-section="Повторение">
+  <div class="wrap">
+    <span class="kicker">Шаг 1 · Новое понятие</span>
+    <h2>Что такое минимальное остовное дерево?</h2>
+    <div class="note" style="margin:0 0 14px"><b>Остовное дерево</b> графа — подграф, который содержит
+      <b>все вершины</b> и является деревом (связный, без циклов).<br>
+      <b>Минимальное остовное дерево (МОД)</b> — остовное дерево с <b>наименьшей суммой весов</b> рёбер.</div>
+    <div class="chips" style="margin-bottom:16px">
+      <span class="chip">🌐 все вершины графа</span><span class="chip">🔗 ровно n − 1 ребро</span>
+      <span class="chip">🚫 нет циклов</span><span class="chip">⚖️ сумма весов минимальна</span>
+    </div>
+    <div class="grid2">
+      <div class="card" style="padding:12px">
+        <div style="display:flex;align-items:center;gap:10px;margin:4px 6px 8px">
+          <h3 style="margin:0;flex:1">Просто остовное дерево</h3><span class="pill blue">вес 23</span></div>
+        <svg id="cmpLeftSvg" class="graph" viewBox="0 0 640 430"></svg>
+      </div>
+      <div class="card" style="padding:12px">
+        <div style="display:flex;align-items:center;gap:10px;margin:4px 6px 8px">
+          <h3 style="margin:0;flex:1">Минимальное остовное дерево</h3><span class="pill green">вес 18</span></div>
+        <svg id="cmpRightSvg" class="graph" viewBox="0 0 640 430"></svg>
+      </div>
+    </div>
+    <p style="color:var(--muted);font-size:15px">Оба дерева связывают все 6 вершин, но справа — дешевле на 5.
+      Как найти самое дешёвое — и есть наша задача.</p>
+    <div class="note amber">Если все веса различны — МОД единственное. При равных весах деревьев-МОД
+      может быть несколько, но минимальная сумма всегда одна.</div>
+  </div>
+</section>
+
+<!-- 3 · ПРИМЕР ИЗ ЖИЗНИ -->
+<section class="slide" data-title="Интернет для посёлков" data-section="Пример">
+  <div class="wrap">
+    <span class="kicker" style="--kc:#d97706">Шаг 2 · Задача из жизни</span>
+    <h2>Интернет для шести посёлков</h2>
+    <p class="lead">Провайдер подключает посёлки A–F к оптоволокну. В проекте — 9 возможных линий,
+      числа на рёбрах — длина кабеля в километрах. Кабель дорогой, поэтому линии нужно выбрать так, чтобы:</p>
+    <div class="chips" style="margin-bottom:14px">
+      <span class="chip">🔗 из любого посёлка был путь в любой другой</span>
+      <span class="chip">🚫 не было лишних линий (циклов)</span>
+      <span class="chip">💰 суммарная длина — минимальная</span>
+    </div>
+    <div class="card" style="padding:12px;max-width:640px">
+      <svg id="lifeSvg" class="graph" viewBox="0 0 640 430"></svg>
+    </div>
+    <div class="grid2" style="margin-top:16px;max-width:860px">
+      <div class="card reveal"><div class="rfront">🔌 Вариант «проложить все 9 линий»<span class="rhint">нажми</span></div>
+        <div class="rbody"><div class="big">45 км</div>
+          <p style="margin:6px 0 0;font-size:15px">Разоримся! Куча лишних связей и циклов — избыточность ни к чему.</p></div></div>
+      <div class="card reveal"><div class="rfront">🧠 Умный выбор — МОД<span class="rhint">нажми</span></div>
+        <div class="rbody"><div class="big green">18 км</div>
+          <p style="margin:6px 0 0;font-size:15px">Все посёлки связаны, экономия <b>27 км</b> — больше половины кабеля!</p></div></div>
+    </div>
+    <div class="note green">💬 Обсудим: с какой линии вы бы начали? Где ещё так делают — дороги, электросети,
+      водопровод, локальные сети, даже кластеризация данных в машинном обучении.</div>
+  </div>
+</section>
+
+<!-- 4 · АЛГОРИТМ -->
+<section class="slide" data-title="Алгоритм Краскала" data-section="Алгоритм">
+  <div class="wrap">
+    <span class="kicker" style="--kc:#16a34a">Шаг 3 · Алгоритм</span>
+    <h2>Алгоритм Краскала (Kruskal): жадно, но аккуратно</h2>
+    <div class="note" style="margin:0 0 16px"><b>Идея:</b> перебираем рёбра от самых дешёвых и берём каждое,
+      если оно <b>не создаёт цикл</b>. Почему это работает: самое лёгкое ребро между двумя частями графа
+      всегда «безопасно» — существует МОД, которое его содержит. Жадность не ошибается.</div>
+    <div class="grid2">
+      <div class="card"><h3>1️⃣ Отсортировать</h3>Все рёбра — по возрастанию веса.</div>
+      <div class="card"><h3>2️⃣ Каждая вершина — отдельная команда</h3>
+        В начале каждая вершина — своя компонента связности.</div>
+      <div class="card"><h3>3️⃣ Идём по списку</h3>
+        Концы ребра в <b>разных</b> компонентах → берём ребро и объединяем команды.<br>
+        Концы уже в <b>одной</b> компоненте → пропускаем: будет цикл.</div>
+      <div class="card"><h3>4️⃣ Стоп на n − 1</h3>
+        Набрали n − 1 ребро — дерево готово, дальше можно не смотреть.</div>
+    </div>
+    <div class="grid2" style="margin-top:16px">
+      <div class="note amber" style="margin:0"><b>Альтернатива — алгоритм Прима:</b> растим одно дерево
+        из стартовой вершины, каждый раз добавляя самое дешёвое ребро, у которого ровно один конец уже в дереве.
+        Результат тот же — МОД.</div>
+      <div class="note" style="margin:0"><b>Скорость:</b> самая дорогая часть Краскала — сортировка:
+        O(E·log E), где E — число рёбер.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 · ДЕМО -->
+<section class="slide" data-title="Демонстрация шаг за шагом" data-section="Алгоритм">
+  <div class="wrap">
+    <span class="kicker" style="--kc:#16a34a">Шаг 3 · Интерактивная демонстрация</span>
+    <h2>Краскал в действии</h2>
+    <p class="lead" style="margin-bottom:8px">Тот же граф про посёлки. Список рёбер уже отсортирован по весу.</p>
+    <div class="legend">
+      <span><i style="border-color:#cbd5e1"></i>не рассматривали</span>
+      <span><i style="border-color:#f59e0b"></i>текущее ребро</span>
+      <span><i style="border-color:#16a34a"></i>взяли в дерево</span>
+      <span><i style="border-color:#ef4444;border-top-style:dashed"></i>отклонили (цикл)</span>
+      <span><i style="width:14px;height:14px;border-radius:50%;background:#dbeafe;border:2px solid #94a3b8"></i>фон вершины — её компонента</span>
+    </div>
+    <div class="demo">
+      <div>
+        <div class="card" style="padding:12px"><svg id="demoSvg" class="graph" viewBox="0 0 640 430"></svg></div>
+        <div class="stats">
+          <div class="stat"><b id="statEdges">0 / 5</b><span>рёбер в дереве</span></div>
+          <div class="stat"><b id="statWeight">0 км</b><span>суммарный вес</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="padding:12px 14px">
+          <div style="font-weight:800;font-size:12.5px;color:var(--muted);letter-spacing:.08em;margin:2px 4px 8px">РЁБРА ПО ВОЗРАСТАНИЮ ВЕСА</div>
+          <div id="edgeList"></div>
+          <div style="font-size:12px;color:var(--muted);margin:8px 4px 0">Клик по строке — перейти к шагу этого ребра</div>
+        </div>
+        <div class="exp" style="margin-top:12px">
+          <span class="badge2 start" id="expBadge">СТАРТ</span>
+          <h4 id="expTitle"></h4><p id="expText"></p>
+        </div>
+        <div class="controls">
+          <button class="btn small" id="stepReset">⟲ Сначала</button>
+          <button class="btn small" id="stepPrev">←</button>
+          <button class="btn small primary" id="stepNext">Шаг →</button>
+          <button class="btn small" id="stepAuto">▶ Авто</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 · КОД 1 -->
+<section class="slide" data-title="Код 1: данные" data-section="Код">
+  <div class="wrap">
+    <span class="kicker" style="--kc:#0284c7">Шаг 4 · Код · 1 из 5</span>
+    <h2>Представляем граф в программе</h2>
+    <p class="lead">Вершины пронумеруем от 0 до n − 1, имена сохраним в списке <b>names</b>.
+      Каждое ребро — список из трёх чисел <b>[u, v, вес]</b>. Все рёбра — список списков.
+      Никаких классов, кортежей и словарей — только списки!</p>
+    <div class="codebar"><span class="filechip">данные графа</span></div>
+<pre class="code"><code class="py">names = ["A", "B", "C", "D", "E", "F"]
+n = 6
+
+# ребро = [номер u, номер v, вес]
+edges = [
+    [0, 1, 3],   # A-B
+    [0, 2, 5],   # A-C
+    [1, 2, 1],   # B-C
+    [1, 3, 6],   # B-D
+    [2, 3, 4],   # C-D
+    [2, 4, 2],   # C-E
+    [3, 4, 7],   # D-E
+    [3, 5, 8],   # D-F
+    [4, 5, 9],   # E-F
+]</code></pre>
+    <div class="chips" style="margin-top:12px">
+      <span class="chip">0 → A</span><span class="chip">1 → B</span><span class="chip">2 → C</span>
+      <span class="chip">3 → D</span><span class="chip">4 → E</span><span class="chip">5 → F</span>
+    </div>
+    <div class="note">Почему список, а не кортеж? Список можно изменять, и он нам уже знаком.
+      Ребро <b>[1, 2, 1]</b> — это B–C весом 1.</div>
+  </div>
+</section>
+
+<!-- 7 · КОД 2 -->
+<section class="slide" data-title="Код 2: сортировка" data-section="Код">
+  <div class="wrap">
+    <span class="kicker" style="--kc:#0284c7">Шаг 4 · Код · 2 из 5</span>
+    <h2>Сортируем рёбра по весу</h2>
+    <p class="lead">Метод <b>sort</b> умеет сортировать по «ключу». Напишем функцию <b>weight</b>,
+      которая возвращает третий элемент ребра, и передадим её: <b>key=weight</b>.
+      Python сам вызовет её для каждого ребра.</p>
+    <div class="codebar"><span class="filechip">сортировка</span></div>
+<pre class="code"><code class="py"># ключ сортировки — вес ребра (третий элемент)
+def weight(edge):
+    return edge[2]
+
+edges.sort(key=weight)</code></pre>
+    <div class="card reveal" style="margin-top:14px">
+      <div class="rfront">🔎 Что получится после сортировки?<span class="rhint">нажми</span></div>
+      <div class="rbody">
+        <div class="chips">
+          <span class="chip">B–C · 1</span><span class="chip">C–E · 2</span><span class="chip">A–B · 3</span>
+          <span class="chip">C–D · 4</span><span class="chip">A–C · 5</span><span class="chip">B–D · 6</span>
+          <span class="chip">D–E · 7</span><span class="chip">D–F · 8</span><span class="chip">E–F · 9</span>
+        </div>
+        <p style="font-size:14px;color:var(--muted);margin:10px 0 0">От лёгких к тяжёлым — именно в таком порядке будем рассматривать рёбра.</p>
+      </div>
+    </div>
+    <div class="note amber">Передаём именно функцию <b>weight</b>, без скобок: sort сам будет её вызывать.
+      <b>weight(edge)</b> со скобками — это уже вызов, так делать не надо.</div>
+  </div>
+</section>
+
+<!-- 8 · КОД 3 -->
+<section class="slide" data-title="Код 3: компоненты и find" data-section="Код">
+  <div class="wrap">
+    <span class="kicker" style="--kc:#0284c7">Шаг 4 · Код · 3 из 5</span>
+    <h2>Компоненты связности: «команды и капитаны»</h2>
+    <p class="lead">Как понять, что ребро создаёт цикл? Его концы уже в одной компоненте!
+      Заведём список <b>parent</b>: parent[v] — «родитель» вершины v. Сначала каждая вершина — капитан самой себя.
+      <b>find(v)</b> поднимается по родителям до капитана (корня).</p>
+    <div class="codebar"><span class="filechip">parent и find</span></div>
+<pre class="code"><code class="py"># сначала каждая вершина — "капитан" самой себя
+parent = []
+for i in range(n):
+    parent.append(i)
+
+# поднимаемся по родителям до капитана (корня)
+def find(v):
+    while parent[v] != v:
+        v = parent[v]
+    return v</code></pre>
+    <div class="card reveal" style="margin-top:14px">
+      <div class="rfront">🔎 Что лежит в parent после рёбер B–C, C–E, A–B?<span class="rhint">нажми</span></div>
+      <div class="rbody">
+<pre class="code"><code class="py">parent = [4, 2, 4, 3, 4, 5]</code></pre>
+        <p style="font-size:14.5px;margin:10px 0 0">A(0) → E(4), B(1) → C(2) → E(4), C(2) → E(4).
+          Капитан команды {A, B, C, E} — <b>E</b>. D и F пока сами себе капитаны.</p>
+      </div>
+    </div>
+    <div class="note green">Главное правило: две вершины в одной компоненте ⇔ <b>find(u) == find(v)</b>.</div>
+  </div>
+</section>
+
+<!-- 9 · КОД 4 -->
+<section class="slide" data-title="Код 4: union и главный цикл" data-section="Код">
+  <div class="wrap">
+    <span class="kicker" style="--kc:#0284c7">Шаг 4 · Код · 4 из 5</span>
+    <h2>Объединение и главный цикл</h2>
+    <p class="lead"><b>union</b> «подвешивает» команду a к капитану команды b.
+      Главный цикл — сердце Краскала: берём ребро, только если концы в разных командах;
+      набрали n − 1 ребро — выходим.</p>
+    <div class="codebar"><span class="filechip">union + главный цикл</span></div>
+<pre class="code"><code class="py"># объединяем команды: капитан a подчиняется капитану b
+def union(a, b):
+    root_a = find(a)
+    root_b = find(b)
+    parent[root_a] = root_b
+
+# главный цикл Краскала
+mst = []
+total = 0
+for edge in edges:
+    u = edge[0]
+    v = edge[1]
+    w = edge[2]
+    if find(u) != find(v):     # цикла не будет — берём
+        union(u, v)
+        mst.append(edge)
+        total = total + w
+        if len(mst) == n - 1:  # набрали n-1 ребро — готово
+            break</code></pre>
+    <div class="note">Строка <b>if find(u) != find(v)</b> — это и есть проверка «не будет ли цикла».
+      А <b>break</b> — досрочная победа: дерево уже готово, лишние рёбра можно не смотреть.</div>
+  </div>
+</section>
+
+<!-- 10 · КОД 5 -->
+<section class="slide" data-title="Код 5: вывод результата" data-section="Код">
+  <div class="wrap">
+    <span class="kicker" style="--kc:#0284c7">Шаг 4 · Код · 5 из 5</span>
+    <h2>Выводим ответ буквами</h2>
+    <p class="lead">В <b>mst</b> лежат рёбра-списки с индексами. Превратим индексы обратно в имена:
+      <b>names[edge[0]]</b>. Сумма весов уже посчитана в <b>total</b>.</p>
+    <div class="codebar"><span class="filechip">вывод</span></div>
+<pre class="code"><code class="py">print("Рёбра минимального остовного дерева:")
+for edge in mst:
+    print(names[edge[0]], "-", names[edge[1]], "вес", edge[2])
+print("Суммарный вес:", total)</code></pre>
+    <div class="note">print с запятыми ставит пробелы между аргументами — удобно для простого отчёта.</div>
+  </div>
+</section>
+
+<!-- 11 · ПОЛНАЯ ПРОГРАММА -->
+<section class="slide" data-title="Полная программа" data-section="Код">
+  <div class="wrap">
+    <span class="kicker" style="--kc:#0284c7">Шаг 4 · Всё вместе</span>
+    <h2>Полная программа</h2>
+    <div class="codebar">
+      <span class="filechip">kruskal.py</span>
+      <button class="btn small" id="copyBtn">📋 Скопировать</button>
+      <button class="btn small" id="outBtn">▶ Показать вывод</button>
+    </div>
+<pre class="code" style="max-height:56vh"><code class="py" id="fullCode"># Минимальное остовное дерево — алгоритм Краскала
+# Только списки, циклы, условия и функции
+
+# 1. Данные: имена вершин и рёбра [u, v, вес]
+names = ["A", "B", "C", "D", "E", "F"]
+n = 6
+edges = [
+    [0, 1, 3],   # A-B
+    [0, 2, 5],   # A-C
+    [1, 2, 1],   # B-C
+    [1, 3, 6],   # B-D
+    [2, 3, 4],   # C-D
+    [2, 4, 2],   # C-E
+    [3, 4, 7],   # D-E
+    [3, 5, 8],   # D-F
+    [4, 5, 9],   # E-F
+]
+
+# 2. Сортируем рёбра по весу
+def weight(edge):
+    return edge[2]
+
+edges.sort(key=weight)
+
+# 3. Компоненты связности: список родителей и поиск корня
+parent = []
+for i in range(n):
+    parent.append(i)
+
+def find(v):
+    while parent[v] != v:
+        v = parent[v]
+    return v
+
+def union(a, b):
+    root_a = find(a)
+    root_b = find(b)
+    parent[root_a] = root_b
+
+# 4. Главный цикл: берём лёгкие рёбра без циклов
+mst = []
+total = 0
+for edge in edges:
+    u = edge[0]
+    v = edge[1]
+    w = edge[2]
+    if find(u) != find(v):     # цикла не будет — берём
+        union(u, v)
+        mst.append(edge)
+        total = total + w
+        if len(mst) == n - 1:  # дерево готово
+            break
+
+# 5. Вывод результата
+print("Рёбра минимального остовного дерева:")
+for edge in mst:
+    print(names[edge[0]], "-", names[edge[1]], "вес", edge[2])
+print("Суммарный вес:", total)</code></pre>
+    <div id="outWrap" class="hidden" style="margin-top:12px">
+      <div class="codebar"><span class="filechip">вывод программы</span></div>
+<pre class="code out">Рёбра минимального остовного дерева:
+B - C вес 1
+C - E вес 2
+A - B вес 3
+C - D вес 4
+D - F вес 8
+Суммарный вес: 18</pre>
+    </div>
+    <div class="note green">В программе только <b>списки, циклы, условия и функции</b> — ни классов,
+      ни кортежей, ни словарей. Поменяй names и edges — получишь МОД своего графа!</div>
+  </div>
+</section>
+
+<!-- 12 · РЕФЛЕКСИЯ -->
+<section class="slide" data-title="Тест: 5 вопросов" data-section="Рефлексия">
+  <div class="wrap">
+    <span class="kicker" style="--kc:#db2777">Шаг 5 · Рефлексия</span>
+    <h2>Проверь себя: 5 вопросов</h2>
+    <p class="lead">Это <b>формирующее оценивание</b>: баллы не идут в журнал. Каждый ответ сразу подскажет,
+      что понять глубже, а ошибка — куда вернуться.</p>
+    <div class="card quiz">
+      <div id="quizPlay">
+        <div class="qprogress"><span id="qCount">Вопрос 1 из 5</span><div class="qdots" id="qDots"></div></div>
+        <div class="qtext" id="qText"></div>
+        <div id="qOpts"></div>
+        <div class="fb hidden" id="qFb"></div>
+        <div style="margin-top:12px;text-align:right">
+          <button class="btn primary hidden" id="qNext">Дальше →</button>
+        </div>
+      </div>
+      <div id="quizResult" class="hidden"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 13 · ИТОГИ -->
+<section class="slide" data-title="Итоги и домашнее задание" data-section="Итоги">
+  <div class="wrap">
+    <span class="kicker" style="--kc:#475569">Финал</span>
+    <h2>Что уносим с урока</h2>
+    <div class="grid3" style="margin:14px 0 18px">
+      <div class="card"><h3>🌳 Понятие</h3>МОД — все вершины, n − 1 ребро, без циклов,
+        минимальная сумма весов.</div>
+      <div class="card"><h3>⚡ Алгоритм</h3>Краскал: отсортировал → берёшь лёгкие рёбра без циклов →
+        стоп на n − 1.</div>
+      <div class="card"><h3>🐍 Код</h3>Ребро = [u, v, w]; компоненты = список parent + функции
+        find и union.</div>
+    </div>
+    <p style="font-weight:700;margin:0 0 8px">Отметь, что уже умеешь (нажми):</p>
+    <div class="chips selfcheck" style="margin-bottom:18px">
+      <button class="chip">Могу объяснить, что такое МОД</button>
+      <button class="chip">Могу выполнить Краскала вручную</button>
+      <button class="chip">Могу написать программу по шагам</button>
+    </div>
+    <div class="note amber" style="margin:0"><b>🏠 Домашнее задание:</b><br>
+      1) Придумай свой граф (6–8 вершин), задай names и edges — найди МОД программой.<br>
+      2) Убери break и убедись, что ответ не изменился. Почему?<br>
+      3) ⭐ Реализуй алгоритм Прима через матрицу смежности (тоже только списки!).</div>
+    <p style="color:var(--muted);font-size:14px;margin-top:22px">Спасибо за урок! · val-sk.github.io/info</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="navbar">
+  <div class="hint">Листай стрелками ← → на клавиатуре или кнопками</div>
+  <div style="display:flex;gap:10px">
+    <button class="btn" id="prevBtn">← Назад</button>
+    <button class="btn primary" id="nextBtn">Далее →</button>
+  </div>
+</footer>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const slides = [...document.querySelectorAll(".slide")];
+const deck = $("#deck");
+let cur = 0;
+
+/* ---------- ДАННЫЕ ГРАФА ---------- */
+const NAMES = ["A","B","C","D","E","F"];
+const NODES = [
+  {name:"A",x:100,y:95},{name:"B",x:320,y:60},{name:"C",x:250,y:215},
+  {name:"D",x:475,y:175},{name:"E",x:300,y:365},{name:"F",x:545,y:330}
+];
+const EDGES = [
+  [0,1,3],[0,2,5],[1,2,1],[1,3,6],[2,3,4],[2,4,2],[3,4,7],[3,5,8],[4,5,9]
+];
+const SORTED = [2,5,0,4,1,3,6,7,8];      // индексы рёбер по возрастанию веса
+const TAKE   = [1,1,1,1,0,0,0,1];        // решение по первым 8 рёбрам
+
+/* ---------- ОТРИСОВКА ГРАФА ---------- */
+const EST = {
+  idle:{c:"#cbd5e1",w:3,o:1}, pending:{c:"#cbd5e1",w:3,o:1},
+  dim:{c:"#e2e8f0",w:3,o:.8}, unused:{c:"#e2e8f0",w:3,o:.6},
+  taken:{c:"#16a34a",w:6,o:1}, "take-now":{c:"#16a34a",w:7,o:1},
+  alt:{c:"#3b82f6",w:5,o:1},
+  rejected:{c:"#ef4444",w:3,o:.5,d:"7 7"},
+  "skip-now":{c:"#ef4444",w:4.5,o:.95,d:"10 8",anim:true}
+};
+const LBL = {
+  idle:["#64748b","#ffffff","#e2e8f0"], pending:["#64748b","#ffffff","#e2e8f0"],
+  dim:["#94a3b8","#ffffff","#e2e8f0"], unused:["#94a3b8","#ffffff","#e2e8f0"],
+  taken:["#15803d","#f0fdf4","#86efac"], "take-now":["#15803d","#f0fdf4","#86efac"],
+  alt:["#1d4ed8","#eff6ff","#bfdbfe"],
+  rejected:["#b91c1c","#fef2f2","#fecaca"], "skip-now":["#b91c1c","#fef2f2","#fecaca"]
+};
+function drawGraph(svg,o){
+  const st=o.edges; let s="";
+  EDGES.forEach((e,i)=>{
+    const a=NODES[e[0]],b=NODES[e[1]],k=EST[st[i]]||EST.idle;
+    if(st[i]==="take-now")
+      s+=`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="#f59e0b" stroke-width="13" opacity="0.3" stroke-linecap="round"/>`;
+    s+=`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${k.c}" stroke-width="${k.w}" opacity="${k.o}" stroke-linecap="round"${k.d?` stroke-dasharray="${k.d}"`:""}${k.anim?' class="anim-dash"':""}/>`;
+  });
+  EDGES.forEach((e,i)=>{
+    const a=NODES[e[0]],b=NODES[e[1]];
+    const dx=b.x-a.x,dy=b.y-a.y,L=Math.hypot(dx,dy);
+    const mx=(a.x+b.x)/2-dy/L*13, my=(a.y+b.y)/2+dx/L*13;
+    const lb=LBL[st[i]]||LBL.idle;
+    s+=`<rect x="${mx-12}" y="${my-12}" width="24" height="24" rx="7" fill="${lb[1]}" stroke="${lb[2]}"/>`;
+    s+=`<text x="${mx}" y="${my}" text-anchor="middle" dominant-baseline="central" font-size="14.5" font-weight="700" fill="${lb[0]}">${e[2]}</text>`;
+  });
+  NODES.forEach((v,i)=>{
+    const f=o.fills?o.fills[i]:"#ffffff", sk=o.strokes?o.strokes[i]:"#334155";
+    s+=`<circle cx="${v.x}" cy="${v.y}" r="21" fill="${f}" stroke="${sk}" stroke-width="2.5"/>`;
+    s+=`<text x="${v.x}" y="${v.y}" text-anchor="middle" dominant-baseline="central" font-size="17" font-weight="800" fill="#0f172a">${v.name}</text>`;
+  });
+  svg.innerHTML=s;
+}
+function renderStatics(){
+  drawGraph($("#titleSvg"),{edges:["taken","idle","taken","idle","taken","taken","idle","taken","idle"]});
+  drawGraph($("#lifeSvg"),{edges:EDGES.map(()=>"idle")});
+  drawGraph($("#cmpLeftSvg"),{edges:["dim","alt","alt","dim","dim","alt","alt","alt","dim"]});
+  drawGraph($("#cmpRightSvg"),{edges:["taken","dim","taken","dim","taken","taken","dim","taken","dim"]});
+}
+
+/* ---------- ПОШАГОВАЯ ДЕМОНСТРАЦИЯ ---------- */
+const PALETTE=["#dbeafe","#dcfce7","#fef9c3","#fce7f3","#cffafe","#ede9fe"];
+const FILLS=[];
+{
+  const par=[0,1,2,3,4,5];
+  const root=x=>{while(par[x]!==x)x=par[x];return x;};
+  for(let s=0;s<=9;s++){
+    if(s>=1&&s<=8){const p=s-1;
+      if(TAKE[p]){const e=EDGES[SORTED[p]];par[root(e[0])]=root(e[1]);}}
+    const groups={};
+    for(let v=0;v<6;v++){const r=root(v);(groups[r]=groups[r]||[]).push(v);}
+    const fills=NODES.map((_,v)=>PALETTE[Math.min(...groups[root(v)])]);
+    if(s===9)fills.fill("#dcfce7");
+    FILLS.push(fills);
+  }
+}
+const TAKECNT=[0],TOTALS=[0];
+{let c=0,t=0;
+ for(let s=1;s<=9;s++){
+   if(s<=8){const p=s-1;if(TAKE[p]){c++;t+=EDGES[SORTED[p]][2];}}
+   TAKECNT.push(c);TOTALS.push(t);}}
+const EXP=[
+ {b:"СТАРТ",c:"start",t:"Граф готов к работе",
+  x:"6 вершин, 9 рёбер. Список справа уже отсортирован по весу. Цвет вершины — её компонента: пока каждый сам за себя. Нажми «Шаг →»."},
+ {b:"БЕРЁМ ✓",c:"take",t:"Шаг 1 · ребро B–C, вес 1",
+  x:"Самое лёгкое ребро. B и C в разных компонентах — цикла не будет. Берём! Посёлки B и C теперь в одной команде."},
+ {b:"БЕРЁМ ✓",c:"take",t:"Шаг 2 · ребро C–E, вес 2",
+  x:"C и E в разных компонентах → берём. Команда {B, C} объединяется с E: теперь {B, C, E}."},
+ {b:"БЕРЁМ ✓",c:"take",t:"Шаг 3 · ребро A–B, вес 3",
+  x:"A ещё одна, а B — в команде {B, C, E}. Разные компоненты → берём. A присоединяется: {A, B, C, E}."},
+ {b:"БЕРЁМ ✓",c:"take",t:"Шаг 4 · ребро C–D, вес 4",
+  x:"D пока отдельная → берём. В команде теперь {A, B, C, D, E}. Осталось подключить F."},
+ {b:"ПРОПУСКАЕМ ✗",c:"skip",t:"Шаг 5 · ребро A–C, вес 5",
+  x:"A и C уже связаны путём A–B–C. Новое ребро замкнуло бы цикл A–B–C–A → пропускаем, хотя вес всего 5!"},
+ {b:"ПРОПУСКАЕМ ✗",c:"skip",t:"Шаг 6 · ребро B–D, вес 6",
+  x:"B и D в одной компоненте (есть путь B–C–D) → был бы цикл → пропускаем."},
+ {b:"ПРОПУСКАЕМ ✗",c:"skip",t:"Шаг 7 · ребро D–E, вес 7",
+  x:"D и E уже связаны путём D–C–E → цикл → пропускаем."},
+ {b:"БЕРЁМ ✓",c:"take",t:"Шаг 8 · ребро D–F, вес 8",
+  x:"F ещё не подключена → берём. Это пятое ребро: n − 1 = 5. Дерево готово — останавливаемся!"},
+ {b:"ГОТОВО 🎉",c:"done",t:"МОД построено: вес 18",
+  x:"Рёбра B–C, C–E, A–B, C–D, D–F дают 18 км — дешевле не существует. Ребро E–F (9) даже не рассматривали. Все вершины одного цвета: одна связная команда без циклов."}
+];
+let step=0, autoTimer=null;
+const demoSvg=$("#demoSvg"),edgeList=$("#edgeList"),
+      expBadge=$("#expBadge"),expTitle=$("#expTitle"),expText=$("#expText"),
+      statEdges=$("#statEdges"),statWeight=$("#statWeight"),
+      stepPrev=$("#stepPrev"),stepNext=$("#stepNext"),
+      stepReset=$("#stepReset"),stepAuto=$("#stepAuto");
+function renderStep(){
+  const s=step;
+  const es=EDGES.map(()=>"pending");
+  for(let p=0;p<Math.min(s,8);p++)es[SORTED[p]]=TAKE[p]?"taken":"rejected";
+  if(s>=1&&s<=8){const p=s-1;es[SORTED[p]]=TAKE[p]?"take-now":"skip-now";}
+  if(s===9)es[SORTED[8]]="unused";
+  const strokes=NODES.map(()=>"#334155");
+  if(s>=1&&s<=8){const e=EDGES[SORTED[s-1]];strokes[e[0]]="#f59e0b";strokes[e[1]]="#f59e0b";}
+  if(s===9)strokes.fill("#16a34a");
+  drawGraph(demoSvg,{edges:es,fills:FILLS[s],strokes});
+  edgeList.innerHTML=SORTED.map((ei,p)=>{
+    const e=EDGES[ei];let cls,ic;
+    if(s===9&&p===8){cls="unused";ic="—";}
+    else if(p<s){
+      cls=TAKE[p]?"taken":"rejected";ic=TAKE[p]?"✓":"✗";
+      if(p===s-1&&s<=8)cls+=" current";
+    }else{cls="pending";ic="·";}
+    return `<div class="erow ${cls}" data-p="${p}" title="Показать этот шаг"><span class="ic">${ic}</span><span class="lbl">${NAMES[e[0]]}–${NAMES[e[1]]}</span><span class="w">${e[2]} км</span></div>`;
+  }).join("");
+  edgeList.querySelectorAll(".erow").forEach(r=>
+    r.addEventListener("click",()=>{stopAuto();setStep(+r.dataset.p+1);}));
+  const info=EXP[s];
+  expBadge.textContent=info.b;expBadge.className="badge2 "+info.c;
+  expTitle.textContent=info.t;expText.textContent=info.x;
+  statEdges.textContent=TAKECNT[s]+" / 5";
+  statWeight.textContent=TOTALS[s]+" км";
+  stepPrev.disabled=s===0;stepNext.disabled=s===9;
+}
+function setStep(n){step=Math.max(0,Math.min(9,n));renderStep();}
+function stopAuto(){if(autoTimer){clearInterval(autoTimer);autoTimer=null;}stepAuto.textContent="▶ Авто";}
+stepPrev.addEventListener("click",()=>{stopAuto();setStep(step-1);});
+stepNext.addEventListener("click",()=>{stopAuto();setStep(step+1);});
+stepReset.addEventListener("click",()=>{stopAuto();setStep(0);});
+stepAuto.addEventListener("click",()=>{
+  if(autoTimer){stopAuto();return;}
+  if(step===9)setStep(0);
+  stepAuto.textContent="⏸ Стоп";
+  autoTimer=setInterval(()=>{setStep(step+1);if(step===9)stopAuto();},2000);
+});
+
+/* ---------- ПОДСВЕТКА PYTHON ---------- */
+function hlPython(src){
+  const esc=src.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  return esc.replace(/(#[^\n]*)|("[^"\n]*")|\b(def|for|in|if|while|return|break|else|elif|not|and|or|True|False|None)\b|\b(print|range|len|sort|append|key)\b|(\b\d+\b)/g,
+    (m,c,s,k,f,n)=>{
+      if(c)return `<span class="tok-c">${c}</span>`;
+      if(s)return `<span class="tok-s">${s}</span>`;
+      if(k)return `<span class="tok-k">${k}</span>`;
+      if(f)return `<span class="tok-f">${f}</span>`;
+      return `<span class="tok-n">${n}</span>`;
+    });
+}
+document.querySelectorAll("pre code.py").forEach(c=>{
+  const raw=c.textContent.replace(/^\n+/,"").replace(/\s+$/,"");
+  c.innerHTML=hlPython(raw);
+});
+
+/* ---------- КОПИРОВАНИЕ И ВЫВОД ---------- */
+let toastTimer=null;
+function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),1800);}
+function copyText(t){
+  const done=()=>toast("Код скопирован ✓");
+  const fb=()=>{const ta=document.createElement("textarea");ta.value=t;
+    ta.style.cssText="position:fixed;opacity:0";document.body.appendChild(ta);ta.select();
+    try{document.execCommand("copy");done();}catch(e){toast("Выдели код и скопируй вручную");}
+    ta.remove();};
+  if(navigator.clipboard&&navigator.clipboard.writeText)
+    navigator.clipboard.writeText(t).then(done,fb);
+  else fb();
+}
+$("#copyBtn").addEventListener("click",()=>copyText($("#fullCode").textContent));
+$("#outBtn").addEventListener("click",()=>{
+  const w=$("#outWrap");w.classList.toggle("hidden");
+  $("#outBtn").textContent=w.classList.contains("hidden")?"▶ Показать вывод":"▼ Скрыть вывод";
+});
+
+/* ---------- ТЕСТ (ФОРМИРУЮЩЕЕ ОЦЕНИВАНИЕ) ---------- */
+const QUIZ=[
+ {q:"Сколько рёбер в остовном дереве графа с 8 вершинами?",
+  opts:["8","7","9","Зависит от весов рёбер"],a:1,tip:2,
+  ex:"В любом дереве с n вершинами ровно n − 1 ребро: 8 − 1 = 7. Веса на это не влияют."},
+ {q:"Почему алгоритм Краскала пропускает ребро A–C (вес 5) в нашем примере?",
+  opts:["Оно слишком тяжёлое","A и C уже связаны — ребро замкнёт цикл",
+        "Оно соединяет разные компоненты","Вершина C уже удалена из графа"],a:1,tip:5,
+  ex:"К этому моменту взяты B–C, C–E, A–B: путь A–B–C уже есть. Ребро A–C замкнуло бы цикл, поэтому пропускаем — несмотря на небольшой вес."},
+ {q:"С чего начинается алгоритм Краскала?",
+  opts:["С выбора стартовой вершины","С удаления самого тяжёлого ребра",
+        "С сортировки рёбер по возрастанию веса","С построения матрицы смежности"],a:2,tip:4,
+  ex:"Краскал — жадный алгоритм: сначала сортируем все рёбра по весу, затем идём от самых лёгких."},
+ {q:"Что возвращает функция find(v) в нашей программе?",
+  opts:["Вес минимального ребра рядом с v","Корня («капитана») компоненты вершины v",
+        "Список соседей вершины v","Число рёбер в дереве"],a:1,tip:8,
+  ex:"find поднимается по parent до капитана команды. Если find(u) == find(v) — вершины уже связаны, и новое ребро создало бы цикл."},
+ {q:"Что будет, если убрать из программы проверку if len(mst) == n - 1: break?",
+  opts:["Построится другое дерево","В дереве появится цикл",
+        "Ответ тот же, но проверятся лишние рёбра","Программа никогда не остановится"],a:2,tip:9,
+  ex:"После n − 1 ребра все вершины уже связаны, поэтому каждое следующее ребро будет отклонено проверкой find(u) != find(v). break лишь экономит время."}
+];
+let qi=0,answers=[];
+const qCount=$("#qCount"),qDots=$("#qDots"),qText=$("#qText"),qOpts=$("#qOpts"),
+      qFb=$("#qFb"),qNext=$("#qNext"),quizPlay=$("#quizPlay"),quizResult=$("#quizResult");
+function dotsHTML(){
+  return QUIZ.map((q,i)=>{
+    let c="qdot";
+    if(i<answers.length)c+=answers[i]===q.a?" done":" miss";
+    else if(i===qi)c+=" cur";
+    return `<span class="${c}"></span>`;
+  }).join("");
+}
+function renderQ(){
+  const q=QUIZ[qi];
+  qCount.textContent=`Вопрос ${qi+1} из 5`;
+  qDots.innerHTML=dotsHTML();
+  qText.textContent=q.q;
+  qOpts.innerHTML="";
+  q.opts.forEach((t,i)=>{
+    const b=document.createElement("button");
+    b.className="qopt";b.textContent=t;
+    b.addEventListener("click",()=>answer(i));
+    qOpts.appendChild(b);
+  });
+  qFb.className="fb hidden";qFb.innerHTML="";
+  qNext.classList.add("hidden");
+}
+function answer(i){
+  const q=QUIZ[qi];answers[qi]=i;
+  [...qOpts.children].forEach((b,j)=>{
+    b.disabled=true;
+    if(j===q.a)b.classList.add("correct");
+    else if(j===i)b.classList.add("wrong");
+    else b.classList.add("muted");
+  });
+  const ok=i===q.a;
+  qFb.className="fb "+(ok?"ok":"no");
+  qFb.innerHTML=`<b class="verdict">${ok?"✅ Верно!":"❌ Не совсем."}</b><span>${q.ex}</span>`;
+  if(!ok){
+    const tip=document.createElement("button");
+    tip.className="tiplink";
+    tip.textContent=`📖 Повторить: слайд ${q.tip+1} «${slides[q.tip].dataset.title}»`;
+    tip.addEventListener("click",()=>go(q.tip));
+    qFb.appendChild(document.createElement("br"));
+    qFb.appendChild(tip);
+    const sm=document.createElement("div");
+    sm.style.cssText="font-size:12px;color:#64748b;margin-top:6px";
+    sm.textContent="Ответы сохранятся — вернись к тесту через оглавление или стрелками.";
+    qFb.appendChild(sm);
+  }
+  qDots.innerHTML=dotsHTML();
+  qNext.textContent=qi===4?"К результатам →":"Дальше →";
+  qNext.classList.remove("hidden");
+}
+qNext.addEventListener("click",()=>{
+  if(qi<4){qi++;renderQ();}else showResult();
+});
+function showResult(){
+  quizPlay.classList.add("hidden");quizResult.classList.remove("hidden");
+  const score=answers.filter((a,i)=>a===QUIZ[i].a).length;
+  const msg=score===5?"Отлично! Все ключевые идеи на месте. Можно браться за алгоритм Прима ⭐"
+    :score>=3?"Хороший результат! Загляни в слайды ниже — и попробуй ещё раз для закрепления."
+    :"Пока трудно — и это нормально. Ошибки показали, что именно повторить: пройди подсказки и вернись к тесту.";
+  const tips=QUIZ.map((q,i)=>answers[i]!==q.a
+    ?`<button class="tiplink" data-s="${q.tip}">📖 Слайд ${q.tip+1} · ${slides[q.tip].dataset.title}</button>`:"").join("");
+  quizResult.innerHTML=`<div class="score">${score} / 5</div>
+    <p style="font-size:17px;margin:10px 0 6px">${msg}</p>
+    ${tips?`<div style="margin:10px 0"><b style="font-size:14px;color:#64748b">Что повторить:</b><div>${tips}</div></div>`
+          :`<p style="color:#16a34a;font-weight:650">Повторять нечего — всё верно! 🎉</p>`}
+    <p style="font-size:13.5px;color:#64748b">Помни: это формирующее оценивание.
+      Цель — не балл, а понимание, куда расти.</p>
+    <button class="btn primary" id="quizRestart">↻ Пройти ещё раз</button>`;
+  quizResult.querySelectorAll("[data-s]").forEach(b=>
+    b.addEventListener("click",()=>go(+b.dataset.s)));
+  $("#quizRestart").addEventListener("click",()=>{
+    qi=0;answers=[];
+    quizResult.classList.add("hidden");quizPlay.classList.remove("hidden");
+    renderQ();
+  });
+}
+
+/* ---------- КАРТОЧКИ-ОТКРЫВАШКИ ---------- */
+document.querySelectorAll(".qa,.reveal").forEach(c=>
+  c.addEventListener("click",()=>c.classList.toggle("open")));
+document.querySelectorAll(".selfcheck .chip").forEach(c=>
+  c.addEventListener("click",()=>{c.classList.toggle("done");
+    c.textContent=c.classList.contains("done")?"✓ "+c.textContent.replace(/^✓ /,""):c.textContent.replace(/^✓ /,"");}));
+
+/* ---------- НАВИГАЦИЯ ---------- */
+const toc=$("#toc"),backdrop=$("#backdrop"),tocItems=$("#tocItems");
+function openToc(){toc.classList.add("open");backdrop.classList.add("show");}
+function closeToc(){toc.classList.remove("open");backdrop.classList.remove("show");}
+$("#menuBtn").addEventListener("click",openToc);
+$("#tocClose").addEventListener("click",closeToc);
+backdrop.addEventListener("click",closeToc);
+slides.forEach((s,i)=>{
+  const b=document.createElement("button");
+  b.className="tocitem";
+  b.innerHTML=`<span class="num">${i+1}</span><span><small>${s.dataset.section}</small>${s.dataset.title}</span>`;
+  b.addEventListener("click",()=>go(i));
+  tocItems.appendChild(b);
+});
+function updateNav(){
+  $("#curNum").textContent=cur+1;
+  $("#totNum").textContent=slides.length;
+  $("#progressFill").style.width=((cur+1)/slides.length*100)+"%";
+  $("#prevBtn").disabled=cur===0;
+  $("#nextBtn").disabled=cur===slides.length-1;
+  document.querySelectorAll(".tocitem").forEach((t,j)=>t.classList.toggle("cur",j===cur));
+}
+function go(i){
+  closeToc();
+  i=Math.max(0,Math.min(slides.length-1,i));
+  if(i===cur)return;
+  stopAuto();
+  slides[cur].classList.remove("active");
+  cur=i;
+  slides[cur].classList.add("active");
+  deck.scrollTop=0;
+  updateNav();
+}
+$("#prevBtn").addEventListener("click",()=>go(cur-1));
+$("#nextBtn").addEventListener("click",()=>go(cur+1));
+document.querySelectorAll("[data-go]").forEach(b=>
+  b.addEventListener("click",()=>go(+b.dataset.go)));
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){closeToc();return;}
+  const tag=(e.target.tagName||"").toLowerCase();
+  if(e.key===" "&&tag==="button")return;
+  if(["ArrowRight","PageDown"," "].includes(e.key)){e.preventDefault();go(cur+1);}
+  else if(["ArrowLeft","PageUp"].includes(e.key)){e.preventDefault();go(cur-1);}
+  else if(e.key==="Home"){e.preventDefault();go(0);}
+  else if(e.key==="End"){e.preventDefault();go(slides.length-1);}
+});
+
+/* ---------- СТАРТ ---------- */
+renderStatics();
+renderStep();
+renderQ();
+updateNav();
+</script>
+</body>
+</html>
