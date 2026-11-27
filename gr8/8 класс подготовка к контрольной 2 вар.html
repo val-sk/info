@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Тренажёр: Элементы математической логики (8 класс)</title>
+<style>
+:root{
+  --bg:#f4f6fb; --card:#fff; --ink:#1e2436; --muted:#6b7590;
+  --acc:#3d5afe; --acc2:#e8ecff; --ok:#12a15a; --okbg:#e6f7ee;
+  --bad:#e0364b; --badbg:#fdecef; --warn:#c98a00; --line:#e2e7f2;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:linear-gradient(120deg,#3d5afe,#7c4dff);color:#fff;padding:18px 16px}
+.wrap{max-width:1000px;margin:0 auto}
+h1{margin:0;font-size:21px}
+.sub{opacity:.9;font-size:13px;margin-top:4px}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.tab{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;
+     padding:8px 14px;border-radius:20px;cursor:pointer;font-size:14px}
+.tab.active{background:#fff;color:var(--acc);font-weight:600}
+.vsw{display:inline-flex;border:1px solid rgba(255,255,255,.5);border-radius:20px;overflow:hidden;margin-left:6px}
+.vsw button{background:transparent;border:0;color:#fff;padding:7px 14px;cursor:pointer;font-size:13px}
+.vsw button.on{background:#fff;color:var(--acc);font-weight:700}
+main{max-width:1000px;margin:18px auto;padding:0 12px 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;
+      box-shadow:0 2px 8px rgba(30,36,54,.05)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:18px;padding:6px 12px;font-size:13px;cursor:pointer}
+.chip.active{background:var(--acc);color:#fff;border-color:var(--acc)}
+.nav-grid{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.nb{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:13px}
+.nb.cur{outline:2px solid var(--acc);font-weight:700}
+.nb.ok{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
+.nb.bad{background:var(--badbg);border-color:var(--bad);color:var(--bad)}
+.head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.badge{font-size:12px;background:var(--acc2);color:var(--acc);padding:4px 10px;border-radius:12px;font-weight:600}
+.badge.mid{background:#fff4e0;color:var(--warn)}
+.badge.high{background:#fdecef;color:var(--bad)}
+.topic{font-size:12px;color:var(--muted)}
+.prompt{font-size:15.5px;line-height:1.55;margin-bottom:12px}
+.expr{font-family:Consolas,monospace;background:#f2f4fb;border:1px solid var(--line);
+      padding:8px 10px;border-radius:8px;display:inline-block;font-size:16px;margin:6px 0}
+.opt{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;
+     padding:10px 12px;margin-bottom:8px;cursor:pointer;background:#fff;font-size:14.5px}
+.opt:hover{border-color:var(--acc)}
+.opt.sel{background:var(--acc2);border-color:var(--acc)}
+.opt.good{background:var(--okbg);border-color:var(--ok)}
+.opt.wrong{background:var(--badbg);border-color:var(--bad)}
+.mark{width:20px;height:20px;flex:0 0 20px;border:2px solid #b9c2d8;border-radius:5px;display:grid;place-items:center;font-size:13px;color:#fff}
+.opt.sel .mark{background:var(--acc);border-color:var(--acc)}
+.radio .mark{border-radius:50%}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:center}
+th{background:#f2f4fb;font-family:Consolas,monospace;font-size:13.5px}
+.tbl-wrap{overflow-x:auto;margin:8px 0}
+.cell{width:46px;height:32px;border:1px solid #c8d0e4;border-radius:6px;background:#fff;cursor:pointer;
+      font-family:Consolas,monospace;font-size:15px}
+.cell.f{background:#fffbe9}
+.cell.good{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
+.cell.wrong{background:var(--badbg);border-color:var(--bad);color:var(--bad)}
+select,input[type=text]{padding:8px 10px;border:1px solid #c8d0e4;border-radius:8px;font-size:15px;background:#fff}
+input.ans{width:170px;font-family:Consolas,monospace}
+.btn{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:10px 16px;font-size:14.5px;cursor:pointer}
+.btn.sec{background:#fff;color:var(--acc);border:1px solid var(--acc)}
+.btn.gray{background:#eef1f8;color:var(--ink)}
+.btn:disabled{opacity:.5;cursor:default}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.fb{margin-top:12px;padding:12px;border-radius:10px;font-size:14.5px;line-height:1.6;display:none}
+.fb.show{display:block}
+.fb.ok{background:var(--okbg);border:1px solid var(--ok)}
+.fb.bad{background:var(--badbg);border:1px solid var(--bad)}
+.steps{font-family:Consolas,monospace;font-size:13.5px;margin:6px 0 0;padding-left:18px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.stat{font-size:13px;color:var(--muted)}
+.timer{position:sticky;top:0;z-index:5;background:#1e2436;color:#fff;padding:10px 14px;border-radius:12px;
+       display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.timer.warn{background:var(--bad)}
+.clock{font-family:Consolas,monospace;font-size:20px;font-weight:700}
+.result{font-size:15px;line-height:1.7}
+.big{font-size:30px;font-weight:800}
+.hide{display:none}
+.hint{font-size:13px;color:var(--muted);margin:6px 0}
+.theory h3{margin:18px 0 8px}
+.theory table{max-width:420px}
+.bar{height:10px;background:#e8ecf5;border-radius:6px;overflow:hidden;margin:4px 0 8px}
+.bar>div{height:100%;background:var(--acc);border-radius:6px}
+.bar .g{background:var(--ok)} .bar .w{background:var(--warn)} .bar .r{background:var(--bad)}
+footer{max-width:1000px;margin:0 auto;padding:0 12px 30px;color:var(--muted);font-size:12.5px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>🧠 Тренажёр «Элементы математической логики»
+      <span class="vsw"><button data-v="1" class="on">Вариант 1</button><button data-v="2">Вариант 2</button></span>
+    </h1>
+    <div class="sub">8 класс · уровень ВПР‑8 / ОГЭ‑9 · высказывания, И / ИЛИ / НЕ, числа и логика, таблицы истинности, импликация</div>
+    <nav>
+      <button class="tab active" data-mode="practice">Тренировка</button>
+      <button class="tab" data-mode="exam">Вариант на 40 минут</button>
+      <button class="tab" data-mode="theory">Теория</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- ТРЕНИРОВКА -->
+  <section id="practice">
+    <div class="card">
+      <div class="chips" id="filters"></div>
+      <div class="nav-grid" id="navgrid"></div>
+      <div class="row" style="justify-content:space-between">
+        <div class="stat" id="stats"></div>
+        <button class="btn gray" id="resetProgress">Сбросить прогресс</button>
+      </div>
+    </div>
+
+    <div id="ptask"></div>
+    <div class="row" style="justify-content:space-between">
+      <button class="btn sec" id="prev">← Предыдущее</button>
+      <button class="btn sec" id="next">Следующее →</button>
+    </div>
+    <div class="hint">Подсказка: листать задания можно стрелками ← → на клавиатуре.
+    Итоги, анализ и отправка отчёта — в блоке ниже, после последнего задания.</div>
+
+    <!-- ИТОГОВЫЙ БЛОК: в самом конце, после последнего задания -->
+    <div class="card" id="scoreCard">
+      <div class="head"><span class="badge">💯 Подсчёт баллов и анализ выполненных заданий</span>
+        <span class="topic" id="variantTag">итоговый блок · обновляется после каждой проверки</span></div>
+      <div class="result" id="scoreBody"></div>
+      <div id="analysis"></div>
+      <hr>
+      <div class="head"><span class="badge mid">🌱 Формирующее оценивание</span>
+        <span class="topic">освоение тем по результатам <b>первых попыток</b> + самооценка</span></div>
+      <div id="formative"></div>
+      <hr>
+      <div class="head"><span class="badge high">📮 Отправка результатов учителю</span>
+        <span class="topic">val-sk@yandex.ru</span></div>
+      <div class="row">
+        <input type="text" id="studentName" placeholder="Фамилия Имя (для отчёта)" style="min-width:230px">
+        <button class="btn" data-send="file">💾 Скачать файл результатов</button>
+        <button class="btn" data-send="mail">📧 Отправить на val-sk@yandex.ru</button>
+        <button class="btn sec" data-send="net">🌐 Отправить через интернет</button>
+        <button class="btn gray" data-send="copy">📋 Копировать отчёт</button>
+      </div>
+      <div class="hint">Кнопка «📧» сохраняет файл отчёта в «Загрузки» и открывает готовое письмо в вашей почтовой программе — прикрепите файл и нажмите «Отправить». Кнопка «🌐» отправляет отчёт без почтовой программы (formsubmit.co).</div>
+    </div>
+  </section>
+
+  <!-- ЭКЗАМЕН -->
+  <section id="exam" class="hide">
+    <div id="examStart" class="card">
+      <h3 style="margin-top:0">Контрольная работа · 40 минут</h3>
+      <p class="result">14 заданий: <b>8 базовых</b>, <b>4 средних</b> (вычисление выражения / задача ОГЭ с числами + 3 таблицы истинности: две для двух переменных, одна для трёх), <b>2 повышенных</b> (с импликацией).<br>
+      Задания выбираются случайно из банка выбранного варианта — каждый запуск новый.</p>
+      <p class="hint">Таблицы истинности: нажимайте на клетку, чтобы менять значение: пусто → 0 → 1. Балл за таблицу даётся при всех верных клетках; если верен только столбец F — половина баллов. Итоги и отправка появятся после последнего задания.</p>
+      <button class="btn" id="startExam">Начать работу</button>
+    </div>
+    <div id="examRun" class="hide">
+      <div class="timer" id="timerBar">
+        <div>Осталось времени: <span class="clock" id="clock">40:00</span></div>
+        <div class="row">
+          <span id="examProgress" style="font-size:13px"></span>
+          <button class="btn" id="finishExam">Завершить работу</button>
+        </div>
+      </div>
+      <div id="examTasks"></div>
+      <!-- итоги + анализ + отправка: ПОСЛЕ последнего задания -->
+      <div id="examResult"></div>
+      <div class="row" id="examAfter" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <!-- ТЕОРИЯ -->
+  <section id="theory" class="hide theory">
+    <div class="card">
+      <h3 style="margin-top:0">Логическое высказывание</h3>
+      <p>Повествовательное предложение, о котором можно однозначно сказать, истинно оно или ложно.
+      <br>✅ «Число 6 чётное» — высказывание (истина). ❌ «Который час?», «Откройте учебник», «x + 5 &gt; 10» — не высказывания.</p>
+      <p>Истина обозначается <b>1</b>, ложь — <b>0</b>.</p>
+      <h3>Основные операции</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th>A</th><th>B</th><th>¬A</th><th>A ∧ B (И)</th><th>A ∨ B (ИЛИ)</th><th>A → B</th></tr>
+        <tr><td>0</td><td>0</td><td>1</td><td>0</td><td>0</td><td>1</td></tr>
+        <tr><td>0</td><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td></tr>
+        <tr><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td></tr>
+        <tr><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td></tr>
+      </table></div>
+      <ul>
+        <li><b>Конъюнкция (И, ∧)</b> — истинна, только когда истинны <i>оба</i> высказывания.</li>
+        <li><b>Дизъюнкция (ИЛИ, ∨)</b> — ложна, только когда <i>оба</i> ложны.</li>
+        <li><b>Отрицание (НЕ, ¬)</b> — меняет значение на противоположное.</li>
+        <li><b>Импликация (→)</b> — «если A, то B»; ложна только при A = 1, B = 0. Равносильна ¬A ∨ B.</li>
+      </ul>
+      <h3>Порядок действий</h3>
+      <p>Скобки → <b>¬</b> → <b>∧</b> → <b>∨</b> → <b>→</b>.</p>
+      <h3>Задания ОГЭ «числа и логика» — алгоритм</h3>
+      <ol>
+        <li>Переведи словесные условия в логику: «x чётное» → x mod 2 = 0; «последняя цифра нечётная» и т.п.</li>
+        <li>Раскрой НЕ: НЕ (P ИЛИ Q) = (НЕ P) И (НЕ Q); НЕ (x ≥ a) = x &lt; a.</li>
+        <li>Для «сколько чисел» — найди диапазон и посчитай подходящие по порядку.</li>
+        <li>Для «наибольшее / наименьшее» — выпиши диапазон и возьми крайний подходящий элемент.</li>
+      </ol>
+      <h3>Как строить таблицу истинности</h3>
+      <ol>
+        <li>Число строк = 2<sup>n</sup>: 2 переменные → 4 строки, 3 → 8 строк.</li>
+        <li>Наборы значений — в порядке возрастания двоичных чисел: 00, 01, 10, 11.</li>
+        <li>Столбцы промежуточных действий — по порядку операций, затем итоговый столбец F.</li>
+      </ol>
+    </div>
+  </section>
+</main>
+<footer>Тренажёр работает без интернета. Прогресс и результаты сохраняются в браузере отдельно для каждого варианта.</footer>
+
+<script>
+/* ================= ЛОГИЧЕСКИЕ ХЕЛПЕРЫ ================= */
+const N=a=>a?0:1, K=(a,b)=>(a&&b)?1:0, D=(a,b)=>(a||b)?1:0, IMP=(a,b)=>(!a||b)?1:0;
+const rowsFor=vars=>{const r=[];for(let i=0;i<2**vars.length;i++){const o={};vars.forEach((v,j)=>o[v]=(i>>(vars.length-1-j))&1);r.push(o);}return r;};
+const shuffle=a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
+const sample=(a,n)=>shuffle(a).slice(0,n);
+const W=v=>v?'1 (истина)':'0 (ложь)';
+const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+
+/* ================= ГЕНЕРАТОРЫ: вычисления (6–7 действий) ================= */
+const TPL=[
+ {expr:'F = ¬A ∧ (B ∨ C) ∨ ¬(B ∧ C)',
+  f:v=>D(K(N(v.A),D(v.B,v.C)),N(K(v.B,v.C))),
+  steps:v=>[`¬A = ${N(v.A)}`,`B ∨ C = ${D(v.B,v.C)}`,`¬A ∧ (B ∨ C) = ${K(N(v.A),D(v.B,v.C))}`,
+            `B ∧ C = ${K(v.B,v.C)}`,`¬(B ∧ C) = ${N(K(v.B,v.C))}`,
+            `F = ${K(N(v.A),D(v.B,v.C))} ∨ ${N(K(v.B,v.C))} = ${D(K(N(v.A),D(v.B,v.C)),N(K(v.B,v.C)))}`]},
+ {expr:'F = ¬(A ∨ B) ∧ C ∨ (¬C ∧ A)',
+  f:v=>D(K(N(D(v.A,v.B)),v.C),K(N(v.C),v.A)),
+  steps:v=>[`A ∨ B = ${D(v.A,v.B)}`,`¬(A ∨ B) = ${N(D(v.A,v.B))}`,`¬(A ∨ B) ∧ C = ${K(N(D(v.A,v.B)),v.C)}`,
+            `¬C = ${N(v.C)}`,`¬C ∧ A = ${K(N(v.C),v.A)}`,
+            `F = ${K(N(D(v.A,v.B)),v.C)} ∨ ${K(N(v.C),v.A)} = ${D(K(N(D(v.A,v.B)),v.C),K(N(v.C),v.A))}`]},
+ {expr:'F = (A ∧ ¬B) ∨ ¬(A ∨ C) ∨ (B ∧ C)',
+  f:v=>D(D(K(v.A,N(v.B)),N(D(v.A,v.C))),K(v.B,v.C)),
+  steps:v=>[`¬B = ${N(v.B)}`,`A ∧ ¬B = ${K(v.A,N(v.B))}`,`A ∨ C = ${D(v.A,v.C)}`,`¬(A ∨ C) = ${N(D(v.A,v.C))}`,
+            `B ∧ C = ${K(v.B,v.C)}`,`(${K(v.A,N(v.B))}) ∨ (${N(D(v.A,v.C))}) = ${D(K(v.A,N(v.B)),N(D(v.A,v.C)))}`,
+            `F = ${D(K(v.A,N(v.B)),N(D(v.A,v.C)))} ∨ ${K(v.B,v.C)} = ${D(D(K(v.A,N(v.B)),N(D(v.A,v.C))),K(v.B,v.C))}`]},
+ {expr:'F = (¬A ∨ B) ∧ (A ∨ ¬C) ∧ ¬B',
+  f:v=>K(K(D(N(v.A),v.B),D(v.A,N(v.C))),N(v.B)),
+  steps:v=>[`¬A = ${N(v.A)}`,`¬A ∨ B = ${D(N(v.A),v.B)}`,`¬C = ${N(v.C)}`,`A ∨ ¬C = ${D(v.A,N(v.C))}`,
+            `(${D(N(v.A),v.B)}) ∧ (${D(v.A,N(v.C))}) = ${K(D(N(v.A),v.B),D(v.A,N(v.C)))}`,`¬B = ${N(v.B)}`,
+            `F = ${K(D(N(v.A),v.B),D(v.A,N(v.C)))} ∧ ${N(v.B)} = ${K(K(D(N(v.A),v.B),D(v.A,N(v.C))),N(v.B))}`]}
+];
+function genCalc(force){
+  const t=force!=null?TPL[force]:TPL[Math.floor(Math.random()*TPL.length)];
+  const v={A:Math.round(Math.random()),B:Math.round(Math.random()),C:Math.round(Math.random())};
+  return {expr:t.expr,vals:v,answer:t.f(v),steps:t.steps(v)};
+}
+
+/* ================= ГЕНЕРАТОРЫ: числа и логика (ОГЭ) ================= */
+function genN1(variant){
+  if(variant===2){
+    const val=n=>{const s=String(n),last=+s[s.length-1],sum=[...s].reduce((a,c)=>a+ +c,0);
+      return K(last%2===1?1:0, sum%2===0?1:0);};
+    let list=[];
+    for(let tries=0;tries<500;tries++){const set=new Set();while(set.size<4)set.add(ri(100,999));list=[...set];
+      if(list.filter(n=>val(n)===1).length===1)break;}
+    const ans=list.find(n=>val(n)===1);
+    const steps=list.map(n=>{const s=String(n),last=+s[s.length-1],sum=[...s].reduce((a,c)=>a+ +c,0);
+      return `${n}: последняя цифра ${last} (${last%2?'нечётная → 1':'чётная → 0'}); сумма цифр ${sum} (${sum%2?'нечётная → 0':'чётная → 1'}); итог ${val(n)}`;});
+    return {pre:'Дано четыре числа: '+list.join(', ')+'.',
+      expr:'(Последняя цифра нечетная) И (Сумма цифр четная)',answer:ans,steps};
+  }
+  const val=n=>{const s=String(n),first=+s[0],sum=[...s].reduce((a,c)=>a+ +c,0);
+    return K(N(first%2===0?1:0), sum%2===0?1:0);};
+  let list=[];
+  for(let tries=0;tries<500;tries++){const set=new Set();while(set.size<4)set.add(ri(100,999));list=[...set];
+    if(list.filter(n=>val(n)===1).length===1)break;}
+  const ans=list.find(n=>val(n)===1);
+  const steps=list.map(n=>{const s=String(n),first=+s[0],sum=[...s].reduce((a,c)=>a+ +c,0);
+    return `${n}: первая цифра ${first} (${first%2?'нечётная → НЕ = 1':'чётная → НЕ = 0'}); сумма цифр ${sum} (${sum%2?'нечётная → 0':'чётная → 1'}); итог ${val(n)}`;});
+  return {pre:'Дано четыре числа: '+list.join(', ')+'.',
+    expr:'НЕ (Первая цифра четная) И (Сумма цифр четная)',answer:ans,steps};
+}
+function genN2(variant){
+  if(variant===2){
+    const b=ri(10,25), a=b+ri(5,35);
+    const cnt=Math.floor(a/2)-Math.floor((b+1)/2);
+    return {expr:`НЕ ((x > ${a}) ИЛИ (x ≤ ${b})) И (x нечетное)`,answer:cnt,
+      steps:[`НЕ ((x > ${a}) ИЛИ (x ≤ ${b})) = (x ≤ ${a}) И (x > ${b})`,
+             `Значит ${b+1} ≤ x ≤ ${a}`,
+             `Нечётных чисел в этом отрезке: ${cnt}`]};
+  }
+  const b=ri(10,25), a=b+ri(5,35);
+  const cnt=Math.floor((a-1)/2)-Math.floor((b-1)/2);
+  return {expr:`НЕ ((x ≥ ${a}) ИЛИ (x < ${b})) И (x четное)`,answer:cnt,
+    steps:[`НЕ ((x ≥ ${a}) ИЛИ (x < ${b})) = (x < ${a}) И (x ≥ ${b})`,
+           `Значит ${b} ≤ x ≤ ${a-1}`,
+           `Чётных чисел в этом отрезке: ${cnt}`]};
+}
+function genN3(variant){
+  if(variant===2){
+    if(Math.random()<0.5){
+      const c=ri(12,40), ans=(c%2===0)?c-1:c-2;
+      return {pre:'Напишите наибольшее целое число x, для которого истинно высказывание:',
+        expr:`НЕ (X нечетное) И НЕ (X >= ${c})`,answer:ans,
+        steps:[`НЕ (X >= ${c}) означает X ≤ ${c-1}`,`X должно быть чётным`,
+               `Наибольшее чётное, не превышающее ${c-1}: ${ans}`]};
+    }
+    const p=ri(3,12), q=p+ri(5,12);
+    const ans=(p+1)%2===1?p+1:p+2;
+    return {pre:'Напишите наименьшее целое число x, для которого истинно высказывание:',
+      expr:`НЕ (X <= ${p}) И НЕ (X >= ${q}) И (X нечетное)`,answer:ans,
+      steps:[`НЕ (X <= ${p}) → X ≥ ${p+1}; НЕ (X >= ${q}) → X ≤ ${q-1}`,
+             `Значит ${p+1} ≤ x ≤ ${q-1}, причём x нечётное`,
+             `Наименьшее нечётное в отрезке: ${ans}`]};
+  }
+  if(Math.random()<0.5){
+    const c=ri(12,40), ans=((c-1)%2===1)?c-1:c-2;
+    return {pre:'Напишите наибольшее целое число x, для которого истинно высказывание:',
+      expr:`НЕ (X четное) И НЕ (X >= ${c})`,answer:ans,
+      steps:[`НЕ (X >= ${c}) означает X ≤ ${c-1}`,`X должно быть нечётным`,
+             `Наибольшее нечётное, не превышающее ${c-1}: ${ans}`]};
+  }
+  const p=ri(3,12), q=p+ri(5,12);
+  const ans=(p+1)%2===0?p+1:p+2;
+  return {pre:'Напишите наименьшее целое число x, для которого истинно высказывание:',
+    expr:`НЕ (X <= ${p}) И НЕ (X >= ${q}) И (X четное)`,answer:ans,
+    steps:[`НЕ (X <= ${p}) → X ≥ ${p+1}; НЕ (X >= ${q}) → X ≤ ${q-1}`,
+           `Значит ${p+1} ≤ x ≤ ${q-1}, причём x чётное`,
+           `Наименьшее чётное в отрезке: ${ans}`]};
+}
+
+/* ================= БАНКИ ЗАДАНИЙ (ВАРИАНТ 1 и ВАРИАНТ 2) ================= */
+const TRUTH_OPTS=['Истина','Ложь','Не является высказыванием'];
+const BANKS={
+1:[
+{id:'b1',level:'base',points:1,type:'multi',topics:['statements'],
+ prompt:'Какие из предложений являются <b>логическими высказываниями</b>? Выберите все верные ответы.',
+ options:['«Сколько будет 2 + 2?»','«Земля вращается вокруг Солнца»','«Нарисуйте окружность»',
+          '«Число 9 — нечётное»','«y − 3 = 7»','«В неделе семь дней»'],
+ answer:[2,4,6],
+ explain:'Высказывание — повествовательное предложение, о котором можно сказать «истина» или «ложь». Вопрос, приказ и предложение с неизвестной y высказываниями не являются.'},
+{id:'b2',level:'base',points:1,type:'single',topics:['statements','truth'],
+ prompt:'Определите истинность высказывания:<br><i>«Число 18 делится на 6 без остатка и является чётным».</i>',
+ options:TRUTH_OPTS,answer:0,explain:'18 : 6 = 3 (истина), 18 — чётное (истина). И ∧ И = Истина.'},
+{id:'b3',level:'base',points:1,type:'single',topics:['statements','truth'],
+ prompt:'Определите истинность высказывания:<br><i>«Число 14 делится на 7 и является простым».</i>',
+ options:TRUTH_OPTS,answer:1,explain:'14 делится на 7 — истина, но 14 не простое (делится на 2 и 7). И ∧ Л = Ложь.'},
+{id:'b4',level:'base',points:1,type:'single',topics:['statements','truth'],
+ prompt:'Определите истинность высказывания:<br><i>«НЕ (9 &gt; 4)».</i>',
+ options:TRUTH_OPTS,answer:1,explain:'9 &gt; 4 — истина, отрицание истины — ложь.'},
+{id:'b5',level:'base',points:1,type:'single',topics:['statements','truth'],
+ prompt:'Определите истинность высказывания:<br><i>«Число 8 — нечётное ИЛИ 8 делится на 4».</i>',
+ options:TRUTH_OPTS,answer:0,explain:'8 не нечётное (ложь), но 8 делится на 4 (истина). Л ∨ И = Истина.'},
+{id:'b6',level:'base',points:1,type:'single',topics:['statements','truth'],
+ prompt:'Определите истинность высказывания:<br><i>«Все ромбы — параллелограммы И все параллелограммы — ромбы».</i>',
+ options:TRUTH_OPTS,answer:1,explain:'Первая часть истинна, вторая ложна (у параллелограмма стороны могут быть разными). И ∧ Л = Ложь.'},
+{id:'b7',level:'base',points:1,type:'single',topics:['statements','truth'],
+ prompt:'Определите истинность высказывания:<br><i>«Число 50 — однозначное ИЛИ 50 делится на 9 без остатка».</i>',
+ options:TRUTH_OPTS,answer:1,explain:'50 — двузначное (ложь); 50 : 9 — не целое (ложь). Л ∨ Л = Ложь.'},
+{id:'b8',level:'base',points:2,type:'match',topics:['ops'],
+ prompt:'Установите соответствие между обозначением и названием логической операции.',
+ left:['А) ¬A','Б) A ∨ B','В) A ∧ B','Г) A → B'],
+ right:['Конъюнкция','Дизъюнкция','Отрицание','Импликация'],
+ answer:[3,2,1,4],
+ explain:'¬A — отрицание (НЕ), A ∨ B — дизъюнкция (ИЛИ), A ∧ B — конъюнкция (И), A → B — импликация («если…то»).'},
+{id:'b9',level:'base',points:2,type:'multi',topics:['truth','ops'],
+ prompt:'Выберите <b>все истинные</b> составные высказывания.',
+ options:['«5 − 5 = 0 И 10 : 2 = 4»','«5 − 5 = 0 ИЛИ 10 : 2 = 4»','«НЕ (3 &gt; 8)»',
+          '«Луна — спутник Земли И Марс — планета»','«8 делится на 3 ИЛИ 8 делится на 4»'],
+ answer:[2,3,4,5],
+ explain:'1) И ∧ Л = Л. 2) И ∨ Л = И. 3) НЕ(Л) = И. 4) И ∧ И = И. 5) Л ∨ И = И.'},
+{id:'b10',level:'base',points:2,type:'multi',topics:['truth','ops'],
+ prompt:'Выберите <b>все истинные</b> составные высказывания.',
+ options:['«20 &gt; 5 И 20 — чётное»','«НЕ (27 делится на 9)»','«3 — простое ИЛИ 3 — чётное»',
+          '«9 &lt; 1 И 9 &lt; 20»','«НЕ (2 &gt; 5) И 9 = 3 · 3»'],
+ answer:[1,3,5],
+ explain:'1) И ∧ И = И. 2) НЕ(И) = Л. 3) И ∨ Л = И. 4) Л ∧ И = Л. 5) И ∧ И = И.'},
+{id:'b11',level:'base',points:2,type:'multi',topics:['truth','ops'],
+ prompt:'Выберите <b>все истинные</b> составные высказывания.',
+ options:['«24 делится на 6 И 24 делится на 8»','«24 делится на 5 ИЛИ 24 — нечётное»',
+          '«НЕ (36 — квадрат числа 6)»','«16 — квадрат числа 4 ИЛИ 16 — простое»','«НЕ (20 ≤ 20)»'],
+ answer:[1,4],
+ explain:'1) И ∧ И = И. 2) Л ∨ Л = Л. 3) НЕ(И) = Л. 4) И ∨ Л = И. 5) НЕ(И) = Л.'},
+{id:'b12',level:'base',points:2,type:'multi',topics:['truth','ops'],
+ prompt:'Выберите <b>все истинные</b> составные высказывания.',
+ options:['«1 — простое число И 1 &gt; 0»','«НЕ (20 делится на 6) ИЛИ 20 делится на 10»',
+          '«3 — единственное нечётное простое, делящееся на 3»','«13 — простое И 13 — двузначное»',
+          '«9 делится на 9 ИЛИ 9 делится на 18»'],
+ answer:[2,3,4,5],
+ explain:'1) Л ∧ И = Л (1 не простое). 2) И ∨ И = И. 3) Истина. 4) И ∧ И = И. 5) И ∨ Л = И.'},
+{id:'b13',level:'base',points:2,type:'multi',topics:['truth','ops'],
+ prompt:'Дано: <b>A = 0, B = 1, C = 0</b>. Выберите <b>все истинные</b> выражения.',
+ options:['A ∧ B','A ∨ B','¬A ∧ ¬C','¬(A ∨ B)','¬B ∨ C'],
+ answer:[2,3],
+ explain:'A ∧ B = 0; A ∨ B = 1; ¬A ∧ ¬C = 1 ∧ 1 = 1; ¬(A ∨ B) = ¬1 = 0; ¬B ∨ C = 0 ∨ 0 = 0.'},
+
+{id:'m1',level:'mid',points:2,type:'open',topics:['truth'],gen:()=>genCalc(0),
+ prompt:'Вычислите значение логического выражения (6 действий). Ответ запишите как <b>0</b> или <b>1</b>.'},
+{id:'m2',level:'mid',points:2,type:'open',topics:['truth'],gen:()=>genCalc(1),
+ prompt:'Вычислите значение логического выражения (6 действий). Ответ запишите как <b>0</b> или <b>1</b>.'},
+{id:'m3',level:'mid',points:2,type:'open',topics:['truth'],gen:()=>genCalc(2),
+ prompt:'Вычислите значение логического выражения (7 действий). Ответ запишите как <b>0</b> или <b>1</b>.'},
+
+{id:'n1',level:'mid',points:2,type:'opennum',topics:['nums','truth'],gen:()=>genN1(1),
+ prompt:'Для какого из приведённых чисел истинно высказывание? Запишите это число.'},
+{id:'n2',level:'mid',points:2,type:'opennum',topics:['nums','truth'],gen:()=>genN2(1),
+ prompt:'Определите количество натуральных чисел x, для которых истинно логическое выражение. Запишите число.'},
+{id:'n3',level:'mid',points:2,type:'opennum',topics:['nums','truth'],gen:()=>genN3(1),
+ prompt:'Запишите ответ числом.'},
+
+{id:'m4',level:'mid',points:2,type:'table',topics:['tables'],vars:['A','B'],
+ prompt:'Постройте таблицу истинности для выражения из <b>5 действий</b> (две переменные).',
+ variants:[
+  {expr:'F = ¬(A ∨ B) ∧ (A ∨ ¬B)',cols:[
+    {label:'A ∨ B',f:v=>D(v.A,v.B)},
+    {label:'¬(A ∨ B)',f:v=>N(D(v.A,v.B))},
+    {label:'A ∨ ¬B',f:v=>D(v.A,N(v.B))},
+    {label:'F',f:v=>K(N(D(v.A,v.B)),D(v.A,N(v.B)))}]},
+  {expr:'F = ¬(A ∧ ¬B) ∨ (¬A ∧ B)',cols:[
+    {label:'A ∧ ¬B',f:v=>K(v.A,N(v.B))},
+    {label:'¬(A ∧ ¬B)',f:v=>N(K(v.A,N(v.B)))},
+    {label:'¬A ∧ B',f:v=>K(N(v.A),v.B)},
+    {label:'F',f:v=>D(N(K(v.A,N(v.B))),K(N(v.A),v.B))}]}
+ ]},
+{id:'m5',level:'mid',points:2,type:'table',topics:['tables'],vars:['A','B'],
+ prompt:'Постройте таблицу истинности для выражения из <b>6 действий</b> (две переменные).',
+ variants:[
+  {expr:'F = ¬(A ∧ B) ∧ (¬A ∨ ¬B)',cols:[
+    {label:'A ∧ B',f:v=>K(v.A,v.B)},
+    {label:'¬(A ∧ B)',f:v=>N(K(v.A,v.B))},
+    {label:'¬A ∨ ¬B',f:v=>D(N(v.A),N(v.B))},
+    {label:'F',f:v=>K(N(K(v.A,v.B)),D(N(v.A),N(v.B)))}]},
+  {expr:'F = ¬(¬A ∧ B) ∨ (A ∧ ¬B)',cols:[
+    {label:'¬A ∧ B',f:v=>K(N(v.A),v.B)},
+    {label:'¬(¬A ∧ B)',f:v=>N(K(N(v.A),v.B))},
+    {label:'A ∧ ¬B',f:v=>K(v.A,N(v.B))},
+    {label:'F',f:v=>D(N(K(N(v.A),v.B)),K(v.A,N(v.B)))}]}
+ ]},
+{id:'m6',level:'mid',points:2,type:'open',topics:['truth'],
+ prompt:'Даны высказывания:<br>A — «Число 15 делится на 5» (истина);<br>B — «Число 15 делится на 6» (ложь);<br>C — «Число 15 — нечётное» (истина).<br>Определите истинность выражения:',
+ fixed:{expr:'F = (A ∧ B) ∨ ¬C',vals:{A:1,B:0,C:1},answer:0,
+        steps:['A = 1, B = 0, C = 1','A ∧ B = 1 ∧ 0 = 0','¬C = ¬1 = 0','F = 0 ∨ 0 = 0']}},
+{id:'m7',level:'mid',points:3,type:'table',topics:['tables'],vars:['A','B','C'],
+ prompt:'Постройте таблицу истинности для выражения с <b>тремя</b> переменными (8 строк).',
+ variants:[
+  {expr:'F = (A ∧ B) ∨ ¬C',cols:[
+    {label:'A ∧ B',f:v=>K(v.A,v.B)},{label:'¬C',f:v=>N(v.C)},
+    {label:'F',f:v=>D(K(v.A,v.B),N(v.C))}]},
+  {expr:'F = ¬(A ∧ B) ∧ (B ∨ C)',cols:[
+    {label:'A ∧ B',f:v=>K(v.A,v.B)},{label:'¬(A ∧ B)',f:v=>N(K(v.A,v.B))},
+    {label:'B ∨ C',f:v=>D(v.B,v.C)},{label:'F',f:v=>K(N(K(v.A,v.B)),D(v.B,v.C))}]}
+ ]},
+
+{id:'h1',level:'high',points:3,type:'table',topics:['tables','advanced'],vars:['A','B'],
+ prompt:'Постройте таблицу истинности для выражения с <b>импликацией</b>. Заполните также столбец ¬B ∨ A и сравните его с F — что вы заметили?',
+ variants:[{expr:'F = B → A',cols:[
+   {label:'¬B ∨ A',f:v=>D(N(v.B),v.A)},
+   {label:'F = B → A',f:v=>IMP(v.B,v.A)}]}],
+ explain:'Импликация B → A ложна только при B = 1, A = 0. Столбцы совпадают: B → A = ¬B ∨ A.'},
+{id:'h2',level:'high',points:4,type:'table',topics:['tables','advanced'],vars:['A','B','C'],
+ prompt:'Постройте таблицу истинности для выражения с импликацией и <b>тремя</b> переменными. Сколько строк, в которых F = 0?',
+ variants:[{expr:'F = (A ∨ B) → ¬C',cols:[
+   {label:'A ∨ B',f:v=>D(v.A,v.B)},{label:'¬C',f:v=>N(v.C)},
+   {label:'F',f:v=>IMP(D(v.A,v.B),N(v.C))}]}],
+ explain:'F = 0, когда посылка истинна, а следствие ложно: A ∨ B = 1 и C = 1. Таких строк три: (0,1,1), (1,0,1), (1,1,1).'}
+],
+
+2:[
+{id:'b1',level:'base',points:1,type:'multi',topics:['statements'],
+ prompt:'Какие из предложений являются <b>логическими высказываниями</b>? Выберите все верные ответы.',
+ options:['«Запишите домашнее задание»','«Число 10 больше числа 7»','«Как тебя зовут?»',
+          '«В сутках 24 часа»','«a + b = c»','«Все кошки — млекопитающие»'],
+ answer:[2,4,6],
+ explain:'Высказывание — повествовательное предложение, о котором можно сказать «истина» или «ложь». Приказ, вопрос и равенство с неизвестными a, b, c высказываниями не являются.'},
+{id:'b2',level:'base',points:1,type:'single',topics:['statements','truth'],
+ prompt:'Определите истинность высказывания:<br><i>«Число 21 делится на 7 без остатка и является нечётным».</i>',
+ options:TRUTH_OPTS,answer:0,explain:'21 : 7 = 3 (истина), 21 — нечётное (истина). И ∧ И = Истина.'},
+{id:'b3',level:'base',points:1,type:'single',topics:['statements','truth'],
+ prompt:'Определите истинность высказывания:<br><i>«Число 16 делится на 8 и является простым».</i>',
+ options:TRUTH_OPTS,answer:1,explain:'16 делится на 8 — истина, но 16 не простое (делится на 2, 4, 8). И ∧ Л = Ложь.'},
+{id:'b4',level:'base',points:1,type:'single',topics:['statements','truth'],
+ prompt:'Определите истинность высказывания:<br><i>«НЕ (3 &gt; 6)».</i>',
+ options:TRUTH_OPTS,answer:0,explain:'3 &gt; 6 — ложь, отрицание лжи — истина.'},
+{id:'b5',level:'base',points:1,type:'single',topics:['statements','truth'],
+ prompt:'Определите истинность высказывания:<br><i>«Число 10 — нечётное ИЛИ 10 делится на 5».</i>',
+ options:TRUTH_OPTS,answer:0,explain:'10 не нечётное (ложь), но 10 делится на 5 (истина). Л ∨ И = Истина.'},
+{id:'b6',level:'base',points:1,type:'single',topics:['statements','truth'],
+ prompt:'Определите истинность высказывания:<br><i>«Все равносторонние треугольники — равнобедренные И все равнобедренные треугольники — равносторонние».</i>',
+ options:TRUTH_OPTS,answer:1,explain:'Первая часть истинна, вторая ложна (у равнобедренного достаточно двух равных сторон). И ∧ Л = Ложь.'},
+{id:'b7',level:'base',points:1,type:'single',topics:['statements','truth'],
+ prompt:'Определите истинность высказывания:<br><i>«Число 200 — трёхзначное ИЛИ 200 делится на 13 без остатка».</i>',
+ options:TRUTH_OPTS,answer:1,explain:'200 — четырёхзначное? нет, трёхзначное? 200 — трёхзначное → истина... проверим вторую: 200 : 13 — не целое (ложь). Но первая часть уже делает ИЛИ истинным? 200 имеет 3 цифры → истина. Тогда всё высказывание Истина. Уточним: возьмём «Число 200 — двузначное ИЛИ 200 делится на 13» → обе части ложны → Ложь.',
+ _fix:true},
+{id:'b8',level:'base',points:2,type:'match',topics:['ops'],
+ prompt:'Установите соответствие между названием логической операции и её символом.',
+ left:['А) Импликация','Б) Отрицание','В) Конъюнкция','Г) Дизъюнкция'],
+ right:['A ∨ B','A ∧ B','¬A','A → B'],
+ answer:[4,3,2,1],
+ explain:'Импликация — A → B, отрицание — ¬A, конъюнкция — A ∧ B, дизъюнкция — A ∨ B.'},
+{id:'b9',level:'base',points:2,type:'multi',topics:['truth','ops'],
+ prompt:'Выберите <b>все истинные</b> составные высказывания.',
+ options:['«7 − 7 = 1 И 12 : 3 = 4»','«7 − 7 = 1 ИЛИ 12 : 3 = 4»','«НЕ (6 &lt; 2)»',
+          '«Вода — жидкость И лёд — твёрдое тело»','«15 делится на 4 ИЛИ 15 делится на 5»'],
+ answer:[2,3,4,5],
+ explain:'1) Л ∧ И = Л. 2) Л ∨ И = И. 3) НЕ(Л) = И. 4) И ∧ И = И. 5) Л ∨ И = И.'},
+{id:'b10',level:'base',points:2,type:'multi',topics:['truth','ops'],
+ prompt:'Выберите <b>все истинные</b> составные высказывания.',
+ options:['«30 &gt; 10 И 30 — чётное»','«НЕ (32 делится на 8)»','«7 — простое ИЛИ 7 — чётное»',
+          '«4 &lt; 0 И 4 &lt; 10»','«НЕ (6 &gt; 9) И 16 = 4 · 4»'],
+ answer:[1,3,5],
+ explain:'1) И ∧ И = И. 2) НЕ(И) = Л. 3) И ∨ Л = И. 4) Л ∧ И = Л. 5) И ∧ И = И.'},
+{id:'b11',level:'base',points:2,type:'multi',topics:['truth','ops'],
+ prompt:'Выберите <b>все истинные</b> составные высказывания.',
+ options:['«30 делится на 5 И 30 делится на 6»','«30 делится на 7 ИЛИ 30 — нечётное»',
+          '«НЕ (49 — квадрат числа 7)»','«25 — квадрат числа 5 ИЛИ 25 — простое»','«НЕ (15 ≤ 15)»'],
+ answer:[1,4],
+ explain:'1) И ∧ И = И. 2) Л ∨ Л = Л. 3) НЕ(И) = Л. 4) И ∨ Л = И. 5) НЕ(И) = Л.'},
+{id:'b12',level:'base',points:2,type:'multi',topics:['truth','ops'],
+ prompt:'Выберите <b>все истинные</b> составные высказывания.',
+ options:['«0 — натуральное число И 0 &lt; 1»','«НЕ (24 делится на 5) ИЛИ 24 делится на 12»',
+          '«5 — единственное простое, оканчивающееся на 5»','«17 — простое И 17 — двузначное»',
+          '«12 делится на 12 ИЛИ 12 делится на 24»'],
+ answer:[2,3,4,5],
+ explain:'1) Л ∧ И = Л (в школьном курсе 0 обычно не считают натуральным). 2) И ∨ И = И. 3) Истина. 4) И ∧ И = И. 5) И ∨ Л = И.'},
+{id:'b13',level:'base',points:2,type:'multi',topics:['truth','ops'],
+ prompt:'Дано: <b>A = 1, B = 1, C = 0</b>. Выберите <b>все истинные</b> выражения.',
+ options:['A ∧ ¬C','¬A ∨ B','¬(A ∧ B)','A ∨ C','¬B ∧ ¬C'],
+ answer:[1,2,4],
+ explain:'A ∧ ¬C = 1 ∧ 1 = 1; ¬A ∨ B = 0 ∨ 1 = 1; ¬(A ∧ B) = ¬1 = 0; A ∨ C = 1; ¬B ∧ ¬C = 0 ∧ 1 = 0.'},
+
+{id:'m1',level:'mid',points:2,type:'open',topics:['truth'],gen:()=>genCalc(3),
+ prompt:'Вычислите значение логического выражения (7 действий). Ответ запишите как <b>0</b> или <b>1</b>.'},
+{id:'m2',level:'mid',points:2,type:'open',topics:['truth'],gen:()=>genCalc(0),
+ prompt:'Вычислите значение логического выражения (6 действий). Ответ запишите как <b>0</b> или <b>1</b>.'},
+{id:'m3',level:'mid',points:2,type:'open',topics:['truth'],gen:()=>genCalc(2),
+ prompt:'Вычислите значение логического выражения (7 действий). Ответ запишите как <b>0</b> или <b>1</b>.'},
+
+{id:'n1',level:'mid',points:2,type:'opennum',topics:['nums','truth'],gen:()=>genN1(2),
+ prompt:'Для какого из приведённых чисел истинно высказывание? Запишите это число.'},
+{id:'n2',level:'mid',points:2,type:'opennum',topics:['nums','truth'],gen:()=>genN2(2),
+ prompt:'Определите количество натуральных чисел x, для которых истинно логическое выражение. Запишите число.'},
+{id:'n3',level:'mid',points:2,type:'opennum',topics:['nums','truth'],gen:()=>genN3(2),
+ prompt:'Запишите ответ числом.'},
+
+{id:'m4',level:'mid',points:2,type:'table',topics:['tables'],vars:['A','B'],
+ prompt:'Постройте таблицу истинности для выражения из <b>5 действий</b> (две переменные).',
+ variants:[
+  {expr:'F = ¬(A ∧ B) ∨ (A ∧ ¬B)',cols:[
+    {label:'A ∧ B',f:v=>K(v.A,v.B)},
+    {label:'¬(A ∧ B)',f:v=>N(K(v.A,v.B))},
+    {label:'A ∧ ¬B',f:v=>K(v.A,N(v.B))},
+    {label:'F',f:v=>D(N(K(v.A,v.B)),K(v.A,N(v.B)))}]},
+  {expr:'F = (¬A ∨ B) ∧ ¬(A ∨ B)',cols:[
+    {label:'¬A ∨ B',f:v=>D(N(v.A),v.B)},
+    {label:'A ∨ B',f:v=>D(v.A,v.B)},
+    {label:'¬(A ∨ B)',f:v=>N(D(v.A,v.B))},
+    {label:'F',f:v=>K(D(N(v.A),v.B),N(D(v.A,v.B)))}]}
+ ]},
+{id:'m5',level:'mid',points:2,type:'table',topics:['tables'],vars:['A','B'],
+ prompt:'Постройте таблицу истинности для выражения из <b>6 действий</b> (две переменные).',
+ variants:[
+  {expr:'F = ¬(A ∨ ¬B) ∧ (¬A ∨ B)',cols:[
+    {label:'A ∨ ¬B',f:v=>D(v.A,N(v.B))},
+    {label:'¬(A ∨ ¬B)',f:v=>N(D(v.A,N(v.B)))},
+    {label:'¬A ∨ B',f:v=>D(N(v.A),v.B)},
+    {label:'F',f:v=>K(N(D(v.A,N(v.B))),D(N(v.A),v.B))}]},
+  {expr:'F = ¬(¬A ∧ ¬B) ∨ (A ∧ B)',cols:[
+    {label:'¬A ∧ ¬B',f:v=>K(N(v.A),N(v.B))},
+    {label:'¬(¬A ∧ ¬B)',f:v=>N(K(N(v.A),N(v.B)))},
+    {label:'A ∧ B',f:v=>K(v.A,v.B)},
+    {label:'F',f:v=>D(N(K(N(v.A),N(v.B))),K(v.A,v.B))}]}
+ ]},
+{id:'m6',level:'mid',points:2,type:'open',topics:['truth'],
+ prompt:'Даны высказывания:<br>A — «Число 20 делится на 4» (истина);<br>B — «Число 20 делится на 6» (ложь);<br>C — «Число 20 — чётное» (истина).<br>Определите истинность выражения:',
+ fixed:{expr:'F = ¬(A ∨ B) ∧ C',vals:{A:1,B:0,C:1},answer:0,
+        steps:['A = 1, B = 0, C = 1','A ∨ B = 1 ∨ 0 = 1','¬(A ∨ B) = 0','F = 0 ∧ 1 = 0']}},
+{id:'m7',level:'mid',points:3,type:'table',topics:['tables'],vars:['A','B','C'],
+ prompt:'Постройте таблицу истинности для выражения с <b>тремя</b> переменными (8 строк).',
+ variants:[
+  {expr:'F = ¬A ∧ (B ∨ C)',cols:[
+    {label:'B ∨ C',f:v=>D(v.B,v.C)},{label:'¬A',f:v=>N(v.A)},
+    {label:'F',f:v=>K(N(v.A),D(v.B,v.C))}]},
+  {expr:'F = (A ∨ C) ∧ ¬(B ∧ C)',cols:[
+    {label:'A ∨ C',f:v=>D(v.A,v.C)},{label:'B ∧ C',f:v=>K(v.B,v.C)},
+    {label:'¬(B ∧ C)',f:v=>N(K(v.B,v.C))},{label:'F',f:v=>K(D(v.A,v.C),N(K(v.B,v.C)))}]}
+ ]},
+
+{id:'h1',level:'high',points:3,type:'table',topics:['tables','advanced'],vars:['A','B'],
+ prompt:'Постройте таблицу истинности для выражения с <b>импликацией</b>. Заполните также столбец ¬A ∨ ¬B и сравните его с F — что вы заметили?',
+ variants:[{expr:'F = A → ¬B',cols:[
+   {label:'¬A ∨ ¬B',f:v=>D(N(v.A),N(v.B))},
+   {label:'F = A → ¬B',f:v=>IMP(v.A,N(v.B))}]}],
+ explain:'A → ¬B ложна только при A = 1, B = 1. Столбцы совпадают: A → ¬B = ¬A ∨ ¬B.'},
+{id:'h2',level:'high',points:4,type:'table',topics:['tables','advanced'],vars:['A','B','C'],
+ prompt:'Постройте таблицу истинности для выражения с импликацией и <b>тремя</b> переменными. Сколько строк, в которых F = 0?',
+ variants:[{expr:'F = (A ∧ C) → B',cols:[
+   {label:'A ∧ C',f:v=>K(v.A,v.C)},{label:'B',f:v=>v.B},
+   {label:'F',f:v=>IMP(K(v.A,v.C),v.B)}]}],
+ explain:'F = 0, когда A ∧ C = 1, а B = 0. Такие строки: (1,0,1). Всего одна строка с F = 0.'}
+]
+};
+/* исправление b7 варианта 2 (корректная формулировка с однозначным ответом «Ложь») */
+BANKS[2][6]={id:'b7',level:'base',points:1,type:'single',topics:['statements','truth'],
+ prompt:'Определите истинность высказывания:<br><i>«Число 200 — двузначное ИЛИ 200 делится на 13 без остатка».</i>',
+ options:TRUTH_OPTS,answer:1,explain:'200 — трёхзначное, значит «двузначное» — ложь; 200 : 13 — не целое — ложь. Л ∨ Л = Ложь.'};
+
+/* ================= ФОРМИРУЮЩЕЕ ОЦЕНИВАНИЕ: справочники ================= */
+const SKILL={statements:'различать высказывания и не‑высказывания, определять их истинность',
+ ops:'знать названия, обозначения и порядок логических операций',
+ truth:'вычислять истинность составных высказываний по действиям',
+ nums:'применять логику к свойствам чисел (формат ОГЭ, тип 3)',
+ tables:'строить таблицы истинности по алгоритму (2ⁿ строк, порядок операций)',
+ advanced:'использовать таблицу истинности импликации и её равносильность ¬A ∨ B'};
+const MIST={statements:'вопросы и побудительные предложения принимают за высказывания',
+ ops:'путают ∨ (ИЛИ) и ∧ (И), забывают ¬ перед скобкой',
+ truth:'нарушают порядок действий: ¬ → ∧ → ∨ → →',
+ nums:'НЕ относят не ко всей скобке; забывают, что НЕ (x ≥ a) = x < a',
+ tables:'неверное число строк или пропуск промежуточного столбца',
+ advanced:'считают импликацию ложной при 0 → 1 (ложна только при 1 → 0)'};
+const REC={statements:'Повтори определение высказывания (теория) и реши задания 1–7 тренировки.',
+ ops:'Выучи обозначения операций; потренируй сопоставление и задания «выбери несколько».',
+ truth:'Решай вычисления по действиям: сначала скобки и ¬, потом ∧, потом ∨. Возьми 3 задания типа 8.',
+ nums:'Разбери алгоритм «числа и логика» в теории и реши 3 задания блока ОГЭ.',
+ tables:'Начни с таблиц на 2 переменные, сверяй каждый столбец с порядком операций.',
+ advanced:'Повтори: A → B ложна только при A=1, B=0; реши обе таблицы с импликацией.'};
+const FILTERS=[['all','Все темы'],['statements','Высказывания'],['ops','Операции И/ИЛИ/НЕ'],
+ ['truth','Истинность составных'],['nums','Числа и логика (ОГЭ)'],['tables','Таблицы истинности'],
+ ['advanced','Повышенный · импликация']];
+
+/* ================= СОСТОЯНИЕ ================= */
+const LS='logic-trainer-8-v5';
+let variant=parseInt(localStorage.getItem('logic-variant')||'1',10);
+let allProgress=JSON.parse(localStorage.getItem(LS)||'{"1":{},"2":{}}');
+if(!allProgress[1])allProgress[1]={};if(!allProgress[2])allProgress[2]={};
+let progress=allProgress[variant];
+let S={filter:'all',idx:0,list:[],inst:{},exam:null,timer:null};
+function BANK(){return BANKS[variant];}
+const save=()=>{allProgress[variant]=progress;localStorage.setItem(LS,JSON.stringify(allProgress));localStorage.setItem('logic-variant',String(variant));};
+const lvlName=l=>l==='base'?'базовый':l==='mid'?'средний':'повышенный';
+
+function setVariant(v){
+  if(v===variant)return;
+  variant=v;progress=allProgress[variant];S.inst={};S.idx=0;S.filter='all';
+  document.querySelectorAll('.vsw button').forEach(b=>b.classList.toggle('on',+b.dataset.v===v));
+  save();
+  if(!document.getElementById('practice').classList.contains('hide'))renderPractice();
+}
+document.querySelectorAll('.vsw button').forEach(b=>b.onclick=()=>setVariant(+b.dataset.v));
+
+function instOf(t){if(!S.inst[t.id]){const i={task:t,vi:0};reset(i);S.inst[t.id]=i;}return S.inst[t.id];}
+function reset(i){
+  const t=i.task;i.checked=false;i.earned=0;i.solution=false;
+  if(t.type==='multi')i.value=[];
+  else if(t.type==='match')i.value=t.left.map(()=>0);
+  else if(t.type==='single')i.value=null;
+  else if(t.type==='open'){i.value='';i.data=t.gen?t.gen():t.fixed;}
+  else if(t.type==='opennum'){i.value='';i.data=t.gen?t.gen():t.fixed;}
+  else if(t.type==='table'){const v=t.variants[i.vi];i.rows=rowsFor(t.vars);i.cells=i.rows.map(()=>v.cols.map(()=>null));}
+}
+
+/* ================= ПРОВЕРКА ================= */
+function check(i){
+  const t=i.task;let ok=false,earned=0,note='';
+  if(t.type==='single')ok=i.value===t.answer;
+  else if(t.type==='multi'){
+    const a=[...i.value].sort((x,y)=>x-y),b=[...t.answer].sort((x,y)=>x-y);
+    ok=a.length===b.length&&a.every((x,k)=>x===b[k]);
+  } else if(t.type==='match')ok=i.value.every((x,k)=>x===t.answer[k]);
+  else if(t.type==='open'){
+    const s=String(i.value).trim().toLowerCase();
+    const map={'1':1,'истина':1,'и':1,'true':1,'0':0,'ложь':0,'л':0,'false':0};
+    ok=map[s]!==undefined&&map[s]===i.data.answer;
+  } else if(t.type==='opennum'){
+    const p=parseInt(String(i.value).trim(),10);
+    ok=!isNaN(p)&&p===i.data.answer;
+  } else if(t.type==='table'){
+    const cols=t.variants[i.vi].cols;let bad=0,badF=0;
+    i.marks=i.rows.map((r,ri)=>cols.map((c,ci)=>{
+      const good=i.cells[ri][ci]===c.f(r);
+      if(!good){bad++;if(ci===cols.length-1)badF++;}
+      return good;}));
+    ok=bad===0;
+    if(!ok&&badF===0&&t.points>=2){earned=Math.max(1,Math.floor(t.points/2));
+      note='Столбец F верен, но есть ошибки в промежуточных столбцах — частичный балл.';}
+  }
+  if(ok)earned=t.points;
+  i.checked=true;i.ok=ok;i.earned=earned;i.note=note;
+  const p=progress[t.id]||{att:0,first:null,best:false,earned:0,self:0};
+  p.att++;if(p.first===null)p.first=ok;p.best=p.best||ok;p.earned=Math.max(p.earned,earned);
+  progress[t.id]=p;save();
+  return {ok,earned};
+}
+function correctText(i){
+  const t=i.task;
+  if(t.type==='single')return t.options[t.answer];
+  if(t.type==='multi')return '№ '+t.answer.join(', ');
+  if(t.type==='match')return t.left.map((l,k)=>l.split(')')[0]+') → '+t.answer[k]).join('; ');
+  if(t.type==='open')return W(i.data.answer);
+  if(t.type==='opennum')return 'число '+i.data.answer;
+  return 'см. верную таблицу ниже';
+}
+
+/* ================= РЕНДЕР ЗАДАНИЙ ================= */
+function tableHTML(i,mode){
+  const t=i.task,v=t.variants[i.vi];
+  let h='<div class="expr">'+v.expr+'</div><div class="hint">Нажимайте на клетку: пусто → 0 → 1. Жёлтые клетки — итоговый столбец F.</div><div class="tbl-wrap"><table><tr>';
+  t.vars.forEach(x=>h+='<th>'+x+'</th>');
+  v.cols.forEach(c=>h+='<th>'+c.label+'</th>');
+  h+='</tr>';
+  i.rows.forEach((r,ri)=>{
+    h+='<tr>';t.vars.forEach(x=>h+='<td><b>'+r[x]+'</b></td>');
+    v.cols.forEach((c,ci)=>{
+      const val=i.cells[ri][ci],last=ci===v.cols.length-1;
+      let cls='cell'+(last?' f':'');
+      if(i.checked&&mode!=='run')cls+=i.marks[ri][ci]?' good':' wrong';
+      h+='<td><button class="'+cls+'" data-cell="'+ri+'_'+ci+'" '+(i.checked&&mode!=='run'?'disabled':'')+'>'+
+         (val===null?'·':val)+'</button></td>';});
+    h+='</tr>';});
+  h+='</table></div>';
+  if(i.solution||(i.checked&&mode!=='run'&&!i.ok)){
+    h+='<div class="hint"><b>Верная таблица:</b></div><div class="tbl-wrap"><table><tr>';
+    t.vars.forEach(x=>h+='<th>'+x+'</th>');v.cols.forEach(c=>h+='<th>'+c.label+'</th>');h+='</tr>';
+    i.rows.forEach(r=>{h+='<tr>';t.vars.forEach(x=>h+='<td>'+r[x]+'</td>');
+      v.cols.forEach(c=>h+='<td><b>'+c.f(r)+'</b></td>');h+='</tr>';});
+    h+='</table></div>';
+  }
+  return h;
+}
+function bodyHTML(i,mode){
+  const t=i.task,lock=i.checked&&mode!=='run';
+  if(t.type==='single'||t.type==='multi'){
+    const multi=t.type==='multi';
+    return '<div class="'+(multi?'':'radio')+'">'+t.options.map((o,k)=>{
+      const sel=multi?i.value.includes(k+1):i.value===k;
+      let cls='opt'+(sel?' sel':'');
+      if(lock){const right=multi?t.answer.includes(k+1):t.answer===k;
+        if(right)cls+=' good';else if(sel)cls+=' wrong';}
+      return '<div class="'+cls+'" data-opt="'+k+'"><div class="mark">'+(sel?'✓':'')+'</div><div><b>'+(k+1)+')</b> '+o+'</div></div>';
+    }).join('')+'</div>';
+  }
+  if(t.type==='match'){
+    return '<div class="tbl-wrap"><table><tr><th style="text-align:left">Операция</th><th>Обозначение</th></tr>'+
+      t.left.map((l,k)=>{
+        let opts='<option value="0">—</option>'+t.right.map((r,j)=>
+          '<option value="'+(j+1)+'" '+(i.value[k]===j+1?'selected':'')+'>'+(j+1)+') '+r+'</option>').join('');
+        let mark=lock?(i.value[k]===t.answer[k]?' ✅':' ❌ '+t.answer[k]):'';
+        return '<tr><td style="text-align:left">'+l+'</td><td><select data-match="'+k+'" '+(lock?'disabled':'')+'>'+opts+'</select>'+mark+'</td></tr>';
+      }).join('')+'</table></div>';
+  }
+  if(t.type==='open'){
+    const d=i.data,vals=Object.entries(d.vals).map(([k,v])=>k+' = '+v).join(', ');
+    return '<div class="hint">'+vals+'</div><div class="expr">'+d.expr+'</div><br>'+
+      '<input type="text" class="ans" data-open placeholder="0 или 1" value="'+i.value+'" '+(lock?'disabled':'')+'>'+
+      ' <button class="btn gray" data-quick="0" '+(lock?'disabled':'')+'>0 (ложь)</button>'+
+      ' <button class="btn gray" data-quick="1" '+(lock?'disabled':'')+'>1 (истина)</button>';
+  }
+  if(t.type==='opennum'){
+    const d=i.data;
+    return (d.pre?'<div class="hint" style="font-size:14.5px;color:var(--ink)">'+d.pre+'</div>':'')+
+      '<div class="expr">'+d.expr+'</div><br>'+
+      '<input type="text" class="ans" data-open placeholder="Ответ числом" value="'+i.value+'" '+(lock?'disabled':'')+'>';
+  }
+  if(t.type==='table')return tableHTML(i,mode);
+  return '';
+}
+function feedbackHTML(i){
+  const t=i.task,top=t.topics[0];
+  let cls=i.ok?'ok':'bad',title=i.ok?('✅ Верно! +'+i.earned+' из '+t.points+' б.'):
+      ('❌ Неверно. Получено '+i.earned+' из '+t.points+' б.');
+  let h='<b>'+title+'</b>';
+  if(i.note)h+='<br>'+i.note;
+  if(!i.ok)h+='<br><b>Правильный ответ:</b> '+correctText(i);
+  if((t.type==='open'||t.type==='opennum')&&i.data.steps)
+    h+='<br><b>Решение по действиям:</b><ol class="steps"><li>'+i.data.steps.join('</li><li>')+'</li></ol>';
+  if(t.explain)h+='<br>'+t.explain;
+  h+='<br><span class="stat">🎯 Умение: '+SKILL[top]+'. ⚠️ Частая ошибка: '+MIST[top]+'.</span>';
+  const p=progress[t.id]||{};
+  h+='<div class="row" style="margin-top:10px"><span class="stat">Самооценка:</span>'+
+     [1,2,3].map(k=>'<button class="btn '+(p.self===k?'':'gray')+'" data-self="'+k+'">'+
+       ['','решил(а) сам(а)','с подсказкой / не сразу','пока не смог(ла)'][k]+'</button>').join('')+'</div>';
+  return '<div class="fb show '+cls+'">'+h+'</div>';
+}
+function renderCard(i,num,mode){
+  const t=i.task;
+  const el=document.createElement('div');el.className='card';el.dataset.id=t.id;
+  const canVariant=(t.gen||(t.variants&&t.variants.length>1))&&mode!=='run';
+  el.innerHTML=
+   '<div class="head"><span class="badge '+(t.level==='mid'?'mid':t.level==='high'?'high':'')+'">Задание '+num+
+   ' · '+lvlName(t.level)+' · '+t.points+' б.</span><span class="topic">'+
+   t.topics.map(x=>(FILTERS.find(f=>f[0]===x)||['',x])[1]).join(' · ')+'</span></div>'+
+   '<div class="prompt">'+t.prompt+'</div>'+bodyHTML(i,mode)+
+   (mode==='run'?'':
+     '<div class="actions">'+
+       (i.checked?'':'<button class="btn" data-act="check">Проверить</button>')+
+       (i.checked?'<button class="btn sec" data-act="retry">Решить заново</button>':'')+
+       (canVariant?'<button class="btn gray" data-act="variant">Другой вариант</button>':'')+
+       (t.type==='table'&&!i.checked?'<button class="btn gray" data-act="clear">Очистить таблицу</button>':'')+
+     '</div>')+
+   (i.checked&&mode!=='run'?feedbackHTML(i):'');
+  bind(el,i,mode);
+  return el;
+}
+function bind(el,i,mode){
+  const t=i.task,rerender=()=>refresh(mode);
+  el.querySelectorAll('[data-opt]').forEach(o=>o.onclick=()=>{
+    if(i.checked&&mode!=='run')return;
+    const k=+o.dataset.opt;
+    if(t.type==='single')i.value=k;
+    else{const n=k+1,p=i.value.indexOf(n);p<0?i.value.push(n):i.value.splice(p,1);}
+    rerender();});
+  el.querySelectorAll('[data-match]').forEach(s=>s.onchange=()=>{i.value[+s.dataset.match]=+s.value;});
+  const inp=el.querySelector('[data-open]');
+  if(inp)inp.oninput=()=>{i.value=inp.value;};
+  el.querySelectorAll('[data-quick]').forEach(b=>b.onclick=()=>{i.value=b.dataset.quick;rerender();});
+  el.querySelectorAll('[data-cell]').forEach(b=>b.onclick=()=>{
+    const [r,c]=b.dataset.cell.split('_').map(Number);
+    const cur=i.cells[r][c];i.cells[r][c]=cur===null?0:cur===0?1:null;rerender();});
+  el.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{
+    const a=b.dataset.act;
+    if(a==='check')check(i);
+    if(a==='retry')reset(i);
+    if(a==='variant'){if(t.variants&&t.variants.length>1)i.vi=(i.vi+1)%t.variants.length;reset(i);}
+    if(a==='clear')i.cells=i.cells.map(r=>r.map(()=>null));
+    rerender();});
+  el.querySelectorAll('[data-self]').forEach(b=>b.onclick=()=>{
+    const p=progress[t.id]||{att:1,first:null,best:false,earned:0,self:0};
+    p.self=+b.dataset.self;progress[t.id]=p;save();rerender();});
+}
+
+/* ================= БАЛЛЫ, АНАЛИЗ, ФОРМИРУЮЩАЯ ПАНЕЛЬ ================= */
+function topicStats(){
+  return FILTERS.slice(1).map(([key,name])=>{
+    const tasks=BANK().filter(t=>t.topics.includes(key));
+    const att=tasks.filter(t=>progress[t.id]);
+    const first=tasks.filter(t=>progress[t.id]&&progress[t.id].first);
+    const m=att.length?first.length/att.length:null;
+    return {key:key,key2:name,att:att.length,total:tasks.length,m};
+  });
+}
+function descriptor(m){
+  if(m===null)return ['нет данных','начни с теории и 2–3 заданий темы','#999'];
+  if(m>=0.85)return ['продвинутый уровень','тема освоена — можешь объяснять другим','var(--ok)'];
+  if(m>=0.6)return ['базовый уровень','нужно ещё 3–5 заданий для автоматизма','var(--warn)'];
+  return ['в процессе освоения','вернись к теории и разбору примеров','var(--bad)'];
+}
+function renderScore(){
+  const bank=BANK();
+  let got=0,max=0;const byL={base:[0,0],mid:[0,0],high:[0,0]};
+  bank.forEach(t=>{max+=t.points;byL[t.level][1]+=t.points;
+    const p=progress[t.id];if(p){got+=p.earned;byL[t.level][0]+=p.earned;}});
+  const le=JSON.parse(localStorage.getItem('logic-lastexam-'+variant)||'null');
+  document.getElementById('variantTag').textContent='Вариант '+variant+' · итоговый блок · обновляется после каждой проверки';
+  document.getElementById('scoreBody').innerHTML=
+    'Набрано за тренировку (Вариант '+variant+'): <b>'+got+' из '+max+' баллов</b> ('+(max?Math.round(got/max*100):0)+'%)<br>'+
+    '<span class="stat">база: '+byL.base[0]+'/'+byL.base[1]+' · средний: '+byL.mid[0]+'/'+byL.mid[1]+
+    ' · повышенный: '+byL.high[0]+'/'+byL.high[1]+'</span>'+
+    (le?('<br>Последний вариант: <b>'+le.got+'/'+le.max+' ('+le.p+'%) → оценка «'+le.mark+'»</b>, '+le.date):'');
+
+  const att=bank.map((t,k)=>({t:t,k:k,p:progress[t.id]})).filter(x=>x.p);
+  let an='<div class="hint" style="margin-top:10px"><b>Анализ выполненных заданий (Вариант '+variant+'):</b></div>';
+  if(!att.length)an+='<div class="stat">Пока нет решённых заданий — анализ появится после первой проверки.</div>';
+  else{
+    an+='<div class="tbl-wrap"><table><tr><th>№</th><th>Уровень</th><th>1‑я попытка</th><th>Лучший балл</th><th>Самооценка</th></tr>';
+    att.forEach(x=>{an+='<tr><td>'+(x.k+1)+'</td><td>'+lvlName(x.t.level)+'</td><td>'+(x.p.first?'✅':'❌')+'</td><td>'+
+      x.p.earned+'/'+x.t.points+'</td><td>'+(x.p.self?['','самостоятельно','с подсказкой','не смог(ла)'][x.p.self]:'—')+'</td></tr>';});
+    an+='</table></div>';
+  }
+  document.getElementById('analysis').innerHTML=an;
+
+  let h='';
+  topicStats().forEach(s=>{
+    const d=descriptor(s.m),col=d[2];
+    const pct=s.m===null?0:Math.round(s.m*100);
+    h+='<div style="margin-bottom:10px"><b>'+s.key2+'</b> — '+s.att+' из '+s.total+' заданий решено'+
+       (s.m!==null?', успех с первой попытки: <b>'+pct+'%</b>':'')+
+       ' · <span style="color:'+col+'">'+d[0]+'</span>'+
+       '<div class="bar"><div class="'+(pct>=85?'g':pct>=60?'w':'r')+'" style="width:'+pct+'%"></div></div>'+
+       (s.m!==null&&s.m<0.7?'<div class="hint">➜ '+REC[s.key]+'</div>':(s.m===null?'<div class="hint">➜ Тема не начата. '+REC[s.key]+'</div>':''))+
+       '</div>';
+  });
+  const self=bank.map(t=>progress[t.id]).filter(p=>p&&p.self);
+  const over=self.filter(p=>p.self===1&&!p.best).length;
+  const under=self.filter(p=>p.self===3&&p.best).length;
+  h+='<div class="hint">🪞 Самооценка: отмечено заданий — '+self.length+
+     (over?'; из них «решил(а) сам(а)», но с ошибками: '+over+' → сверяйся с решением после проверки':'')+
+     (under?'; «пока не смог(ла)», хотя ответ верный: '+under+' → ты умеешь больше, чем думаешь!':'')+'.</div>';
+  document.getElementById('formative').innerHTML=h;
+}
+
+/* ================= РЕЖИМ ТРЕНИРОВКИ ================= */
+function renderPractice(){
+  document.getElementById('filters').innerHTML=FILTERS.map(f=>
+    '<button class="chip '+(S.filter===f[0]?'active':'')+'" data-f="'+f[0]+'">'+f[1]+'</button>').join('');
+  document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{S.filter=b.dataset.f;S.idx=0;renderPractice();});
+  S.list=BANK().filter(t=>S.filter==='all'||t.topics.includes(S.filter));
+  if(S.idx>=S.list.length)S.idx=0;
+  if(S.idx<0)S.idx=0;
+  document.getElementById('navgrid').innerHTML=S.list.map((t,k)=>{
+    const p=progress[t.id];let c='nb'+(k===S.idx?' cur':'');
+    if(p)c+=p.best?' ok':' bad';
+    return '<button class="'+c+'" data-go="'+k+'">'+(k+1)+'</button>';}).join('');
+  document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{S.idx=+b.dataset.go;renderPractice();});
+  const done=S.list.filter(t=>progress[t.id]).length;
+  let tot=0;BANK().forEach(t=>{const p=progress[t.id];if(p)tot+=p.earned;});
+  document.getElementById('stats').textContent='Вариант '+variant+' · решено заданий темы: '+done+' из '+S.list.length+' · всего баллов: '+tot;
+  renderScore();
+  const mount=document.getElementById('ptask');mount.innerHTML='';
+  mount.appendChild(renderCard(instOf(S.list[S.idx]),S.idx+1,'practice'));
+  document.getElementById('prev').disabled=S.idx===0;
+  document.getElementById('next').disabled=S.idx===S.list.length-1;
+  wireSend();
+}
+function refresh(mode){if(mode==='run'||mode==='review')renderExamTasks();else renderPractice();}
+function goPrev(){if(S.idx>0){S.idx--;renderPractice();}}
+function goNext(){if(S.idx<S.list.length-1){S.idx++;renderPractice();}}
+document.getElementById('prev').onclick=goPrev;
+document.getElementById('next').onclick=goNext;
+document.addEventListener('keydown',e=>{
+  if(document.getElementById('practice').classList.contains('hide'))return;
+  const tag=(document.activeElement&&document.activeElement.tagName)||'';
+  if(/INPUT|SELECT|TEXTAREA/.test(tag))return;
+  if(e.key==='ArrowRight')goNext();
+  if(e.key==='ArrowLeft')goPrev();
+});
+document.getElementById('resetProgress').onclick=()=>{
+  if(confirm('Сбросить прогресс и баллы текущего варианта ('+variant+')?')){progress={};save();S.inst={};renderPractice();}};
+
+/* ================= ЭКЗАМЕН ================= */
+function buildExam(){
+  const by=id=>BANK().find(t=>t.id===id);
+  const base=['b2','b3','b4','b5','b6','b7'].map(by);
+  const multi=['b9','b10','b11','b12','b13'].map(by);
+  const pool=['m1','m2','m3','m6','n1','n2','n3'].map(by);
+  const list=[by('b1'),...sample(base,3),by('b8'),...sample(multi,3),
+              sample(pool,1)[0],by('m4'),by('m5'),by('m7'),by('h1'),by('h2')];
+  S.inst={};
+  S.exam={insts:list.map(t=>{const i={task:t,vi:0};reset(i);S.inst[t.id]=i;return i;}),
+          left:40*60,finished:false,started:Date.now()};
+}
+function startExam(){
+  buildExam();
+  document.getElementById('examStart').classList.add('hide');
+  document.getElementById('examRun').classList.remove('hide');
+  document.getElementById('examResult').innerHTML='';
+  document.getElementById('examAfter').innerHTML='';
+  document.getElementById('finishExam').disabled=false;
+  renderExamTasks();tick();
+  clearInterval(S.timer);S.timer=setInterval(tick,1000);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function tick(){
+  const e=S.exam;if(!e||e.finished)return;
+  e.left--;
+  document.getElementById('clock').textContent=Math.floor(e.left/60)+':'+String(e.left%60).padStart(2,'0');
+  document.getElementById('timerBar').classList.toggle('warn',e.left<=300);
+  if(e.left<=0)finishExam(true);
+}
+function renderExamTasks(){
+  const e=S.exam,mount=document.getElementById('examTasks');mount.innerHTML='';
+  const mode=e.finished?'review':'run';
+  e.insts.forEach((i,k)=>mount.appendChild(renderCard(i,k+1,mode)));
+  if(!e.finished){
+    const filled=e.insts.filter(i=>{const t=i.task;
+      if(t.type==='single')return i.value!==null;
+      if(t.type==='multi')return i.value.length>0;
+      if(t.type==='match')return i.value.every(x=>x>0);
+      if(t.type==='open'||t.type==='opennum')return String(i.value).trim()!=='';
+      if(t.type==='table')return i.cells.every(r=>r.every(c=>c!==null));}).length;
+    document.getElementById('examProgress').textContent='Вариант '+variant+' · заполнено: '+filled+' из '+e.insts.length;
+  }
+}
+function finishExam(auto){
+  const e=S.exam;if(e.finished)return;
+  if(!auto&&!confirm('Завершить работу и проверить ответы?'))return;
+  e.finished=true;clearInterval(S.timer);
+  let got=0,max=0;
+  e.insts.forEach(i=>{check(i);got+=i.earned;max+=i.task.points;});
+  const p=Math.round(got/max*100),mark=p>=85?5:p>=70?4:p>=45?3:2;
+  const spent=Math.min(40*60,Math.round((Date.now()-e.started)/1000));
+  const per=e.insts.map((i,k)=>({n:k+1,lvl:i.task.level,got:i.earned,max:i.task.points,ok:i.ok}));
+  localStorage.setItem('logic-lastexam-'+variant,JSON.stringify({variant:variant,date:new Date().toLocaleString('ru-RU'),got:got,max:max,p:p,mark:mark,per:per}));
+  document.getElementById('examResult').innerHTML=
+    '<div class="card"><div class="result"><div class="big">Вариант '+variant+' · Оценка: '+mark+'</div>'+
+    'Баллы: <b>'+got+' из '+max+'</b> ('+p+'%) · затрачено '+Math.floor(spent/60)+' мин '+spent%60+' с'+
+    (auto?' · ⏰ время вышло':'')+'<br>'+
+    '<span class="stat">Шкала: 85–100% → «5»; 70–84% → «4»; 45–69% → «3»; менее 45% → «2».</span><hr>'+
+    '<b>Анализ выполненных заданий:</b><br>'+
+    per.map(x=>'Задание '+x.n+' ('+lvlName(x.lvl)+'): '+(x.ok?'✅':(x.got?'🟡':'❌'))+' '+x.got+'/'+x.max+' б.').join('<br>')+
+    '<div class="row" style="margin-top:12px">'+
+    '<input type="text" id="studentName2" placeholder="Фамилия Имя (для отчёта)" style="min-width:210px" value="'+(localStorage.getItem('logic-name')||'')+'">'+
+    '<button class="btn" data-send="file">💾 Скачать файл результатов</button>'+
+    '<button class="btn" data-send="mail">📧 Отправить на val-sk@yandex.ru</button>'+
+    '<button class="btn sec" data-send="net">🌐 Отправить через интернет</button></div>'+
+    '<div class="hint">Кнопка «📧» сохраняет файл отчёта и открывает готовое письмо — прикрепите файл и отправьте.</div></div></div>';
+  document.getElementById('finishExam').disabled=true;
+  document.getElementById('examAfter').innerHTML='<button class="btn" id="againExam">Новый вариант</button>';
+  document.getElementById('againExam').onclick=startExam;
+  const n2=document.getElementById('studentName2');
+  if(n2)n2.onchange=()=>{localStorage.setItem('logic-name',n2.value.trim());
+    const n1=document.getElementById('studentName');if(n1)n1.value=n2.value.trim();};
+  wireSend();renderExamTasks();
+  const res=document.getElementById('examResult');
+  if(res)res.scrollIntoView({behavior:'smooth',block:'start'});
+}
+document.getElementById('startExam').onclick=startExam;
+document.getElementById('finishExam').onclick=()=>finishExam(false);
+
+/* ================= ОТЧЁТ И ОТПРАВКА ================= */
+const TEACHER='val-sk@yandex.ru';
+function getName(){
+  const el=document.getElementById('studentName');
+  const el2=document.getElementById('studentName2');
+  let n=((el2&&el2.value)||'').trim()||((el&&el.value)||'').trim()||localStorage.getItem('logic-name')||'';
+  if(!n){n=prompt('Укажите фамилию и имя для отчёта:','')||'Без имени';}
+  localStorage.setItem('logic-name',n);
+  if(el)el.value=n;if(el2)el2.value=n;
+  return n;
+}
+function buildReport(){
+  const name=getName(),bank=BANK();
+  let got=0,max=0;
+  bank.forEach(t=>{max+=t.points;const p=progress[t.id];if(p)got+=p.earned;});
+  const le=JSON.parse(localStorage.getItem('logic-lastexam-'+variant)||'null');
+  const L=[];
+  L.push('ОТЧЁТ ПО ТРЕНАЖЁРУ «Элементы математической логики» (8 класс) — ВАРИАНТ '+variant);
+  L.push('Ученик: '+name);
+  L.push('Дата формирования: '+new Date().toLocaleString('ru-RU'));
+  L.push('');
+  L.push('== ТРЕНИРОВКА (Вариант '+variant+') ==');
+  L.push('Баллы: '+got+' из '+max+' ('+(max?Math.round(got/max*100):0)+'%)');
+  L.push('');
+  bank.forEach((t,k)=>{const p=progress[t.id];if(!p)return;
+    L.push('Задание '+(k+1)+' ['+lvlName(t.level)+', '+t.points+' б.] — '+
+      (p.best?'верно':'неверно')+', с 1-й попытки: '+(p.first?'да':'нет')+
+      ', попыток: '+p.att+', лучший балл: '+p.earned+'/'+t.points+
+      (p.self?', самооценка: '+['','самостоятельно','с подсказкой','не смог(ла)'][p.self]:''));});
+  L.push('');
+  L.push('== ОСВОЕНИЕ ТЕМ (формирующее оценивание) ==');
+  topicStats().forEach(s=>{const d=descriptor(s.m)[0];
+    L.push(s.key2+': решено '+s.att+'/'+s.total+', успех с 1-й попытки '+
+      (s.m===null?'—':Math.round(s.m*100)+'%')+' → '+d);});
+  L.push('');
+  L.push('== КОНТРОЛЬНЫЙ ВАРИАНТ (40 мин, Вариант '+variant+') ==');
+  if(le){
+    L.push('Дата: '+le.date);
+    L.push('Баллы: '+le.got+' из '+le.max+' ('+le.p+'%) → оценка «'+le.mark+'»');
+    le.per.forEach(x=>L.push('  Задание '+x.n+' ('+lvlName(x.lvl)+'): '+x.got+'/'+x.max));
+  } else {
+    L.push('вариант не выполнялся');
+  }
+  L.push('');
+  L.push('--');
+  L.push('Отчёт сформирован веб-тренажёром.');
+  return L.join('\n');
+}
+function downloadReport(){
+  const rep=buildReport(),name=getName();
+  const fn='rezultaty_logika_var'+variant+'_'+name.replace(/\s+/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.txt';
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([rep],{type:'text/plain;charset=utf-8'}));
+  a.download=fn;a.click();URL.revokeObjectURL(a.href);
+  return {rep:rep,fn:fn};
+}
+function wireSend(){
+  document.querySelectorAll('[data-send]').forEach(b=>{
+    b.onclick=async()=>{
+      const kind=b.dataset.send;
+      if(kind==='copy'){
+        try{await navigator.clipboard.writeText(buildReport());alert('Отчёт скопирован в буфер обмена.');}
+        catch(e){alert('Не удалось скопировать. Используйте «Скачать файл».');}
+        return;}
+      const r=downloadReport();
+      if(kind==='file'){alert('Файл '+r.fn+' сохранён в «Загрузки».');return;}
+      if(kind==='mail'){
+        location.href='mailto:'+TEACHER+'?subject='+
+          encodeURIComponent('Результаты тренажёра «Математическая логика», Вариант '+variant+', '+getName())+
+          '&body='+encodeURIComponent(r.rep+'\n\n(Файл '+r.fn+' приложите к письму.)');
+        return;}
+      if(kind==='net'){
+        b.disabled=true;b.textContent='Отправка…';
+        try{
+          const resp=await fetch('https://formsubmit.co/ajax/'+TEACHER,{method:'POST',
+            headers:{'Content-Type':'application/json','Accept':'application/json'},
+            body:JSON.stringify({_subject:'Результаты тренажёра «Математическая логика», Вариант '+variant+', '+getName(),
+              'Ученик':getName(),'Вариант':variant,'Отчёт':r.rep})});
+          if(!resp.ok)throw 0;
+          alert('Отчёт (Вариант '+variant+') отправлен учителю на '+TEACHER+'. Файл '+r.fn+' также сохранён у вас.');
+        }catch(e){
+          alert('Интернет-отправка не удалась (сервису нужно первое подтверждение адреса учителем). Используйте кнопку «📧».');
+        }
+        b.disabled=false;b.textContent='🌐 Отправить через интернет';
+      }
+    };});
+}
+const nameEl=document.getElementById('studentName');
+nameEl.value=localStorage.getItem('logic-name')||'';
+nameEl.onchange=()=>localStorage.setItem('logic-name',nameEl.value.trim());
+
+/* ================= ТАБЫ ================= */
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  ['practice','exam','theory'].forEach(id=>document.getElementById(id).classList.add('hide'));
+  document.getElementById(b.dataset.mode).classList.remove('hide');
+  if(b.dataset.mode==='practice')renderPractice();
+});
+renderPractice();
+</script>
+</body>
+</html>
